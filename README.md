@@ -23,5 +23,5 @@ $ ./link_all
 ```
 
 The `Rprofile` looks like this:
-![Rprofile example](screen_rprofile.png)
+![Rprofile example](screen_rprofile.png =250x)
 

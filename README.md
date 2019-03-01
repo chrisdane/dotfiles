@@ -23,5 +23,5 @@ $ ./link_all
 ```
 
 The `Rprofile` looks like this:
-![Rprofile example](screen_rprofile.png =250x)
+<img align="left" width="200" height="400" src="screen_rprofile.png">
 

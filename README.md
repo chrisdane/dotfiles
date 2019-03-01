@@ -23,5 +23,6 @@ $ ./link_all
 ```
 
 The `Rprofile` looks like this:
-<img align="left" width="200" height="400" src="screen_rprofile.png">
+<br>
+<img align="left" width="500" height="600" src="screen_rprofile.png">
 

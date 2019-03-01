@@ -155,7 +155,7 @@ if (T) { # set F for blank .Rprofile
 				checktext <- strip_style(checktext)
 			}
             # show if cran or git package
-            repo <- utils::packageDescription(i)
+            repo <- suppressMessages(suppressWarnings(utils::packageDescription(i)))
             if (any(names(repo) == "RemoteType")) {
                 message("  ", repo$RemoteType, appendLF=F) # = "github"
             } else if (any(names(repo) == "Repository")) {

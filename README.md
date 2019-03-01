@@ -1,6 +1,6 @@
 # dots
 
-To link these dotfiles to `~/` paste
+To link these dotfiles to your `~/`, copy-paste
 
 ```
 $ cat > link_all <<EOF
@@ -15,10 +15,13 @@ done
 EOF
 ```
 
-and run
+and then run
 
 ```
 $ chmod 755 link_all
 $ ./link_all
 ```
+
+The `Rprofile` looks like this:
+![Rprofile example](screen_rprofile.png?raw=true "Rprofile example")
 

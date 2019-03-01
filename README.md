@@ -22,7 +22,7 @@ $ chmod 755 link_all
 $ ./link_all
 ```
 
-The `Rprofile` looks like this:
-<br>
-<img align="left" width="500" height="600" src="screen_rprofile.png">
+The `Rprofile` results in:
+<br><br>
+<img align="left" width="500" src="screen_rprofile.png">
 

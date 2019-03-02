@@ -1,11 +1,12 @@
 # dotfiles
 
-If you want, after cloning the repo, set once the `post-merge` hook for this repo by
-```bash
-ln -s /absolute/repopath/myhooks/post-merge /absolute/repopath/.git/hooks/.
 ```
-Then, after every `git pull`, you will be asked to link the dotfiles to your `~/`.
-
+If you want, after cloning the repo, save your dotfile and link the new one with
+```bash
+cp ~/.Rprofile ~/.myRprofile
+ln -s /absolute/repopath/Rprofile ~/.
+```
+After every additional `git pull` the dotfile link gets updated automatically by (this is how `ln` works).
 
 The `Rprofile` results in:
 <br><br>

@@ -10,6 +10,8 @@ fs=(vimrc Rprofile)
 # enable user input ()
 exec < /dev/tty
 
+echo pwd: $PWD
+
 for i in "${fs[@]}"; do
     echo [$PWD/post-merge]: run \"ln -sf $PWD/../$i ~/.$i\"? [y/n]
     read yn

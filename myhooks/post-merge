@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# by hand: git config core.hooksPath repo/this_dir
+
 # link the files to your home if wanted
 
 fs=(vimrc Rprofile) 

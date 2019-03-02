@@ -1,4 +1,4 @@
-# dots
+# dotfiles
 
 To link these dotfiles to your `~/`, copy-paste
 

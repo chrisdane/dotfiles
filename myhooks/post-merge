@@ -3,7 +3,7 @@
 ## link the files to your home if wanted
 
 # note: need to link this hook once by hand to the .git/hooks directory:
-# ln -s <repodir>/myhook/post-merge <repodir>/.git/hooks/.
+# ln -s /absolute/repopath/myhooks/post-merge /absolute/repopath/.git/hooks/.
 
 fs=(vimrc Rprofile)
 cnt=0

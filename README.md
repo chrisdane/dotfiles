@@ -2,7 +2,7 @@
 
 If you want, after cloning the repo, set once the `post-merge` hook for this repo by
 ```bash
-ln -s <repodir>/myhook/post-merge <repodir>/.git/hooks/.
+ln -s /absolute/repopath/myhooks/post-merge /absolute/repopath/.git/hooks/.
 ```
 Then, after every `git pull`, you will be asked to link the dotfiles to your `~/`.
 

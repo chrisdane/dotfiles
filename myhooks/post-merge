@@ -11,11 +11,9 @@ fs=(vimrc Rprofile)
 exec < /dev/tty
 
 for i in "${fs[@]}"; do
-    echo Run \"ln -sf $PWD/../$i ~/.$i\"? [y/n]
+    echo [$PWD/post-merge]: run \"ln -sf $PWD/../$i ~/.$i\"? [y/n]
     read yn
 	if [ "$yn" != "${yn#[Yy]}" ] ;then
 		ln -sf $PWD/../$i ~/.$i
-	else
-		echo Do not link $i to ~/.$i
 	fi
 done

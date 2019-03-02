@@ -8,11 +8,11 @@
 fs=(vimrc Rprofile) 
 
 for i in "${fs[@]}"; do
-    echo Run \" ln -sf $PWD/$i ~/.$i\"? [y/n]
+    echo Run \"ln -sf $PWD/../$i ~/.$i\"? [y/n]
     read yn
-	if [ "$yn" != "${answer#[Yy]}" ] ;then
-		ln -sf $PWD/$i ~/.$i
+	if [ "$yn" != "${yn#[Yy]}" ] ;then
+		ln -sf $PWD/../$i ~/.$i
 	else
-		echo Do not link $i to ~/
+		echo Do not link $i to ~/.$i
 	fi
 done

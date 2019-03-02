@@ -1,4 +1,18 @@
 #!/bin/bash
 
-# by hand: git config core.hooksPath repo/this_dir
-echo "post-merge: done"
+## link the files to your home if wanted
+
+# note: need to link this hook once by hand to the .git/hooks directory:
+# ln -s <repodir>/myhook/post-merge <repodir>/.git/hooks/.
+
+fs=(vimrc Rprofile) 
+
+for i in "${fs[@]}"; do
+    echo Run \" ln -sf $PWD/$i ~/.$i\"? [y/n]
+    read yn
+	if [ "$yn" != "${answer#[Yy]}" ] ;then
+		ln -sf $PWD/$i ~/.$i
+	else
+		echo Do not link $i to ~/
+	fi
+done

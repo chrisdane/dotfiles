@@ -6,16 +6,19 @@
 # ln -s <repodir>/myhook/post-merge <repodir>/.git/hooks/.
 
 fs=(vimrc Rprofile) 
+cnt=0
 
-# enable user input ()
+# enable user input in hook 
+# from https://stackoverflow.com/questions/3417896/how-do-i-prompt-the-user-from-within-a-commit-msg-hook
 exec < /dev/tty
 
-echo pwd: $PWD
-
+echo ******** start  $PWD/myhooks/post-merge ********
 for i in "${fs[@]}"; do
-    echo [$PWD/post-merge]: run \"ln -sf $PWD/../$i ~/.$i\"? [y/n]
+    cnt=$((cnt+1))
+    echo cnt/${#fs[@]}: run \"ln -sf $PWD/$i ~/.$i\"? [y/n]
     read yn
 	if [ "$yn" != "${yn#[Yy]}" ] ;then
-		ln -sf $PWD/../$i ~/.$i
+		ln -sf $PWD/$i ~/.$i
 	fi
 done
+echo  ******** finish $PWD/myhooks/post-merge ********

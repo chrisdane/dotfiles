@@ -46,7 +46,7 @@ if (T) { # set F for blank .Rprofile
        
 	if (interactive()) {
 
-        # change R message language to english if necessary
+        # change R message language to english if not alread done by OS
 		if (regexpr("en", Sys.getlocale("LC_MESSAGES")) == -1) {
 			oldlocale <- Sys.getlocale("LC_MESSAGES")
 			Sys.setlocale("LC_MESSAGES", "C")
@@ -59,7 +59,8 @@ if (T) { # set F for blank .Rprofile
         # add my functions to an environment so that they do not get removed on rm()
         # https://stackoverflow.com/questions/4828094/hiding-personal-functions-in-r
         scripts <- paste0("~/scripts/r/functions/", 
-                          c("ccf2.r", "ls2.r", "update.check.r", "my_setOutputColors.r", "myErrorFun.r"))
+                          c("ccf2.r", "ls2.r", "update.check.r", "my_setOutputColors.r", 
+                            "myErrorFun.r", "myPromptPath.r"))
         for (i in 1:length(scripts)) {
             if (file.exists(scripts[i])) {
                 if (!exists("myEnv")) {
@@ -72,22 +73,30 @@ if (T) { # set F for blank .Rprofile
             }
         }
         if (exists("myEnv")) {
-            attach(myEnv)
+            attach(myEnv, warn.conflicts=F) # if masked functions exist
             rm(myEnv)
         }
         rm(scripts, i)
 
         # set some global options
         message("   Set options ...")
-		message("      options(continue=\"",
-                paste0(rep(" ", t=nchar(options()$prompt)), "  "), "\")")
-        options(continue=paste0(rep(" ", t=nchar(options()$prompt)), "  "))
+		r <- getOption("repos")
+        r["CRAN"] <- "https://cloud.r-project.org" # https and always-near-me mirror 
+		message("      options(repos=c(CRAN=\"", r, "\"))")
+        options(repos=r)
+		rm(r)
+		message("      options(continue=\"   \")")
+        options(continue="   ")
         message("      options(show.error.locations=T)")
         options(show.error.locations=T)
+		if (any(ls(pos=which(search() == "myEnv")) == "myPromptPath")) {
+            message("      options(prompt=myPromptPath())   (setwd() is also changed)")
+            options(prompt=myPromptPath())
+        } # if myPromptPath function is loaded
         if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) {
             message("      options(error=myErrorFun)   (check with 'getOption(\"error\")')")
             options(error=myErrorFun)
-        } # if special error
+        } # if myErrorFun is loaded
 
         # load default packages
 		message("   Load default packages ...")
@@ -181,7 +190,6 @@ if (T) { # set F for blank .Rprofile
         # paste some stuff
         message("   Package options ...")
         message("      install: install.packages(\"packagename\", lib=\"lib\")")
-        message("               https://cran.r-project.org/src/contrib/Archive")
 		message("               devtools::install_github(\"user/package\", args=\"--with-keep.source\")")
         message("               devtools::with_libpaths(new=\"libpath\", install_github(\"user/package\"))")
         message("      compile: R CMD build \"package directory\"")
@@ -191,10 +199,11 @@ if (T) { # set F for blank .Rprofile
         message("      unload:  detach(package:packagename, unload=T)")
         message("      update:  update.packages(instlib=\"lib\", repos=\"package\", ask=F, checkBuilt=T)")
         message("               update.packages(instlib=.libPaths()[1], ask=F, checkBuilt=T)")
-        message("               dtupdate::github_update()")
+        message("               dtupdate::github_update(auto.install=T, ask=T, dependencies=T)")
         message("      remove:  remove.packages(\"packagename\", lib=\"lib\")")
         message("      which:   find.package(\"packagename\")")
         message("      version: packageVersion(\"packagename\")")
+        message("      archive: https://cran.r-project.org/src/contrib/Archive")
         message("   Run R ...")
         message("      in background:            $ Rscript script.r > test.log 2>&1 &") 
         message("      as script:                #!/bin/Rscript --vanilla")

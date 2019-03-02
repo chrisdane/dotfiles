@@ -7,9 +7,12 @@
 
 fs=(vimrc Rprofile) 
 
+# enable user input ()
+#exec < /dev/tty
+
 for i in "${fs[@]}"; do
     echo Run \"ln -sf $PWD/../$i ~/.$i\"? [y/n]
-    read yn
+    read -p yn
 	if [ "$yn" != "${yn#[Yy]}" ] ;then
 		ln -sf $PWD/../$i ~/.$i
 	else

@@ -84,7 +84,7 @@ if (T) { # set F for blank .Rprofile
 		# options(defaultPackages = c(getOption("defaultPackages"), "crayon"))
 		# but this has not such a nice handling
         
-        packages <- c("crayon", "ncdf4", "fields", "ff", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
+        packages <- c("crayon", "ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
         # "data.table", "forecast", "ncdf.tools"
         if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put first
 

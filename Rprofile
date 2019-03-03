@@ -59,8 +59,8 @@ if (T) { # set F for blank .Rprofile
         # add my functions to an environment so that they do not get removed on rm()
         # https://stackoverflow.com/questions/4828094/hiding-personal-functions-in-r
         scripts <- paste0("~/scripts/r/functions/", 
-                          c("ccf2.r", "ls2.r", "update.check.r", "my_setOutputColors.r", 
-                            "myErrorFun.r", "myPromptPath.r"))
+                          c("myccf.r", "myls.r", "update.check.r", "mysetOutputColors.r", 
+                            "myErrorFun.r", "myRPrompt.r"))
         for (i in 1:length(scripts)) {
             if (file.exists(scripts[i])) {
                 if (!exists("myEnv")) {
@@ -78,40 +78,16 @@ if (T) { # set F for blank .Rprofile
         }
         rm(scripts, i)
 
-        # set some global options
-        message("   Set options ...")
-		r <- getOption("repos")
-        r["CRAN"] <- "https://cloud.r-project.org" # https and always-near-me mirror 
-		message("      options(repos=c(CRAN=\"", r, "\"))")
-        options(repos=r)
-		rm(r)
-		message("      options(continue=\"   \")")
-        options(continue="   ")
-        message("      options(show.error.locations=T)")
-        options(show.error.locations=T)
-		if (any(ls(pos=which(search() == "myEnv")) == "myPromptPath")) {
-            message("      options(prompt=myPromptPath())   (setwd() is also changed)")
-            options(prompt=myPromptPath())
-        } # if myPromptPath function is loaded
-        if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) {
-            message("      options(error=myErrorFun)   (check with 'getOption(\"error\")')")
-            options(error=myErrorFun)
-        } # if myErrorFun is loaded
-
         # load default packages
 		message("   Load default packages ...")
 		# actually: 
 		# options(defaultPackages = c(getOption("defaultPackages"), "crayon"))
 		# but this has not such a nice handling
-		if (Sys.getenv("TERM") == "xterm-256color") {
-            packages <- "colorout"
-        } else {
-            packages <- "crayon"
-        }
-        packages <- c(packages 
-                      , c("ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
-                      )
-		# "data.table", "forecast", "extrafont", "ncdf.tools"
+        
+        packages <- c("crayon", "ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
+        # "data.table", "forecast", "ncdf.tools"
+        if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put first
+
         npkg <- length(packages)
         cnt <- 0
         nchars <- nchar(packages)
@@ -119,8 +95,9 @@ if (T) { # set F for blank .Rprofile
 		for (i in packages) {
             cnt <- cnt + 1
 			suppressMessages(suppressWarnings(require(i, character.only=T)))
-            # replace colorout with crayon if loading of colorout was not successful
-            if (i == "colorout" && !any(search() == paste0("package:", i))) {
+            # replace colorout with crayon if loading of colorout was not successful and crayon is not mentioned
+            if (i == "colorout" && !any(search() == paste0("package:", i)) &&
+                !any(packages == "crayon")) {
                 i <- "crayon"
                 packages[1] <- i
                 nchars <- nchar(packages)
@@ -184,8 +161,30 @@ if (T) { # set F for blank .Rprofile
             # linebreak
 			message("")
 		} # for i packages
-		rm(cnt, npkg, packages, i, nchars, checktext, failed, repo)
+		rm(cnt, npkg, packages, i, nchars, checktext 
+           , failed
+           , repo)
 		if (exists("fancy")) rm(fancy)
+
+        # set some global options after packages loaded since some functions may need package functions
+        message("   Set options ...")
+        r <- getOption("repos")
+        r["CRAN"] <- "https://cloud.r-project.org" # https and always-near-me mirror 
+        message("      options(repos=c(CRAN=\"", r, "\"))")
+        options(repos=r)
+        rm(r)
+        message("      options(continue=\"   \")")
+        options(continue="   ")
+        message("      options(show.error.locations=T)")
+        options(show.error.locations=T)
+        if (any(ls(pos=which(search() == "myEnv")) == "myRPrompt")) {
+            message("      options(prompt=myRPrompt())   (setwd() is also changed)")
+            options(prompt=myRPrompt())
+        } # if myRPrompt function is loaded
+        if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) { 
+            message("      options(error=myErrorFun)   (check with 'getOption(\"error\")')")
+            options(error=myErrorFun)
+        } # if myErrorFun is loaded
 
         # paste some stuff
         message("   Package options ...")

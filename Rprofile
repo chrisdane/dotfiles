@@ -217,8 +217,9 @@ if (T) { # set F for blank .Rprofile
         if (!is.null(failed)) {
             message("   Messages of failed packages:")
             for (i in 1:length(failed)) message("      ", failed[i])
-            rm(i, failed)
+            rm(i)
         } # if any packages failed
+        rm(failed)
 
         message("*********************************************")
 

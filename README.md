@@ -9,5 +9,5 @@ After every further `git pull`, the dotfile link gets updated automatically (thi
 
 The `Rprofile` results in (check the `functions` repo for function defs):
 <br><br>
-<img align="left" width="500" src="screen_rprofile.png">
+<img align="left" width="600" src="screen_rprofile.png">
 

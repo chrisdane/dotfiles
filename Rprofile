@@ -105,7 +105,7 @@ if (T) { # set F for blank .Rprofile
             }
             # load my default colors once
             if (i == "colorout" && any(search() == "package:colorout")) {
-                my_setOutputColors()
+                mysetOutputColors()
             }
             message("     ", cnt, "/", npkg, "  ", i, "  ", paste0(rep(" ", t=max(nchars) - nchar(i)), collapse=""), appendLF=F)
             # check if package load was successfull
@@ -118,9 +118,9 @@ if (T) { # set F for blank .Rprofile
             # apply colorout/crayon colors
             if (any(search() == "package:colorout")) {
                 if (checktext == "ok") {
-                    my_setOutputColors(stderror=40) # green
+                    mysetOutputColors(stderror=40) # green
                 } else if (checktext == "failed") {
-                    my_setOutputColors(stderror=196) # red
+                    mysetOutputColors(stderror=196) # red
                 }
             } else if (any(search() == "package:crayon")) {
 				if (checktext == "ok") {
@@ -136,7 +136,7 @@ if (T) { # set F for blank .Rprofile
 			message(checktext, appendLF=F)
 			# remove green/red colorout/crayon format
             if (any(search() == "package:colorout")) {
-                my_setOutputColors()
+                mysetOutputColors()
             } else if (any(search() == "package:crayon")) {
 				checktext <- strip_style(checktext)
 			}
@@ -234,7 +234,7 @@ if (T) { # set F for blank .Rprofile
                               # reload colorout package
                               if (any(search() == "package:colorout")) {
                                   message("setHook: my_setOutputColors() ... ")
-                                  my_setOutputColors()
+                                  mysetOutputColors()
                               }
                           }
                           # overwrite the original function of the package

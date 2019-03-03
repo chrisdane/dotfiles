@@ -61,7 +61,6 @@ if (T) { # set F for blank .Rprofile
         scripts <- paste0("~/scripts/r/functions/", 
                           c("ccf2.r", "ls2.r", "update.check.r", "my_setOutputColors.r", 
                             "myErrorFun.r", "myPromptPath.r"))
-        test
         for (i in 1:length(scripts)) {
             if (file.exists(scripts[i])) {
                 if (!exists("myEnv")) {

@@ -84,36 +84,42 @@ if (T) { # set F for blank .Rprofile
 		# options(defaultPackages = c(getOption("defaultPackages"), "crayon"))
 		# but this has not such a nice handling
         
-        packages <- c("crayon", "ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
+        packages <- c("crayon", "ncdf4", "fields", "ff", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
         # "data.table", "forecast", "ncdf.tools"
         if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put first
 
         npkg <- length(packages)
+        nchar_no <- nchar(npkg)
         cnt <- 0
-        nchars <- nchar(packages)
+        nchar_pkg <- nchar(packages)
 		failed <- NULL
 		for (i in packages) {
+            
             cnt <- cnt + 1
-			suppressMessages(suppressWarnings(require(i, character.only=T)))
+            # here, library() yields better error handling than require()
+		   	tc <- tryCatch(suppressMessages(suppressWarnings(library(i, character.only=T))),
+                           error=function(e) e, warning=function(w) w)
+            
             # replace colorout with crayon if loading of colorout was not successful and crayon is not mentioned
             if (i == "colorout" && !any(search() == paste0("package:", i)) &&
                 !any(packages == "crayon")) {
                 i <- "crayon"
                 packages[1] <- i
-                nchars <- nchar(packages)
+                nchar_pkg <- nchar(packages)
                 suppressMessages(suppressWarnings(require(i, character.only=T)))
             }
             # load my default colors once
             if (i == "colorout" && any(search() == "package:colorout")) {
                 mysetOutputColors()
             }
-            message("     ", cnt, "/", npkg, "  ", i, "  ", paste0(rep(" ", t=max(nchars) - nchar(i)), collapse=""), appendLF=F)
+            message("     ", sprintf(paste0("%", nchar_no, "i"), cnt), "/", npkg, "  ", i, "  ", 
+                    paste0(rep(" ", t=max(nchar_pkg) - nchar(i)), collapse=""), appendLF=F)
             # check if package load was successfull
             if (any(search() == paste0("package:", i))) {
 				checktext <- "ok"
 			} else {
 				checktext <- "failed"
-				failed <- c(failed, i)
+				failed <- c(failed, paste0(i, ": ", tc$message))
 			}
             # apply colorout/crayon colors
             if (any(search() == "package:colorout")) {
@@ -161,9 +167,7 @@ if (T) { # set F for blank .Rprofile
             # linebreak
 			message("")
 		} # for i packages
-		rm(cnt, npkg, packages, i, nchars, checktext 
-           , failed
-           , repo)
+		rm(cnt, npkg, packages, tc, i, nchar_no, nchar_pkg, checktext, repo)
 		if (exists("fancy")) rm(fancy)
 
         # set some global options after packages loaded since some functions may need package functions
@@ -210,11 +214,18 @@ if (T) { # set F for blank .Rprofile
     
         try(fortunes::fortune(), silent=T)
 
+        if (!is.null(failed)) {
+            message("   Messages of failed packages:")
+            for (i in 1:length(failed)) message("      ", failed[i])
+            rm(i, failed)
+        } # if any packages failed
+
         message("*********************************************")
 
     } # if interactive
 
     # modify a function from a package as soon as the package is loaded
+    # somehow not needed anymore
 	if (F) {
         setHook(hookName=packageEvent(pkgname="devtools", event="attach"),
                 value=function(...) {

@@ -211,15 +211,16 @@ if (T) { # set F for blank .Rprofile
         message("      in background:            $ Rscript script.r > test.log 2>&1 &") 
         message("      as script:                #!/bin/Rscript --vanilla")
         message("      without this ~/.Rprofile: $ R --no-init-file")
-    
-        try(fortunes::fortune(), silent=T)
-
+   
+        # show error message if package load failed
         if (!is.null(failed)) {
             message("   Messages of failed packages:")
             for (i in 1:length(failed)) message("      ", failed[i])
             rm(i)
         } # if any packages failed
         rm(failed)
+
+        try(fortunes::fortune(), silent=T)
 
         message("*********************************************")
 

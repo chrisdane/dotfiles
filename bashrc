@@ -27,6 +27,11 @@
 
 ## From here, everyhing happens only if running interactively
 
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+    source /etc/bashrc
+fi
+
 # use bash completion, if installed
 if [ -f /etc/bash_completion ]; then
     source /etc/bash_completion

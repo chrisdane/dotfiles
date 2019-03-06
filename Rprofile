@@ -28,9 +28,11 @@
 #
 if (T) { # set F for blank .Rprofile
 
-    if (interactive()) {
-        message("*********************************************")
-		message("This ", R.version.string, " runs on ", 
+    if (interactive()) { 
+        message(paste0(c(rep("*", t=(getOption("width")/2 - 6)),
+                         " ~/.Rprofile ", 
+                         rep("*", t=(getOption("width")/2 - 6)))))
+        message("This ", R.version.string, " runs on ", 
                 Sys.info()[4], " with PID ", Sys.getpid())
     }
 
@@ -228,7 +230,9 @@ if (T) { # set F for blank .Rprofile
 
         try(fortunes::fortune(), silent=T)
 
-        message("*********************************************")
+        message(paste0(c(rep("*", t=(getOption("width")/2 - 6)),
+                         " ~/.Rprofile ",
+                         rep("*", t=(getOption("width")/2 - 6)))))
 
     } # if interactive
 

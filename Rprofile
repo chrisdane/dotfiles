@@ -84,8 +84,8 @@ if (T) { # set F for blank .Rprofile
 		# options(defaultPackages = c(getOption("defaultPackages"), "crayon"))
 		# but this has not such a nice handling
         
-        packages <- c("crayon", "ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
-        # "data.table", "forecast", "ncdf.tools"
+        packages <- c("ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
+        # "data.table", "forecast", "ncdf.tools", "crayon"
         if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put first
 
         npkg <- length(packages)
@@ -181,6 +181,12 @@ if (T) { # set F for blank .Rprofile
         options(continue="   ")
         message("      options(show.error.locations=T)")
         options(show.error.locations=T)
+        if (exists("~/.plotly")) {
+            message("      Sys.setenv(\"plotly_username\"=\"...\")")
+            message("      Sys.setenv(\"plotly_api_key\"=\"...\")")
+            message("      Sys.setenv(\"MAPBOX_TOKEN\"=\"...\"")
+            source("~/.plotly")
+        }
         if (any(ls(pos=which(search() == "myEnv")) == "myRPrompt")) {
             message("      options(prompt=myRPrompt())   (setwd() is also changed)")
             options(prompt=myRPrompt())
@@ -209,7 +215,7 @@ if (T) { # set F for blank .Rprofile
         message("      archive: https://cran.r-project.org/src/contrib/Archive")
         message("   Run R ...")
         message("      in background:            $ Rscript script.r > test.log 2>&1 &") 
-        message("      as script:                #!/bin/Rscript --vanilla")
+        message("      as script:                #!/usr/bin/env Rscript")
         message("      without this ~/.Rprofile: $ R --no-init-file")
    
         # show error message if package load failed

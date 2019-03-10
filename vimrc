@@ -1,10 +1,5 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-" Maintainer:
-"       Amir Salihefendic
-"       http://amix.dk - amix@amix.dk
-"
-
+" Adapted from .vimrc of Amir Salihefendic (http://amix.dk - amix@amix.dk)
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => General
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -15,16 +10,34 @@ nnoremap <F2> :set invpaste paste?<CR>
 set pastetoggle=<F2>
 set showmode
 
-
 " Mouse support (if mouse=a, to copy paste with ctrl+c and +v, 
 " press shift and then select with mouse)
 "set ttymouse=sgr
 set mouse=a
 
-" line numbers
-" set number
-" set relativenumber
+"" line numbers
+" absolute
+:set nu " = set number
+:set nonu " = set nonumber
+:set nu! " = set number! (toggle)
 
+" relative 
+:set rnu " = set relativenumber
+:set nornu " = set norelativenumber
+:set rnu! " set relativenumber! (toggle)
+
+" hybrid (= absolute + relative)
+:set nu rnu " set number relativenumber
+:set nonu nornu " set nonumber norelativenumber
+:set nu! rnu! " set number! relativenumber! (toggle)
+
+" When entering insert mode, relative line numbers 
+" are turned off, leaving absolute line numbers turned on
+:augroup numbertoggle
+:  autocmd!
+:  autocmd BufEnter,FocusGained,InsertLeave * set relativenumber
+:  autocmd BufLeave,FocusLost,InsertEnter   * set norelativenumber
+:augroup END
 
 " Sets how many lines of history VIM has to remember
 set history=700
@@ -143,7 +156,7 @@ set t_kD=[3~
 set t_ti=7[r[?47h t_te=[?47l8 " clear window
 "set t_ti= t_te= " NOT clear window
 
-" fix arrow keys "(not necessary on blizzard)
+" fix arrow keys if not working
 "set t_ku=[A
 "set t_kd=[B
 "set t_kr=[C
@@ -243,6 +256,7 @@ set viminfo^=%
 set laststatus=2
 
 " Format the status line
+"set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ %l
 "set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l
 
 

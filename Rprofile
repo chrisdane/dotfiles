@@ -159,8 +159,8 @@ if (T) { # set F for blank .Rprofile
 			# show library path
 			if (checktext == "ok") {
                 tmp <- base::find.package(i)
-                if (substr(tmp, 1, nchar(path.expand("~"))) == path.expand("~")) {
-                    tmp <- paste0("~", substr(tmp, nchar(path.expand("~")) + 1, nchar(tmp)))
+                if (substr(tmp, 1, nchar(normalizePath("~"))) == normalizePath("~")) {
+                    tmp <- paste0("~", substr(tmp, nchar(normalizePath("~")) + 1, nchar(tmp)))
                 }
 				message("  ", tmp, appendLF=F)
                 rm(tmp)

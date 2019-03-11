@@ -139,10 +139,16 @@ if check_existance vi; then
     clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
     xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
     if [ ${clipboard:0:1} == "-" ]; then
-        echo "~/.bashrc: 'vi --version | grep clipboard' yields $clipboard"
+        echo warn: vi option $clipboard detected
     fi
     if [ ${xterm_clipboard:0:1} == "-" ]; then 
-        echo "~/.bashrc: 'vi --version | grep clipboard' yields $xterm_clipboard"
+        echo warn: vi option $xterm_clipboard detected
     fi
 fi
 
+# check if login shell
+if check_existance shopt; then
+    if shopt -q login_shell; then
+        echo this is a login shell
+    fi
+fi

@@ -4,9 +4,9 @@
 
 ## .bashrc vs .bash_profile
 # if non-interactive shell:
-#   echo $- = hB (e.g.); "i" is not included or
+#   echo $- = hB (e.g.); "i" is not included
 # if interactive shell:
-#   echo $- = himBHs (e.g.); "i" is included or 
+#   echo $- = himBHs (e.g.); "i" is included 
 #   run 1) /etc/bash.bashrc, 2) ~/.bashrc
 #   if login shell:
 #       echo $0 = "-bash" or shopt login_shell = on
@@ -90,7 +90,18 @@ alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls'
 alias vi='vim'
 alias R='R --quiet'
 
-# helper functions
+## helper functions
+# check if program exists also if its masked by alias
+# if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
+# https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
+check_existance(){
+    if command -v $1 > /dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+# tail-follow most recent file
 tl(){
     file=$(ls -t | head -n1)
     echo `pwd`/$file
@@ -109,15 +120,29 @@ else
 fi
 
 # run R stuff if available
-if [ -x "$(command -v Rscript)" ]; then
-    if [ -x "$(command -v mytimes)" ]; then
+if check_existance Rscript; then
+    if check_existance mytimes; then
         mytimes
     fi
 fi
 
 # run bash stuff if available
-if [ -x "$(command -v bash)" ]; then
-    if [ -x "$(command -v birthdays)" ]; then
+if check_existance bash; then
+    if check_existance birthdays; then
         birthdays
     fi
 fi
+
+# check if vi is installed and supports clipboard pasting
+if check_existance vi; then
+    tmp=$(vi --version | grep clipboard)
+    clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
+    xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
+    if [ ${clipboard:0:1} == "-" ]; then
+        echo "~/.bashrc: 'vi --version | grep clipboard' yields $clipboard"
+    fi
+    if [ ${xterm_clipboard:0:1} == "-" ]; then 
+        echo "~/.bashrc: 'vi --version | grep clipboard' yields $xterm_clipboard"
+    fi
+fi
+

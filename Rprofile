@@ -25,6 +25,7 @@
 # getAnywhere(objectname)
 # system.file("extdata", "2012.csv", package = "testdat")
 # options(menu.graphics=FALSE) #graphics dialogs always seem to crash R
+# sort(x, index.return=TRUE)$ix
 #
 if (T) { # set F for blank .Rprofile
 
@@ -188,6 +189,8 @@ if (T) { # set F for blank .Rprofile
         options(continue="   ")
         message("      options(show.error.locations=T)")
         options(show.error.locations=T)
+        message("      options(stringsAsFactors=F)")
+        options(stringsAsFactors=F)
         if (exists("~/.plotly")) {
             message("      Sys.setenv(\"plotly_username\"=\"...\")")
             message("      Sys.setenv(\"plotly_api_key\"=\"...\")")

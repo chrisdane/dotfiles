@@ -268,7 +268,7 @@ set clipboard=unnamed
 vmap <C-c> "+yi
 vmap <C-x> "+c
 vmap <C-v> c<ESC>"+p
-vmap <C-v> <C-r><C-o>+
+imap <C-v> <C-r><C-o>+
 
 " Remap VIM 0 to first non-blank character
 map 0 ^

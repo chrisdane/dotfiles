@@ -157,10 +157,10 @@ if check_existance vim || check_existance vimx; then
     fi
     if [[ $vim_return == 1 ]] && [[ $vimx_return == 1 ]]; then
         if check_existance vim; then
-            echo "warn: vim exists but with $vim_cliboard and $vim_xterm_clipboard"
+            echo warn: vim exists but with $vim_clipboard and $vim_xterm_clipboard
         fi
         if check_existance vimx; then
-            echo "warn: vimx exists but with $vimx_cliboard and $vimx_xterm_clipboard"
+            echo warn: vimx exists but with $vimx_clipboard and $vimx_xterm_clipboard
         fi
     fi
 fi # if vim or vimx exist

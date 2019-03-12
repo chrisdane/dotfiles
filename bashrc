@@ -120,10 +120,13 @@ else
 fi
 
 # check which OS is used
+printf "OS: "
 if [ -f /etc/os-release ]; then
-    echo "OS: `head -1 /etc/os-release`"
+    head -1 /etc/os-release
 elif [ -f /etc/system-release ]; then
-    echo "OS: `head -1 /etc/system-release`"
+    head -1 /etc/system-release
+else 
+    echo unknown
 fi
 
 # check if vi is installed and supports clipboard pasting

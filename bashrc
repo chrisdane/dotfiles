@@ -129,20 +129,43 @@ else
     echo unknown
 fi
 
-# check if vi is installed and supports clipboard pasting
-if check_existance vim; then
-    tmp=$(vim --version | grep clipboard)
-    clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
-    xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
-    if [ ${clipboard:0:1} == "-" ]; then
-        echo warn: vi option $clipboard detected
+# check if vim/vimx is installed and supports clipboard pasting
+if check_existance vim || check_existance vimx; then
+    echo hi
+    if check_existance vim; then
+        tmp=$(vim --version | grep clipboard)
+        vim_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
+        vim_xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
+        if [[ ${vim_clipboard:0:1} == "-" ]] && [ ${vim_xterm_clipboard:0:1} == "-" ]; then
+            vim_return=1
+        else
+            vim_return=0
+        fi
+    else
+        vim_return=1
     fi
-    if [ ${xterm_clipboard:0:1} == "-" ]; then
-        echo warn: vi option $xterm_clipboard detected
+    if check_existance vimx; then
+        tmp=$(vimx --version | grep clipboard)
+        vimx_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
+        vimx_xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
+        if [[ ${vimx_clipboard:0:1} == "-" ]] && [ ${vimx_xterm_clipboard:0:1} == "-" ]; then
+            vimx_return=1
+        else
+            vimx_return=0
+    else 
+        vimx_return=1
     fi
-fi
+    if [[ $vim_return == 1 ]] && [[ $vimx_return == 1 ]]; then
+        if check_existance vim; then
+            echo warn: vim exists but with $vim_cliboard and $vim_xterm_clipboard
+        fi
+        if check_existance vimx; then
+            echo warn: vimx exists but with $vimx_cliboard and $vimx_xterm_clipboard
+        fi
+    fi
+fi # if vim or vimx exist
 
-# check if login shell
+# check if login shell (cannot check $0 from within this script)
 if check_existance shopt; then
     if shopt -q login_shell; then
         echo this is a login shell

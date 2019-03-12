@@ -191,6 +191,8 @@ if (T) { # set F for blank .Rprofile
         options(show.error.locations=T)
         message("      options(stringsAsFactors=F)")
         options(stringsAsFactors=F)
+        message("      options(menu.graphics=F)")
+        options(menu.graphics=F)
         if (exists("~/.plotly")) {
             message("      Sys.setenv(\"plotly_username\"=\"...\")")
             message("      Sys.setenv(\"plotly_api_key\"=\"...\")")

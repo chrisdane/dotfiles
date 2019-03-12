@@ -62,7 +62,8 @@ if (T) { # set F for blank .Rprofile
         # add my functions to an environment so that they do not get removed on rm()
         # https://stackoverflow.com/questions/4828094/hiding-personal-functions-in-r
         scripts <- paste0("~/scripts/r/functions/", 
-                          c("myccf.r", "myls.r", "update.check.r", "mysetOutputColors.r", 
+                          c("myfunctions.r", "myccf.r", "myls.r", 
+                            "update.check.r", "mysetOutputColors.r", 
                             "myErrorFun.r", "myRPrompt.r"))
         for (i in 1:length(scripts)) {
             if (file.exists(scripts[i])) {
@@ -209,6 +210,8 @@ if (T) { # set F for blank .Rprofile
         } # if myErrorFun is loaded
 
         # paste some stuff
+        message("   Built-in constants ...")
+        message("      LETTERS, letters, month.abb, month.name, pi")
         message("   Package options ...")
         message("      install: install.packages(\"packagename\", lib=\"lib\")")
 		message("               devtools::install_github(\"user/package\", args=\"--with-keep.source\")")

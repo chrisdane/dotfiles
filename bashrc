@@ -87,17 +87,6 @@ fi
 # https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
 complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 
-# check aliase with 'type alias'
-alias ll='ls --color=auto -lFh'
-alias la='ls --color=auto -alFh'
-alias ls='ls --color=auto -F' # default: ls='ls --color=auto'
-# ls only files excluding .dotfiles
-alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls'
-# ls only files including .dotfiles
-alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls'
-alias vi='vim'
-alias R='R --quiet'
-
 ## helper functions
 # check if program exists also if its masked by alias
 # if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
@@ -119,6 +108,21 @@ tl(){
 export compress='gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -        dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'
 export cut='gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'
 export cat='gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'
+
+# check aliase with 'type alias'
+alias ll='ls --color=auto -lFh'
+alias la='ls --color=auto -alFh'
+alias ls='ls --color=auto -F' # default: ls='ls --color=auto'
+# ls only files excluding .dotfiles
+alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls'
+# ls only files including .dotfiles
+alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls'
+alias R='R --quiet'
+alias vi='vim'
+if check_existance vimx; then
+    alias vi='vimx' # for +clipboard
+    alias vim='vimx'
+fi
 
 # run private stuff
 if [ -f ~/.myprofile ]; then

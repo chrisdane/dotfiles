@@ -134,8 +134,8 @@ if check_existance bash; then
 fi
 
 # check if vi is installed and supports clipboard pasting
-if check_existance vi; then
-    tmp=$(vi --version | grep clipboard)
+if check_existance vim; then
+    tmp=$(vim --version | grep clipboard)
     clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
     xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
     if [ ${clipboard:0:1} == "-" ]; then

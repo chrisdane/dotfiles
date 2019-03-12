@@ -263,12 +263,22 @@ set laststatus=2
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Editing mappings
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" <S-...>		shift-key			*shift* *<S-*
+" <C-...>		control-key			*control* *ctrl* *<C-*
+" <M-...>		alt-key or meta-key		*META* *meta* *alt* *<M-*
+" <A-...>		same as <M-...>			*<A-*
+" <D-...>		command-key or "super" key	*<D-*
+" https://vi.stackexchange.com/questions/84/how-can-i-copy-text-to-the-system-clipboard-from-vim
+" on linux, there are two clipboards:
+" * uses PRIMARY; mnemonic: "S"tar is "S"elect (for copy-on-"s"elect)
+" + uses CLIPBOARD; mnemonic: CTRL "PLUS" C (for the common keybind)
 " Using the clipboard as the default register
-set clipboard=unnamed
+"set clipboard=unnamed " to use * (PRIMARY, on select)
+set clipboard=unnamedplus " to use + (CLIPBOARD, ^C)
 vmap <C-c> "+yi
-vmap <C-x> "+c
 vmap <C-v> c<ESC>"+p
-imap <C-v> <C-r><C-o>+
+"imap <C-v> <C-r><C-o>+
+"vmap <C-x> "+c
 
 " Remap VIM 0 to first non-blank character
 map 0 ^

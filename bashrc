@@ -26,6 +26,13 @@
 [[ $- != *i* ]] && return
 
 ## From here, everyhing happens only if running interactively
+# Start
+ncol=$(($(tput cols)/2))
+ncol=$(($ncol<35?$ncol:35)) # = min(ncol,35)
+printf '%*s' "$ncol" | tr ' ' "*"
+printf " ~/.bashrc "
+printf '%*s' "$ncol" | tr ' ' "*"
+echo ""
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
@@ -186,3 +193,8 @@ if check_existance bash; then
     fi
 fi
 
+# Finish
+printf '%*s' "$ncol" | tr ' ' "*"
+printf " ~/.bashrc "
+printf '%*s' "$ncol" | tr ' ' "*"
+echo ""

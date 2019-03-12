@@ -27,8 +27,9 @@
 
 ## From here, everyhing happens only if running interactively
 # Start
+nch=34
 ncol=$(($(tput cols)/2))
-ncol=$(($ncol<35?$ncol:35)) # = min(ncol,35)
+ncol=$(($ncol<$nch?$ncol:$nch)) # = min(ncol,nch)
 printf '%*s' "$ncol" | tr ' ' "*"
 printf " ~/.bashrc "
 printf '%*s' "$ncol" | tr ' ' "*"

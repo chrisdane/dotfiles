@@ -17,18 +17,18 @@ set mouse=a
 
 "" line numbers
 " absolute
-:set nu " = set number
-:set nonu " = set nonumber
-:set nu! " = set number! (toggle)
+"set nu " = set number
+"set nonu " = set nonumber
+"set nu! " = set number! (toggle)
 
 " relative 
-:set rnu " = set relativenumber
-:set nornu " = set norelativenumber
-:set rnu! " set relativenumber! (toggle)
+"set rnu " = set relativenumber
+"set nornu " = set norelativenumber
+"set rnu! " set relativenumber! (toggle)
 
 " hybrid (= absolute + relative)
-:set nu rnu " set number relativenumber
-:set nonu nornu " set nonumber norelativenumber
+"set nu rnu " set number relativenumber
+"set nonu nornu " set nonumber norelativenumber
 :set nu! rnu! " set number! relativenumber! (toggle)
 
 " When entering insert mode, relative line numbers 

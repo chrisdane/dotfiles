@@ -131,7 +131,6 @@ fi
 
 # check if vim/vimx is installed and supports clipboard pasting
 if check_existance vim || check_existance vimx; then
-    echo hi
     if check_existance vim; then
         tmp=$(vim --version | grep clipboard)
         vim_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
@@ -152,6 +151,7 @@ if check_existance vim || check_existance vimx; then
             vimx_return=1
         else
             vimx_return=0
+        fi
     else 
         vimx_return=1
     fi

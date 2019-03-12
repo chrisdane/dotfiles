@@ -119,6 +119,33 @@ else
     echo ".bashrc: could not find ~/.myprofile"
 fi
 
+# check which OS is used
+if [ -f /etc/os-release ]; then
+    echo "OS: `head -1 /etc/os-release`"
+elif [ -f /etc/system-release ]; then
+    echo "OS: `head -1 /etc/system-release`"
+fi
+
+# check if vi is installed and supports clipboard pasting
+if check_existance vim; then
+    tmp=$(vim --version | grep clipboard)
+    clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
+    xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
+    if [ ${clipboard:0:1} == "-" ]; then
+        echo warn: vi option $clipboard detected
+    fi
+    if [ ${xterm_clipboard:0:1} == "-" ]; then
+        echo warn: vi option $xterm_clipboard detected
+    fi
+fi
+
+# check if login shell
+if check_existance shopt; then
+    if shopt -q login_shell; then
+        echo this is a login shell
+    fi
+fi
+
 # run R stuff if available
 if check_existance Rscript; then
     if check_existance mytimes; then
@@ -133,22 +160,3 @@ if check_existance bash; then
     fi
 fi
 
-# check if vi is installed and supports clipboard pasting
-if check_existance vim; then
-    tmp=$(vim --version | grep clipboard)
-    clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
-    xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
-    if [ ${clipboard:0:1} == "-" ]; then
-        echo warn: vi option $clipboard detected
-    fi
-    if [ ${xterm_clipboard:0:1} == "-" ]; then 
-        echo warn: vi option $xterm_clipboard detected
-    fi
-fi
-
-# check if login shell
-if check_existance shopt; then
-    if shopt -q login_shell; then
-        echo this is a login shell
-    fi
-fi

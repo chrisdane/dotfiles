@@ -26,7 +26,8 @@
 # system.file("extdata", "2012.csv", package = "testdat")
 # options(menu.graphics=FALSE) #graphics dialogs always seem to crash R
 # sort(x, index.return=TRUE)$ix
-#
+# pdf.options(useDingbats = TRUE) https://yihui.name/knitr/demo/graphics/
+# options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 
@@ -64,7 +65,7 @@ if (T) { # set F for blank .Rprofile
         scripts <- paste0("~/scripts/r/functions/", 
                           c("myfunctions.r", "myccf.r", "myls.r", 
                             "update.check.r", "mysetOutputColors.r", 
-                            "myErrorFun.r", "myRPrompt.r"))
+                            "myErrorFun.r", "myRPrompt.r", "label_function.r"))
         for (i in 1:length(scripts)) {
             if (file.exists(scripts[i])) {
                 if (!exists("myEnv")) {
@@ -209,30 +210,27 @@ if (T) { # set F for blank .Rprofile
             options(error=myErrorFun)
         } # if myErrorFun is loaded
 
-        # paste some stuff
-        message("   Built-in constants ...")
-        message("      LETTERS, letters, month.abb, month.name, pi")
-        message("   Package options ...")
-        message("      install: install.packages(\"packagename\", lib=\"lib\")")
-		message("               devtools::install_github(\"user/package\", args=\"--with-keep.source\")")
-        message("               devtools::with_libpaths(new=\"libpath\", install_github(\"user/package\"))")
-        message("      compile: R CMD build \"package directory\"")
-        message("               R CMD INSTALL -l \"lib\" \"packagename.tar.gz\"")
-        message("               install.packages(\"packagename.tar.gz\", repos=NULL)")
-        message("      load:    library(packagename, lib=\"lib\")")
-        message("      unload:  detach(package:packagename, unload=T)")
-        message("      update:  update.packages(instlib=\"lib\", repos=\"package\", ask=F, checkBuilt=T)")
-        message("               update.packages(instlib=.libPaths()[1], ask=F, checkBuilt=T)")
-        message("               dtupdate::github_update(auto.install=T, ask=T, dependencies=T)")
-        message("      remove:  remove.packages(\"packagename\", lib=\"lib\")")
-        message("      which:   find.package(\"packagename\")")
-        message("      version: packageVersion(\"packagename\")")
-        message("      archive: https://cran.r-project.org/src/contrib/Archive")
-        message("   Run R ...")
-        message("      in background:            $ Rscript script.r > test.log 2>&1 &") 
-        message("      as script:                #!/usr/bin/env Rscript")
-        message("      without this ~/.Rprofile: $ R --no-init-file")
-   
+        ## do stuff after loading packages/functions
+        # paste commands that I always forget
+        #if (any(ls(pos=which(search() == "myEnv")) == "myhelp")) myhelp()
+       
+        # set default plot fonts
+        if (any(search() == "package:extrafont")) {
+            #family <- "Droid Sans Mono" # "CM Roman"
+            family <- "CM Roman"
+            if (any(regexpr(family, fonts()) != -1)) {
+                message("   Set default plot font ...")
+                cmd <- paste0("      grDevices::X11.options(family=", family, ")")
+                message(cmd)
+                grDevices::X11.options(family=family)
+                cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
+                message(cmd)
+                grDevices::pdf.options(family=family)
+            } else {
+                message("family '", family, "' is not installed")
+            }
+        }
+        
         # show error message if package load failed
         if (!is.null(failed)) {
             message("   Messages of failed packages:")

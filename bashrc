@@ -118,6 +118,7 @@ alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r
 # ls only files including .dotfiles
 alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls'
 alias R='R --quiet'
+alias R0='R --no-init-file'
 alias vi='vim'
 if check_existance vimx; then
     alias vi='vimx' # for +clipboard

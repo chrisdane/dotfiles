@@ -225,6 +225,7 @@ if (T) { # set F for blank .Rprofile
             cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
             message(cmd)
             grDevices::pdf.options(family=family)
+            rm(cmd)
         } else {
             message("   warn: family '", family, "' is not installed")
         }

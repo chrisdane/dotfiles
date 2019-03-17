@@ -215,22 +215,21 @@ if (T) { # set F for blank .Rprofile
         #if (any(ls(pos=which(search() == "myEnv")) == "myhelp")) myhelp()
        
         # set default plot fonts
-        if (any(search() == "package:extrafont")) {
-            #family <- "Droid Sans Mono" # "CM Roman"
-            family <- "CM Roman"
-            if (any(regexpr(family, fonts()) != -1)) {
-                message("   Set default plot font ...")
-                cmd <- paste0("      grDevices::X11.options(family=", family, ")")
-                message(cmd)
-                grDevices::X11.options(family=family)
-                cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
-                message(cmd)
-                grDevices::pdf.options(family=family)
-            } else {
-                message("family '", family, "' is not installed")
-            }
+        #family <- "Droid Sans Mono" # "CM Roman"
+        family <- "CM Roman"
+        if (any(regexpr(family, fonts()) != -1)) {
+            message("   Set default plot font ...")
+            cmd <- paste0("      grDevices::X11.options(family=", family, ")")
+            message(cmd)
+            grDevices::X11.options(family=family)
+            cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
+            message(cmd)
+            grDevices::pdf.options(family=family)
+        } else {
+            message("   warn: family '", family, "' is not installed")
         }
-        
+        rm(family)
+    
         # show error message if package load failed
         if (!is.null(failed)) {
             message("   Messages of failed packages:")

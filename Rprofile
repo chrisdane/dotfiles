@@ -223,7 +223,7 @@ if (T) { # set F for blank .Rprofile
             message(cmd)
             grDevices::X11.options(family=family)
             cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
-            message(cmd)
+            message(cmd, " # dont forget embedFonts()")
             grDevices::pdf.options(family=family)
             rm(cmd)
         } else {

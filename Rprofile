@@ -36,6 +36,7 @@ if (T) { # set F for blank .Rprofile
                          rep("*", t=(getOption("width")/2 - 6)))))
         message("This ", R.version.string, " runs on ", 
                 Sys.info()[4], " with PID ", Sys.getpid())
+        message("Executable: ", file.path(R.home(), "bin", "exec", "R"))
     }
 
     # add own paths to .libPaths()
@@ -51,6 +52,7 @@ if (T) { # set F for blank .Rprofile
 	if (interactive()) {
 
         # change R message language to english if not alread done by OS
+        # LC_CTYPE: character type
 		if (regexpr("en", Sys.getlocale("LC_MESSAGES")) == -1) {
 			oldlocale <- Sys.getlocale("LC_MESSAGES")
 			Sys.setlocale("LC_MESSAGES", "C")
@@ -65,7 +67,8 @@ if (T) { # set F for blank .Rprofile
         scripts <- paste0("~/scripts/r/functions/", 
                           c("myfunctions.r", "myccf.r", "myls.r", 
                             "update.check.r", "mysetOutputColors.r", 
-                            "myErrorFun.r", "myRPrompt.r", "label_function.r"))
+                            "myErrorFun.r", "myRPrompt.r", "label_function.r",
+                            "leap_function.r"))
         for (i in 1:length(scripts)) {
             if (file.exists(scripts[i])) {
                 if (!exists("myEnv")) {
@@ -219,11 +222,8 @@ if (T) { # set F for blank .Rprofile
         family <- "CM Roman"
         if (any(regexpr(family, fonts()) != -1)) {
             message("   Set default plot font ...")
-            cmd <- paste0("      grDevices::X11.options(family=", family, ")")
-            message(cmd)
-            grDevices::X11.options(family=family)
             cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
-            message(cmd, " # dont forget embedFonts()")
+            message(cmd, " # and extrafont::embed_fonts()")
             grDevices::pdf.options(family=family)
             rm(cmd)
         } else {
@@ -238,8 +238,6 @@ if (T) { # set F for blank .Rprofile
             rm(i)
         } # if any packages failed
         rm(failed)
-
-        try(fortunes::fortune(), silent=T)
 
         message(paste0(c(rep("*", t=(getOption("width")/2 - 6)),
                          " ~/.Rprofile ",

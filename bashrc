@@ -203,7 +203,13 @@ fi
 if ! check_existance nc-config; then
     echo nc-config is missing!!!
 fi
-    
+
+# what module is actually
+if check_existance module; then
+    moduletype=type module
+    echo $moduletype
+fi
+
 # Finish
 printf '%*s' "$ncol" | tr ' ' "*"
 printf " ~/.bashrc "

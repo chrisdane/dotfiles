@@ -199,6 +199,11 @@ if check_existance bash; then
     fi
 fi
 
+# run bash stuff if available
+if ! check_existance nc-config; then
+    echo nc-config is missing!!!
+fi
+    
 # Finish
 printf '%*s' "$ncol" | tr ' ' "*"
 printf " ~/.bashrc "

@@ -27,7 +27,7 @@
 
 ## From here, everyhing happens only if running interactively
 # Start
-nch=34
+nch=34 # columns to print
 ncol=$(($(tput cols)/2))
 ncol=$(($ncol<$nch?$ncol:$nch)) # = min(ncol,nch)
 printf '%*s' "$ncol" | tr ' ' "*"
@@ -125,7 +125,8 @@ if check_existance vimx; then
     alias vim='vimx'
 fi
 
-# run private stuff
+# run private stuff after the default aliases 
+# (some get overwritten depending on machine)
 if [ -f ~/.myprofile ]; then
     source ~/.myprofile
 else 
@@ -204,10 +205,16 @@ if ! check_existance nc-config; then
     echo nc-config is missing!!!
 fi
 
-# what module is actually
+# find module binary
+# $?: last command return value
+# $*: list of all args
+# works: eval `/sw/rhel6-x64/tcl/modules-3.2.10/Modules/$MODULE_VERSION/bin/modulecmd bash list`
+# works: eval `/sw/rhel6-x64/tcl/modules-3.2.10/Modules/$MODULE_VERSION/bin/modulecmd bash purge`
+# works: eval `/sw/rhel6-x64/tcl/modules-3.2.10/Modules/$MODULE_VERSION/bin/modulecmd bash load gcc`
+# ldd binary (executes the binary!)
+# readelf -d | grep NEEDED (does not execute the binary)
 if check_existance module; then
-    moduletype=type module
-    echo $moduletype
+    echo $(type module)
 fi
 
 # Finish

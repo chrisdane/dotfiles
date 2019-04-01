@@ -81,6 +81,9 @@ if [ -x "$(command -v liquidprompt)" ]; then
            LP_PS1_PREFIX="$(show_temp)°C "
     fi
     source liquidprompt # need to source here because its not bash?!
+
+else 
+    echo could not load liquidprompt
 fi
 
 # enable make autocomplete:

@@ -112,6 +112,10 @@ set tm=500
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Enable syntax highlighting
 " syntax enable 
+" non AWI:
+" "set term=color_xterm
+" " @AWI:
+" set term=xterm
 " set term=color_xterm " not working on blizzard
 syntax on
 

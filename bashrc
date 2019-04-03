@@ -217,6 +217,7 @@ fi
 # ldd binary (executes the binary!)
 # readelf -d | grep NEEDED (does not execute the binary)
 if check_existance module; then
+    module list
     echo $(type module)
 fi
 

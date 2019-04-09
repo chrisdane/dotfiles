@@ -67,7 +67,7 @@ if (T) { # set F for blank .Rprofile
         scripts <- paste0("~/scripts/r/functions/", 
                           c("myfunctions.r", "myccf.r", "myls.r", 
                             "update.check.r", "mysetOutputColors.r", 
-                            "myErrorFun.r", "myRPrompt.r", "label_function.r",
+                            "myRPrompt.r", "label_function.r",
                             "leap_function.r"))
         for (i in 1:length(scripts)) {
             if (file.exists(scripts[i])) {

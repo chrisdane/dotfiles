@@ -214,8 +214,8 @@ fi
 # works: eval `/sw/rhel6-x64/tcl/modules-3.2.10/Modules/$MODULE_VERSION/bin/modulecmd bash list`
 # works: eval `/sw/rhel6-x64/tcl/modules-3.2.10/Modules/$MODULE_VERSION/bin/modulecmd bash purge`
 # works: eval `/sw/rhel6-x64/tcl/modules-3.2.10/Modules/$MODULE_VERSION/bin/modulecmd bash load gcc`
-# ldd binary (executes the binary!)
-# readelf -d | grep NEEDED (does not execute the binary)
+# $ ldd binary (executes the binary!)
+# $ readelf -d | grep NEEDED (does not execute the binary)
 if check_existance module; then
     module list
     echo $(type module)

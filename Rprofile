@@ -11,6 +11,7 @@
 # save output to file: sink("file.txt") <do stuff> sink() # sink() closes the connection
 # file.edit()
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
+# getSrcDirectory
 # anyNA(x) is more efficient than any(is.na(x))
 # which.min is more efficient than which(x == min(x))
 # mean1 <- function(x) mean(x)
@@ -43,10 +44,12 @@ if (T) { # set F for blank .Rprofile
     newLibPaths <- paste0("~/scripts/r/packages/", c("bin"))
 	sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths)
+
     if (interactive()) {
         message("   Set .libPaths() ...")
         message(paste0("      ", .libPaths(), collapse="\n"))
     }
+    #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
     rm(newLibPaths)
        
 	if (interactive()) {

@@ -128,6 +128,9 @@ if check_existance vimx; then
     alias vim='vimx'
 fi
 
+export VISUAL=vim
+export EDITOR="$VISUAL" # also applies to git
+
 # run private stuff after the default aliases 
 # (some get overwritten depending on machine)
 if [ -f ~/.myprofile ]; then

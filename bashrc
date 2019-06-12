@@ -114,9 +114,6 @@ export cat1='gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -
 export cat2='pdftk in.pdf cat 1-12 14-end output out.pdf'
 export crop='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
 
-# colorful grep
-export GREP_OPTIONS='--color=auto'
-
 # check aliase with 'type alias'
 alias ll='ls --color=auto -lFh'
 alias la='ls --color=auto -alFh'
@@ -125,6 +122,7 @@ alias ls='ls --color=auto -F' # default: ls='ls --color=auto'
 alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls'
 # ls only files including .dotfiles
 alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls'
+alias grep="grep --color=auto"
 alias R='R --quiet'
 alias R0='R --no-init-file'
 alias vi='vim'

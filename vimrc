@@ -13,7 +13,7 @@ set showmode
 " Mouse support (if mouse=a, to copy paste with ctrl+c and +v, 
 " press shift and then select with mouse)
 "set ttymouse=sgr
-set mouse=a
+set mouse=a "c "n "a
 
 "" line numbers
 " absolute

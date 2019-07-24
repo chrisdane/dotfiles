@@ -112,6 +112,7 @@ export compress='gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/de
 export cut='gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'
 export cat1='gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'
 export cat2='pdftk in.pdf cat 1-12 14-end output out.pdf'
+export cat3='pdftk in1.pdf in2.pdf output out.pdf'
 export crop='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
 
 # check aliase with 'type alias'

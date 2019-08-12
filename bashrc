@@ -197,7 +197,7 @@ fi # if vim or vimx exist
 # check if login shell (cannot check $0 from within this script)
 if check_existance shopt; then
     if shopt -q login_shell; then
-        echo this is a login shell
+        echo "this is a login shell (\$0 = -$(basename $SHELL) or shopt login_shell = on)"
     fi
 fi
 

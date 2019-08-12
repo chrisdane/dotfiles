@@ -107,6 +107,11 @@ tl(){
     echo `pwd`/$file
     tail -f $file
 }
+ml(){
+    file=$(ls -t | head -n1)
+    echo `pwd`/$file
+    less $file
+}
 # need to convert these to functions:
 export compress='gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -        dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'
 export cut='gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'
@@ -233,3 +238,5 @@ printf '%*s' "$ncol" | tr ' ' "*"
 printf " ~/.bashrc "
 printf '%*s' "$ncol" | tr ' ' "*"
 echo ""
+
+

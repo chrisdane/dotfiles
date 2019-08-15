@@ -204,7 +204,6 @@ fi # if vim or vimx exist
 # B: The shell performs brace expansion (see Brace Expansion above).  This is on by default
 # H: Enable !  style history substitution.  This option is on by default when the shell is interactive.
 echo "\$- = $-"
-[[ $- =~ i ]] && echo "yes"
 
 ## check if login shell (cannot check $0 from within this script)
 if check_existance shopt; then

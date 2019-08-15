@@ -89,6 +89,18 @@ fi
 # https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
 #complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 
+## helper functions 1
+# check if program exists also if its masked by alias
+# if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
+# https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
+check_existance(){
+    if command -v $1 > /dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 ## aliase
 # check aliase with 'type alias'
 alias ll='ls --color=auto -lFh'
@@ -107,17 +119,7 @@ if check_existance vimx; then
     alias vim='vimx'
 fi
 
-## helper functions
-# check if program exists also if its masked by alias
-# if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
-# https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
-check_existance(){
-    if command -v $1 > /dev/null 2>&1; then
-        return 0
-    else
-        return 1
-    fi
-}
+## helper functions 2
 # tail-follow most recent file
 tl(){
     file=$(ls -t | head -n1)
@@ -202,6 +204,7 @@ fi # if vim or vimx exist
 # B: The shell performs brace expansion (see Brace Expansion above).  This is on by default
 # H: Enable !  style history substitution.  This option is on by default when the shell is interactive.
 echo "\$- = $-"
+[[ $- =~ i ]] && echo "yes"
 
 ## check if login shell (cannot check $0 from within this script)
 if check_existance shopt; then

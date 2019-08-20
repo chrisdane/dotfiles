@@ -25,13 +25,11 @@
 # If not running interactively, don't do anything
 #[[ $- != *i* ]] && return
 if [[ $- != *i* ]]; then
-    echo "Wow, this is not an interactive session. How did you do this?!"
-    echo "\$- = $-"
-
+    echo "*** .bashrc non-interactive session \$- = $- ***"
+    
+## From here, everyhing happens only if running interactively
 else
 
-    ## From here, everyhing happens only if running interactively
-    # Start
     nch=34 # columns to print
     ncol=$(($(tput cols)/2))
     ncol=$(($ncol<$nch?$ncol:$nch)) # = min(ncol,nch)
@@ -123,6 +121,8 @@ else
         alias vi='vimx' # for +clipboard
         alias vim='vimx'
     fi
+    alias less="less -i"
+    alias more="less"
 
     ## helper functions 2
     # tail-follow most recent file
@@ -134,7 +134,7 @@ else
     ml(){
         file=$(ls -t | head -n1)
         echo `pwd`/$file
-        less $file
+        less -i $file
     }
 
     ## own variables

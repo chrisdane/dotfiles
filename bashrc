@@ -63,10 +63,10 @@
     #fi
 
     ## my bins (doing this recursively is not recommended; security)
-    if [ -d "$~/bin" ]; then
+    if [ -d ~/bin ]; then
         export PATH=~/bin/:$PATH
     fi
-    if [ -d "$~/.local/bin" ]; then
+    if [ -d ~/.local/bin ]; then
         export PATH=~/.local/bin/:$PATH
     fi
 

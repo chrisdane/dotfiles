@@ -23,12 +23,19 @@
 # https://www.gnu.org/software/bash/manual/bash.html#Bash-Startup-Files
 
 # If not running interactively, don't do anything
-#[[ $- != *i* ]] && return
-if [[ $- != *i* ]]; then
-    echo "*** .bashrc non-interactive session \$- = $- ***"
+[[ $- != *i* ]] && return
+#if [[ $- != *i* ]]; then
+    #echo "*** .bashrc non-interactive session ***" 
+    #echo "\$- = $-"
+    #if shopt -q login_shell; then
+    #    echo "\$0 = -$(basename $SHELL) or 'shopt login_shell' = on -> login shell"
+    #else
+    #    echo "\$0 = $(basename $SHELL) or 'shopt login_shell' = off -> not login shell"
+    #    fi
+    #echo "***************************************" 
     
 ## From here, everyhing happens only if running interactively
-else
+#else
 
     nch=34 # columns to print
     ncol=$(($(tput cols)/2))
@@ -56,7 +63,12 @@ else
     #fi
 
     ## my bins (doing this recursively is not recommended; security)
-    export PATH=~/bin/:$PATH
+    if [ -d ~/bin ]; then
+        export PATH=~/bin/:$PATH
+    fi
+    if [ -d ~/.local/bin ]; then
+        export PATH=~/.local/bin/:$PATH
+    fi
 
     ## default prompt
     PS1='[\u@\h \W]\$ '
@@ -218,7 +230,7 @@ else
             echo "\$0 = $(basename $SHELL) or 'shopt login_shell' = off -> not login shell"
         fi
     else
-        echo "cannot check if this is a login or non-login shell since 'shopt' is not installed and \$0 cannot be evaluated from within .bashrc"
+        echo "cannot check if this is a login or non-login shell since 'shopt' is not installed and \$0 cannot be evaluated from within this .bashrc"
     fi
 
     ## run R stuff if available
@@ -259,5 +271,5 @@ else
     printf '%*s' "$ncol" | tr ' ' "*"
     echo ""
 
-fi # interactive or not
+#fi # interactive or not
 

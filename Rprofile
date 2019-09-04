@@ -230,7 +230,7 @@ if (T) { # set F for blank .Rprofile
             grDevices::pdf.options(family=family)
             rm(cmd)
         } else {
-            message("   warn: family '", family, "' is not installed")
+            message("   warn: family '", family, "' is not installed: font_install(\"fontcm\")")
         }
         rm(family)
     

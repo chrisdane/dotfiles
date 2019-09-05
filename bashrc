@@ -186,7 +186,7 @@
     modprobe tun &> /dev/null # silent output
     if [ $? -ne 0 ]; then # if not successfull either due to missing permissions or file not found
         tun_file=$(find /lib/modules/`uname -r` -print | grep -i "tun.ko")
-        if [ ! -f $tun_file ]; then # if missing file 
+        if [ ${#tun_file} == 0 ]; then # if missing file 
             echo "'modprobe tun' raised some problem, consider restart:"
             modprobe tun
         fi

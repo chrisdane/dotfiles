@@ -148,6 +148,13 @@
         echo `pwd`/$file
         less -i $file
     }
+    cdohelp(){
+        echo "cdo -f nc copy file.grb file.nc"
+        echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
+        echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
+        echo "cdo chname,var1,var2 in.nc out.nc"
+        echo "for f in *.nc; do echo $f; ncdump -h $f | grep var167; done"
+    }
 
     ## own variables
     export VISUAL=vim

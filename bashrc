@@ -104,7 +104,7 @@
     # https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
     complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 
-    ## helper functions 1
+    ## helper functions
     # check if program exists also if its masked by alias
     # if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
     # https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
@@ -114,6 +114,23 @@
         else
             return 1
         fi
+    }
+    tl(){
+        file=$(ls -t | head -n1)
+        echo `pwd`/$file
+        tail -f $file
+    }
+    ml(){
+        file=$(ls -t | head -n1)
+        echo `pwd`/$file
+        less -i $file
+    }
+    cdohelp(){
+        echo "cdo -f nc copy file.grb file.nc"
+        echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
+        echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
+        echo "cdo chname,var1,var2 in.nc out.nc"
+        echo "for f in *.nc; do echo $f; ncdump -h $f | grep var167; done"
     }
 
     ## aliase
@@ -135,26 +152,6 @@
     fi
     alias less="less -i"
     alias more="less"
-
-    ## helper functions 2
-    # tail-follow most recent file
-    tl(){
-        file=$(ls -t | head -n1)
-        echo `pwd`/$file
-        tail -f $file
-    }
-    ml(){
-        file=$(ls -t | head -n1)
-        echo `pwd`/$file
-        less -i $file
-    }
-    cdohelp(){
-        echo "cdo -f nc copy file.grb file.nc"
-        echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
-        echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
-        echo "cdo chname,var1,var2 in.nc out.nc"
-        echo "for f in *.nc; do echo $f; ncdump -h $f | grep var167; done"
-    }
 
     ## own variables
     export VISUAL=vim
@@ -183,6 +180,12 @@
         head -1 /etc/system-release
     else 
         echo unknown
+    fi
+
+    ## check if module tun is available or not (it is not after system upgrade)
+    modprobe tun
+    if [ $? -ne 0 ]; then
+        echo "'modprobe tun' raised some problem, consider restart"
     fi
 
     ## check if vim/vimx is installed and supports clipboard pasting

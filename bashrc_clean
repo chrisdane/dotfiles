@@ -1,0 +1,10 @@
+# 
+# ~/.bashrc
+#
+if [[ $- != *i* ]]; then
+    echo "\$- = $- --> bashrc non-interactive"
+else
+    echo "bashrc interactive"
+fi
+echo "\$(shopt login_shell) = $(shopt login_shell)"
+

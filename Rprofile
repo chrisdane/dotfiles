@@ -114,6 +114,7 @@ if (T) { # set F for blank .Rprofile
             # replace colorout with crayon if loading of colorout was not successful and crayon is not mentioned
             if (i == "colorout" && !any(search() == paste0("package:", i)) &&
                 !any(packages == "crayon")) {
+                #devtools::install_github("jalvesaq/colorout")
                 i <- "crayon"
                 packages[1] <- i
                 nchar_pkg <- nchar(packages)
@@ -221,18 +222,20 @@ if (T) { # set F for blank .Rprofile
         #if (any(ls(pos=which(search() == "myEnv")) == "myhelp")) myhelp()
        
         # set default plot fonts
-        #family <- "Droid Sans Mono" # "CM Roman"
-        family <- "CM Roman"
-        if (any(regexpr(family, fonts()) != -1)) {
-            message("   Set default plot font ...")
-            cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
-            message(cmd, " # and extrafont::embed_fonts()")
-            grDevices::pdf.options(family=family)
-            rm(cmd)
-        } else {
-            message("   warn: family '", family, "' is not installed: font_install(\"fontcm\")")
+        if (any(search() == "package:extrafont")) {
+            #family <- "Droid Sans Mono" # "CM Roman"
+            family <- "CM Roman"
+            if (any(regexpr(family, extrafont::fonts()) != -1)) {
+                message("   Set default plot font ...")
+                cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
+                message(cmd, " # and extrafont::embed_fonts()")
+                grDevices::pdf.options(family=family)
+                rm(cmd)
+            } else {
+                message("   warn: family '", family, "' is not installed: font_install(\"fontcm\")")
+            }
+            rm(family)
         }
-        rm(family)
     
         # show error message if package load failed
         if (!is.null(failed)) {

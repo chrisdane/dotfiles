@@ -1,0 +1,8 @@
+# 
+# ~/.bash_profile
+#
+if [[ $- != *i* ]]; then
+    echo "bash_profile interactive"
+else
+    echo "bash_profile non-interactive"
+fi

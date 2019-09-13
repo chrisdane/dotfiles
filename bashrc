@@ -2,22 +2,24 @@
 # ~/.bashrc
 #
 
-## .bashrc vs .bash_profile
+## .bashrc vs .bash_profile: nothing but annoying
 # if non-interactive shell:
 #   echo $- = hB (e.g.); "i" is not included
 # if interactive shell:
 #   echo $- = himBHs (e.g.); "i" is included 
 #   run 1) /etc/bash.bashrc, 2) ~/.bashrc
 #   if login shell:
-#       echo $0 = "-bash" or shopt login_shell = on
+#       echo $0 = "-bash" or `shopt login_shell` = on
 #       on login:  run 1) /etc/profile, 2) ~/.bash_profile, 3) ~/.bash_login, 4) ~/.profile
 #       on logout: run 1) ~/.bash_logout, 2) /etc/bash.bash_logout
 #   if non-login shell:
-#       echo $0 = "bash" or shopt login_shell = off
+#       echo $0 = "bash" or `shopt login_shell` = off
 #       on login: run ~/.bashrc
-# a) on the local machine, a bash session starts as interactive (echo $- = himBHs) non-login (echo $0 = bash) shell
-# b) when SSH/SCPing to a server, a bash session starts as interactive (echo $- = himBHs) login (echo $0 = -bash) shell
-# c) from a script (e.g. #!/bin/bash) bash starts as non-interactive session (echo $- = hB)
+# a) start a new shell with `bash`           -->     interactive & non-login shell --> bashrc
+# b) connect via ssh                         -->     interactive &     login shell --> bash_profile 
+# c) submit a command via ssh or scp a file  --> non-interactive & non-login shell --> bashrc
+# d) from within a bash script (#!/bin/bash) --> non-interactive & non-login shell --> none
+# --> conclusion: you always need both: .bashrc and .bash_profile, i.e. the most complicated way was chosen -_-
 # https://wiki.archlinux.org/index.php/bash#Invocation
 # https://linux.die.net/man/1/bash (incovation chapter)
 # https://www.gnu.org/software/bash/manual/bash.html#Bash-Startup-Files
@@ -28,9 +30,9 @@
     #echo "*** .bashrc non-interactive session ***" 
     #echo "\$- = $-"
     #if shopt -q login_shell; then
-    #    echo "\$0 = -$(basename $SHELL) or 'shopt login_shell' = on -> login shell"
+    #    echo "\$0 = -$(basename $SHELL) or \`shopt login_shell\` = on -> login shell"
     #else
-    #    echo "\$0 = $(basename $SHELL) or 'shopt login_shell' = off -> not login shell"
+    #    echo "\$0 = $(basename $SHELL) or \`shopt login_shell\` = off -> not login shell"
     #    fi
     #echo "***************************************" 
     
@@ -239,31 +241,31 @@
     ## check if login shell (cannot check $0 from within this script)
     if check_existance shopt; then
         if shopt -q login_shell; then
-            echo "\$0 = -$(basename $SHELL) or 'shopt login_shell' = on -> login shell"
+            echo "\$0 = -$(basename $SHELL) or \`shopt login_shell\` = on -> login shell"
         else
-            echo "\$0 = $(basename $SHELL) or 'shopt login_shell' = off -> not login shell"
+            echo "\$0 = $(basename $SHELL) or \`shopt login_shell\` = off -> not login shell"
         fi
     else
-        echo "cannot check if this is a login or non-login shell since 'shopt' is not installed and \$0 cannot be evaluated from within this .bashrc"
+        echo "cannot check if this is a login or non-login shell since \`shopt\` is not installed and \$0 cannot be evaluated from within this .bashrc"
     fi
 
+    ## run bash stuff if available
+    if ! check_existance nc-config; then
+        echo nc-config is missing!!!
+    fi
+    
     ## run R stuff if available
     if check_existance Rscript; then
         if check_existance mytimes; then
             mytimes
         fi
     fi
-
+    
     ## run bash stuff if available
     if check_existance bash; then
         if check_existance birthdays; then
             birthdays
         fi
-    fi
-
-    ## run bash stuff if available
-    if ! check_existance nc-config; then
-        echo nc-config is missing!!!
     fi
 
     ## find module binary

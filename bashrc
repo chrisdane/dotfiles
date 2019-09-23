@@ -169,9 +169,8 @@
 
     ## run private stuff after the default aliases (some get overwritten depending on machine)
     if [ -f ~/.myprofile ]; then
+        echo "load ~/.myprofile ..."
         source ~/.myprofile
-    else 
-        echo ".bashrc: could not find ~/.myprofile"
     fi
 
     ## check which OS is used

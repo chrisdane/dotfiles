@@ -143,6 +143,8 @@
         readlink -f .
     }
 
+    #set -o vi # unfortunatley this breaks ctrl+a/+e
+
     ## aliase
     # check aliase with 'type alias'
     alias ll='ls --color=auto -lFh'

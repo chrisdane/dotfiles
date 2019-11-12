@@ -135,6 +135,8 @@
         echo "for f in *.nc; do echo $f; ncdump -h $f | grep var167; done"
     }
 
+    #set -o vi # unfortunatley this breaks ctrl+a/+e
+
     ## aliase
     # check aliase with 'type alias'
     alias ll='ls --color=auto -lFh'

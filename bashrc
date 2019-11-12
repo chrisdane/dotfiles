@@ -119,20 +119,28 @@
     }
     tl(){
         file=$(ls -t | head -n1)
-        echo `pwd`/$file
+        echo `ls --color=auto -lFh $(pwd)/$file`
         tail -f $file
     }
     ml(){
         file=$(ls -t | head -n1)
-        echo `pwd`/$file
+        echo `ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
+    bashhelp(){
+        echo "./script > script.log 2>&1 &"
+    }
     cdohelp(){
-        echo "cdo -f nc copy file.grb file.nc"
+        echo "man cdo does not exist: cdo maual -> Intro -> Usage -> Options"
+        echo "cdo [-t echam6] -f nc copy file.grb file.nc"
+        echo "for f in *01.grb; do echo \$f; cdo -t echam6 -f nc copy \$f \$f.nc; done"
         echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
         echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
         echo "cdo chname,var1,var2 in.nc out.nc"
-        echo "for f in *.nc; do echo $f; ncdump -h $f | grep var167; done"
+        echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
+    }
+    pwd2() {
+        readlink -f .
     }
 
     ## aliase
@@ -166,12 +174,6 @@
     export cat3='pdftk in1.pdf in2.pdf output out.pdf'
     export crop='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
     # watch -n 0.1 ls
-
-    ## run private stuff after the default aliases (some get overwritten depending on machine)
-    if [ -f ~/.myprofile ]; then
-        echo "load ~/.myprofile ..."
-        source ~/.myprofile
-    fi
 
     ## check which OS is used
     printf "OS: "
@@ -253,6 +255,12 @@
         echo nc-config is missing!!!
     fi
     
+    ## run private stuff after the default aliases (some get overwritten depending on machine)
+    if [ -f ~/.myprofile ]; then
+        echo "load ~/.myprofile ..."
+        source ~/.myprofile
+    fi
+
     ## run R stuff if available
     if check_existance Rscript; then
         if check_existance mytimes; then

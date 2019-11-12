@@ -198,8 +198,8 @@ if (T) { # set F for blank .Rprofile
         options(continue="   ")
         message("      options(show.error.locations=T)")
         options(show.error.locations=T)
-        message("      options(stringsAsFactors=F)")
-        options(stringsAsFactors=F)
+        #message("      options(stringsAsFactors=F)")
+        #options(stringsAsFactors=F)
         message("      options(menu.graphics=F)")
         options(menu.graphics=F)
         if (exists("~/.plotly")) {

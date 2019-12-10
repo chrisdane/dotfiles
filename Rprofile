@@ -29,6 +29,9 @@
 # sort(x, index.return=TRUE)$ix
 # pdf.options(useDingbats = TRUE) https://yihui.name/knitr/demo/graphics/
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
+#list.files(pattern = glob2rx('*.tif'))
+#list.files(pattern = '^.*\\.tif$')
+
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 
@@ -79,8 +82,9 @@ if (T) { # set F for blank .Rprofile
                     message("   Load default functions into environment \"myEnv\" ...")
                     message("   (check with 'ls(pos=which(search() == \"myEnv\"))')")
                 }   
-                message("      ", scripts[i])
-                sys.source(scripts[i], envir=myEnv)
+                cmd <- paste0("sys.source(\"", scripts[i], "\", envir=myEnv)")
+                message("      ", cmd)
+                eval(parse(text=cmd))
             }
         }
         if (exists("myEnv")) {

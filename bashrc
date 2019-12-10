@@ -129,9 +129,14 @@
     }
     bashhelp(){
         echo "./script > script.log 2>&1 &"
+        echo "ln -sfn path/to/file-name link-name"
+        echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
+        echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
     }
     cdohelp(){
-        echo "man cdo does not exist: cdo maual -> Intro -> Usage -> Options"
+        echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
+        echo "cdo --operators"
+        echo "cdo -h [operator] # e.g. cdo -h after"
         echo "cdo [-t echam6] -f nc copy file.grb file.nc"
         echo "for f in *01.grb; do echo \$f; cdo -t echam6 -f nc copy \$f \$f.nc; done"
         echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 

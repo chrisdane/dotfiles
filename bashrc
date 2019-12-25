@@ -142,6 +142,7 @@
         echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
         echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
         echo "cdo chname,var1,var2 in.nc out.nc"
+        echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
     }
     pwd2() {
@@ -302,4 +303,20 @@
     echo ""
 
 #fi # interactive or not
+
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/work/ab0246/a270073/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/work/ab0246/a270073/miniconda3/etc/profile.d/conda.sh" ]; then
+        . "/work/ab0246/a270073/miniconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/work/ab0246/a270073/miniconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
 

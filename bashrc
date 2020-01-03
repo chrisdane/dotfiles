@@ -39,11 +39,11 @@
 ## From here, everyhing happens only if running interactively
 #else
 
-    nch=34 # columns to print
+    nch=30 # columns to print
     ncol=$(($(tput cols)/2))
     ncol=$(($ncol<$nch?$ncol:$nch)) # = min(ncol,nch)
     printf '%*s' "$ncol" | tr ' ' "*"
-    printf " ~/.bashrc "
+    printf " ~/.bashrc start "
     printf '%*s' "$ncol" | tr ' ' "*"
     echo ""
 
@@ -184,13 +184,16 @@
     # watch -n 0.1 ls
 
     ## check which OS is used
-    printf "OS: "
+    printf "\$(hostname).\$(hostname -d): "
+    echo $(hostname).$(hostname -d)
     if [ -f /etc/os-release ]; then
+        printf "\$(head -1 /etc/os-release): "
         head -1 /etc/os-release
     elif [ -f /etc/system-release ]; then
+        printf "\$(head -1 /etc/system-release): "
         head -1 /etc/system-release
-    else 
-        echo unknown
+    else
+        echo operating system unknown!!!
     fi
 
     ## check if module tun is available or not (it is not after system upgrade)
@@ -263,12 +266,6 @@
         echo nc-config is missing!!!
     fi
     
-    ## run private stuff after the default aliases (some get overwritten depending on machine)
-    if [ -f ~/.myprofile ]; then
-        echo "load ~/.myprofile ..."
-        source ~/.myprofile
-    fi
-
     ## run R stuff if available
     if check_existance Rscript; then
         if check_existance mytimes; then
@@ -292,23 +289,16 @@
     # $ ldd binary (executes the binary!)
     # $ readelf -d | grep NEEDED (does not execute the binary)
     if check_existance module; then
-        module list
+        echo "detected 'module' command:"
         echo $(type module)
+        echo "loaded startup modules:"; module list
     fi
-
-    ## Finish
-    printf '%*s' "$ncol" | tr ' ' "*"
-    printf " ~/.bashrc "
-    printf '%*s' "$ncol" | tr ' ' "*"
-    echo ""
-
-#fi # interactive or not
-
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 __conda_setup="$('/work/ab0246/a270073/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
+    #echo "run \$__conda_setup = $__conda_setup ..."
     eval "$__conda_setup"
 else
     if [ -f "/work/ab0246/a270073/miniconda3/etc/profile.d/conda.sh" ]; then
@@ -319,4 +309,18 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
+    
+    ## run private stuff after the default aliases (some get overwritten depending on machine)
+    if [ -f ~/.myprofile ]; then
+        echo "source ~/.myprofile ..."
+        source ~/.myprofile
+    fi
+
+    ## Finish
+    printf '%*s' "$ncol" | tr ' ' "*"
+    printf " ~/.bashrc finish "
+    printf '%*s' "$ncol" | tr ' ' "*"
+    echo ""
+
+#fi # interactive or not
 

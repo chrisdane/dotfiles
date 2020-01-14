@@ -175,7 +175,7 @@
     export VISUAL=vim
     export EDITOR="$VISUAL" # also applies to git
     # todo: need to convert these to functions:
-    export compress='gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -        dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'
+    export compress='gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'
     export cut='gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'
     export cat1='gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'
     export cat2='pdftk in.pdf cat 1-12 14-end output out.pdf'
@@ -258,7 +258,8 @@
             echo "\$0 = $(basename $SHELL) or \`shopt login_shell\` = off -> not login shell"
         fi
     else
-        echo "cannot check if this is a login or non-login shell since \`shopt\` is not installed and \$0 cannot be evaluated from within this .bashrc"
+        echo "cannot check if this is a login or non-login shell since \`shopt\` is not installed and"
+        echo "\$0 cannot be evaluated from within this .bashrc"
     fi
 
     ## run bash stuff if available
@@ -289,38 +290,43 @@
     # $ ldd binary (executes the binary!)
     # $ readelf -d | grep NEEDED (does not execute the binary)
     if check_existance module; then
-        echo "detected 'module' command:"
+        echo "type module"
         echo $(type module)
         echo "loaded startup modules:"; module list
     fi
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/work/ab0246/a270073/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    #echo "run \$__conda_setup = $__conda_setup ..."
-    eval "$__conda_setup"
-else
-    if [ -f "/work/ab0246/a270073/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/work/ab0246/a270073/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/work/ab0246/a270073/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-    
     ## run private stuff after the default aliases (some get overwritten depending on machine)
     if [ -f ~/.myprofile ]; then
         echo "source ~/.myprofile ..."
         source ~/.myprofile
     fi
 
+#fi # interactive or not
+
+if true; then
+#if false; then
+    # >>> conda initialize >>>
+    # !! Contents within this block are managed by 'conda init' !!
+    __conda_setup="$('/work/ab0246/a270073/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        echo "run \$__conda_setup from ~/.bashrc ..." #$__conda_setup ..."
+        eval "$__conda_setup"
+    else
+        if [ -f "/work/ab0246/a270073/miniconda3/etc/profile.d/conda.sh" ]; then
+            . "/work/ab0246/a270073/miniconda3/etc/profile.d/conda.sh"
+        else
+            export PATH="/work/ab0246/a270073/miniconda3/bin:$PATH"
+        fi
+    fi
+    unset __conda_setup
+    # <<< conda initialize <<<
+fi
+
+if [[ $- == *i* ]]; then # if interactive
     ## Finish
     printf '%*s' "$ncol" | tr ' ' "*"
     printf " ~/.bashrc finish "
     printf '%*s' "$ncol" | tr ' ' "*"
     echo ""
-
-#fi # interactive or not
+fi # interactive or not
 

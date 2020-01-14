@@ -40,11 +40,41 @@ if (T) { # set F for blank .Rprofile
                          rep("*", t=(getOption("width")/2 - 6)))))
         message("This ", R.version.string, " runs on ", 
                 Sys.info()[4], " with PID ", Sys.getpid())
-        message("Executable: ", file.path(R.home(), "bin", "exec", "R"))
+    }
+    
+    # R executable
+    Rexe <- file.path(R.home(), "bin", "exec", "R")
+    if (interactive()) message("R executable: ", Rexe)
+
+    # C compiler used to build this R 
+    if (interactive()) message("C compiler used to build this R:")
+    cmd <- "R CMD config CC"
+    if (interactive()) message("   `", cmd, "`:")
+    Ccompiler <- system(cmd, intern=T)
+    # e.g.: "gcc"
+    #       "gcc -std=gnu99"
+    #       "x86_64-conda_cos6-linux-gnu-cc"
+    Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
+    if (interactive()) message("      ", Ccompiler)
+    
+    # C compiler version used to build this R
+    cmd <- paste0("strings -a ", Rexe, " | grep CC:")
+    if (interactive()) message("   `", cmd, "`:")
+    Ccompiler_version <- system(cmd, intern=T)
+    if (interactive()) {
+        for (i in 1:length(Ccompiler_version)) message("      ", Ccompiler_version[i])
+    }
+    Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
+    Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
+    if (interactive()) {
+        message("   automatically derived version number:")
+        message("      ", Ccompiler_version)
     }
 
     # add own paths to .libPaths()
-    newLibPaths <- paste0("~/scripts/r/packages/", c("bin"))
+    # --> construct my libpath as function of R version and C compiler version used to build this R version
+    #newLibPaths <- paste0("~/scripts/r/packages/", c("bin"))
+    newLibPaths <- paste0("~/scripts/r/packages/bin/R_", as.character(getRversion()), "_C_", Ccompiler_version)
 	sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths)
 
@@ -80,7 +110,7 @@ if (T) { # set F for blank .Rprofile
                 if (!exists("myEnv")) {
                     myEnv <- new.env()
                     message("   Load default functions into environment \"myEnv\" ...")
-                    message("   (check with 'ls(pos=which(search() == \"myEnv\"))')")
+                    message("      check with `ls(pos=which(search() == \"myEnv\"))`")
                 }   
                 cmd <- paste0("sys.source(\"", scripts[i], "\", envir=myEnv)")
                 message("      ", cmd)
@@ -99,6 +129,7 @@ if (T) { # set F for blank .Rprofile
 		# options(defaultPackages = c(getOption("defaultPackages"), "crayon"))
 		# but this has not such a nice handling
         
+        #packages <- NULL
         packages <- c("ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
         # "data.table", "forecast", "ncdf.tools", "crayon"
         if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put first

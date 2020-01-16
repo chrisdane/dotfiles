@@ -67,7 +67,7 @@ if (T) { # set F for blank .Rprofile
     Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
     Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
     if (interactive()) {
-        message("   automatically derived version number:")
+        message("   automatically derived C compiler version number:")
         message("      ", Ccompiler_version)
     }
 

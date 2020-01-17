@@ -79,7 +79,7 @@ if (T) { # set F for blank .Rprofile
     .libPaths(newLibPaths)
 
     if (interactive()) {
-        message("   Set .libPaths() ...")
+        message("Set .libPaths() ...")
         message(paste0("      ", .libPaths(), collapse="\n"))
     }
     #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
@@ -109,11 +109,11 @@ if (T) { # set F for blank .Rprofile
             if (file.exists(scripts[i])) {
                 if (!exists("myEnv")) {
                     myEnv <- new.env()
-                    message("   Load default functions into environment \"myEnv\" ...")
-                    message("      check with `ls(pos=which(search() == \"myEnv\"))`")
+                    message("Load default functions into environment \"myEnv\" ...")
+                    message("   check with `ls(pos=which(search() == \"myEnv\"))`")
                 }   
                 cmd <- paste0("sys.source(\"", scripts[i], "\", envir=myEnv)")
-                message("      ", cmd)
+                message("   ", cmd)
                 eval(parse(text=cmd))
             }
         }
@@ -124,7 +124,7 @@ if (T) { # set F for blank .Rprofile
         rm(scripts, i)
 
         # load default packages
-		message("   Load default packages ...")
+		message("Load default packages ...")
 		# actually: 
 		# options(defaultPackages = c(getOption("defaultPackages"), "crayon"))
 		# but this has not such a nice handling
@@ -159,7 +159,7 @@ if (T) { # set F for blank .Rprofile
             if (i == "colorout" && any(search() == "package:colorout")) {
                 mysetOutputColors()
             }
-            message("     ", sprintf(paste0("%", nchar_no, "i"), cnt), "/", npkg, "  ", i, "  ", 
+            message("   ", sprintf(paste0("%", nchar_no, "i"), cnt), "/", npkg, "  ", i, "  ", 
                     paste0(rep(" ", t=max(nchar_pkg) - nchar(i)), collapse=""), appendLF=F)
             # check if package load was successfull
             if (any(search() == paste0("package:", i))) {
@@ -223,32 +223,32 @@ if (T) { # set F for blank .Rprofile
 		if (exists("fancy")) rm(fancy)
 
         # set some global options after packages loaded since some functions may need package functions
-        message("   Set options ...")
+        message("Set options ...")
         r <- getOption("repos")
         r["CRAN"] <- "https://cloud.r-project.org" # https and always-near-me mirror 
-        message("      options(repos=c(CRAN=\"", r, "\"))")
+        message("   options(repos=c(CRAN=\"", r, "\"))")
         options(repos=r)
         rm(r)
-        message("      options(continue=\"   \")")
+        message("   options(continue=\"   \")")
         options(continue="   ")
-        message("      options(show.error.locations=T)")
+        message("   options(show.error.locations=T)")
         options(show.error.locations=T)
-        #message("      options(stringsAsFactors=F)")
+        #message("   options(stringsAsFactors=F)")
         #options(stringsAsFactors=F)
-        message("      options(menu.graphics=F)")
+        message("   options(menu.graphics=F)")
         options(menu.graphics=F)
         if (exists("~/.plotly")) {
-            message("      Sys.setenv(\"plotly_username\"=\"...\")")
-            message("      Sys.setenv(\"plotly_api_key\"=\"...\")")
-            message("      Sys.setenv(\"MAPBOX_TOKEN\"=\"...\"")
+            message("   Sys.setenv(\"plotly_username\"=\"...\")")
+            message("   Sys.setenv(\"plotly_api_key\"=\"...\")")
+            message("   Sys.setenv(\"MAPBOX_TOKEN\"=\"...\"")
             source("~/.plotly")
         }
         if (any(ls(pos=which(search() == "myEnv")) == "myRPrompt")) {
-            message("      options(prompt=myRPrompt())   (setwd() is also changed)")
+            message("   options(prompt=myRPrompt())   (setwd() is also changed)")
             options(prompt=myRPrompt())
         } # if myRPrompt function is loaded
         if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) { 
-            message("      options(error=myErrorFun)   (check with 'getOption(\"error\")')")
+            message("   options(error=myErrorFun)   (check with 'getOption(\"error\")')")
             options(error=myErrorFun)
         } # if myErrorFun is loaded
 
@@ -261,8 +261,8 @@ if (T) { # set F for blank .Rprofile
             #family <- "Droid Sans Mono" # "CM Roman"
             family <- "CM Roman"
             if (any(regexpr(family, extrafont::fonts()) != -1)) {
-                message("   Set default plot font ...")
-                cmd <- paste0("      grDevices::pdf.options(family=", family, ")")
+                message("Set default plot font ...")
+                cmd <- paste0("   grDevices::pdf.options(family=", family, ")")
                 message(cmd, " # and extrafont::embed_fonts()")
                 grDevices::pdf.options(family=family)
                 rm(cmd)
@@ -274,7 +274,7 @@ if (T) { # set F for blank .Rprofile
     
         # show error message if package load failed
         if (!is.null(failed)) {
-            message("   Messages of failed packages:")
+            message("Messages of failed packages:")
             for (i in 1:length(failed)) message("      ", failed[i])
             rm(i)
         } # if any packages failed

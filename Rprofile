@@ -34,6 +34,9 @@
 
 if (T) { # set F for blank .Rprofile
 
+    # hostname, e.g. mlogin101, stan1.awi.de, K
+    host <- Sys.info()[4]
+
     if (interactive()) { 
         message(paste0(c(rep("*", t=(getOption("width")/2 - 6)),
                          " ~/.Rprofile ", 
@@ -47,28 +50,32 @@ if (T) { # set F for blank .Rprofile
     if (interactive()) message("R executable: ", Rexe)
 
     # C compiler used to build this R 
-    if (interactive()) message("C compiler used to build this R:")
-    cmd <- "R CMD config CC"
-    if (interactive()) message("   `", cmd, "`:")
-    Ccompiler <- system(cmd, intern=T)
-    # e.g.: "gcc"
-    #       "gcc -std=gnu99"
-    #       "x86_64-conda_cos6-linux-gnu-cc"
-    Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
-    if (interactive()) message("      ", Ccompiler)
-    
-    # C compiler version used to build this R
-    cmd <- paste0("strings -a ", Rexe, " | grep CC:")
-    if (interactive()) message("   `", cmd, "`:")
-    Ccompiler_version <- system(cmd, intern=T)
-    if (interactive()) {
-        for (i in 1:length(Ccompiler_version)) message("      ", Ccompiler_version[i])
-    }
-    Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
-    Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
-    if (interactive()) {
-        message("   automatically derived C compiler version number:")
-        message("      ", Ccompiler_version)
+    if (grepl("stan", host)) {
+        Ccompiler_version <- "4.4.7"
+    } else {
+        if (interactive()) message("C compiler used to build this R:")
+        cmd <- "R CMD config CC"
+        if (interactive()) message("   `", cmd, "`:")
+        Ccompiler <- system(cmd, intern=T)
+        # e.g.: "gcc"
+        #       "gcc -std=gnu99"
+        #       "x86_64-conda_cos6-linux-gnu-cc"
+        Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
+        if (interactive()) message("      ", Ccompiler)
+        
+        # C compiler version used to build this R
+        cmd <- paste0("strings -a ", Rexe, " | grep CC:")
+        if (interactive()) message("   `", cmd, "`:")
+        Ccompiler_version <- system(cmd, intern=T)
+        if (interactive()) {
+            for (i in 1:length(Ccompiler_version)) message("      ", Ccompiler_version[i])
+        }
+        Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
+        Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
+        if (interactive()) {
+            message("   automatically derived C compiler version number:")
+            message("      ", Ccompiler_version)
+        }
     }
 
     # add own paths to .libPaths()

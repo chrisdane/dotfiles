@@ -86,7 +86,7 @@
         PS1='\[\033[0;34m\]\h:$(show_temp)°C:$(pwd)/>\[\033[0m\] '
     fi
 
-    ## use liquidprompt if available https://github.com/nojhan/liquidprompt
+    # use liquidprompt if available https://github.com/nojhan/liquidprompt
     if [ -x "$(command -v liquidprompt)" ]; then
 
         # add cpu temp to liquidprompt
@@ -145,11 +145,15 @@
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
     }
-    pwd2() {
+    pwd2(){
         readlink -f .
     }
-
+    
     #set -o vi # unfortunatley this breaks ctrl+a/+e
+    # kill open remote sessions:
+    #ssh cdanek@stan1.awi.de w
+    #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
+    #ssh cdanek@stan1.awi.de pkill -u cdanek
 
     ## aliase
     # check aliase with 'type alias'
@@ -193,9 +197,15 @@
         printf "\$(head -1 /etc/system-release): "
         head -1 /etc/system-release
     else
-        echo operating system unknown!!!
+        echo operating system unknown!
     fi
 
+  
+    ## which login manager is used?
+    echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
+    printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$: "
+    ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$" 
+    
     ## check if module tun is available or not (it is not after system upgrade)
     modprobe tun &> /dev/null # silent output
     if [ $? -ne 0 ]; then # if not successfull either due to missing permissions or file not found

@@ -210,8 +210,17 @@
     if check_existance vim || check_existance vimx; then
         if check_existance vim; then
             tmp=$(vim --version | grep clipboard)
-            vim_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
-            vim_xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
+            if [[ $tmp == *clipboard* ]]; then
+                while read -r pos ; do
+                    # test if +/-clipboard or +/-xterm_clipboard
+                    clipboard="${tmp:(($pos-5)):15}" # xterm_clipboard
+                    if [[ $clipboard == "xterm_clipboard" ]]; then
+                        vim_xterm_clipboard="${tmp:(($pos-6)):16}"
+                    else # or +/-clipboard
+                        vim_clipboard="${tmp:(($pos-1)):10}"
+                    fi
+                done < <(echo $tmp | grep -b -o "clipboard" | awk 'BEGIN {FS=":"}{print $1}')                
+            fi            
             if [[ ${vim_clipboard:0:1} == "-" ]] && [ ${vim_xterm_clipboard:0:1} == "-" ]; then
                 vim_return=1
             else
@@ -222,8 +231,17 @@
         fi
         if check_existance vimx; then
             tmp=$(vimx --version | grep clipboard)
-            vimx_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 1)
-            vimx_xterm_clipboard=$(echo $tmp | tr -s ' ' | cut -d ' ' -f 8)
+            if [[ $tmp == *clipboard* ]]; then
+                while read -r pos ; do
+                    # test if +/-clipboard or +/-xterm_clipboard
+                    clipboard="${tmp:(($pos-5)):15}" # xterm_clipboard
+                    if [[ $clipboard == "xterm_clipboard" ]]; then
+                        vimx_xterm_clipboard="${tmp:(($pos-6)):16}"
+                    else # or +/-clipboard
+                        vimx_clipboard="${tmp:(($pos-1)):10}"
+                    fi
+                done < <(echo $tmp | grep -b -o "clipboard" | awk 'BEGIN {FS=":"}{print $1}')                
+            fi            
             if [[ ${vimx_clipboard:0:1} == "-" ]] && [ ${vimx_xterm_clipboard:0:1} == "-" ]; then
                 vimx_return=1
             else

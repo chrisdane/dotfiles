@@ -256,14 +256,18 @@ if (T) { # set F for blank .Rprofile
             message("   Sys.setenv(\"MAPBOX_TOKEN\"=\"...\"")
             source("~/.plotly")
         }
-        if (any(ls(pos=which(search() == "myEnv")) == "myRPrompt")) {
-            message("   options(prompt=myRPrompt())   (setwd() is also changed)")
-            options(prompt=myRPrompt())
-        } # if myRPrompt function is loaded
-        if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) { 
-            message("   options(error=myErrorFun)   (check with 'getOption(\"error\")')")
-            options(error=myErrorFun)
-        } # if myErrorFun is loaded
+        if (length(which(search() == "myEnv")) > 0) {
+            if (any(ls(pos=which(search() == "myEnv")) == "myRPrompt")) {
+                message("   options(prompt=myRPrompt())   (setwd() is also changed)")
+                options(prompt=myRPrompt())
+            } # if myRPrompt function is loaded
+            if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) { 
+                if (exists(".traceback")) { 
+                    message("   options(error=myErrorFun)   (check with 'getOption(\"error\")')")
+                    options(error=myErrorFun)
+                }
+            } # if myErrorFun is loaded
+        } # if environment myEnv was loaded
 
         ## do stuff after loading packages/functions
         # paste commands that I always forget

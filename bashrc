@@ -63,7 +63,8 @@
     #if [ -f ~/.git-completion.bash ]; then
     #    source ~/.git-completion.bash
     #fi
-    ## works:
+    
+    ## enable git colors
     #git config --global color.ui auto
     
     ## my bins (doing this recursively is not recommended; security)

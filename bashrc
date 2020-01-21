@@ -207,8 +207,7 @@
     ## which login manager is used?
     echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
     printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$: "
-    printf auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$" 
-    echo
+    ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$" 
 
     ## check if module tun is available or not (it is not after system upgrade)
     modprobe tun &> /dev/null # silent output

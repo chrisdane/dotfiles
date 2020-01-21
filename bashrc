@@ -206,9 +206,9 @@
   
     ## which login manager is used?
     echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
-    printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$: "
+    printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "
     tmp=$(ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$")
-    printf $tmp
+    printf "%s" $tmp
     echo
     unset tmp
 

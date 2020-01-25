@@ -147,6 +147,7 @@
         echo "cdo chname,var1,var2 in.nc out.nc"
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
+        echo "cdo -r copy in out"
     }
     pwd2(){
         readlink -f .
@@ -190,9 +191,15 @@
     export crop='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
     # watch -n 0.1 ls
 
+    ## check processors
+    if check_existance lscpu; then
+        #printf "lspcu | grep CPU(s):"
+        lscpu | grep --color=never "^CPU(s):"
+        #printf "lscpu | grep Model name::"
+        lscpu | grep --color=never "Model name:"
+    fi
+
     ## check which OS is used
-    printf "\$(hostname).\$(hostname -d): "
-    echo $(hostname).$(hostname -d)
     if [ -f /etc/os-release ]; then
         printf "\$(head -1 /etc/os-release): "
         head -1 /etc/os-release
@@ -203,8 +210,11 @@
         echo operating system unknown!
     fi
 
+    ## hostname
+    printf "\$(hostname).\$(hostname -d): "
+    echo $(hostname).$(hostname -d)
   
-    ## which login manager is used?
+    ## which display manager (dm) is used?
     echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
     printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "
     tmp=$(ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$")

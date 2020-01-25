@@ -191,12 +191,17 @@
     export crop='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
     # watch -n 0.1 ls
 
+    ## hostname
+    printf "\$(hostname).\$(hostname -d): "
+    echo $(hostname).$(hostname -d)
+  
     ## check processors
     if check_existance lscpu; then
-        #printf "lspcu | grep CPU(s):"
-        lscpu | grep --color=never "^CPU(s):"
+        printf "CPUs: "; nproc
+        #lscpu | grep --color=never "^CPU(s):"
+        cat /proc/cpuinfo | grep --color=never "model name" | head -1
         #printf "lscpu | grep Model name::"
-        lscpu | grep --color=never "Model name:"
+        #lscpu | grep --color=never "Model name:"
     fi
 
     ## check which OS is used
@@ -210,10 +215,6 @@
         echo operating system unknown!
     fi
 
-    ## hostname
-    printf "\$(hostname).\$(hostname -d): "
-    echo $(hostname).$(hostname -d)
-  
     ## which display manager (dm) is used?
     echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
     printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "

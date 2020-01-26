@@ -91,7 +91,6 @@
 
     # use liquidprompt if available https://github.com/nojhan/liquidprompt
     if [ -x "$(command -v liquidprompt)" ]; then
-
         # add cpu temp to liquidprompt
         # this is not perfect way yet
         # check ~/.liquidpromptrc
@@ -153,11 +152,18 @@
         readlink -f .
     }
     
-    #set -o vi # unfortunatley this breaks ctrl+a/+e
-    # kill open remote sessions:
-    #ssh cdanek@stan1.awi.de w
-    #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
-    #ssh cdanek@stan1.awi.de pkill -u cdanek
+    ## argument list too long
+    #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
+    #/bin/echo "$(printf "%*s" 131072 ".")" > /dev/null --> too long
+    # --> $(getconf PAGE_SIZE)*32 = 4096*32 = 131072
+    # --> this is hardcoded in binfmts.h
+    # getconf ARG_MAX = 2097152
+    # too long: 2612711 characters wout multiple spaces
+    # ok:       2612710 characters wout multiple spaces
+    # start counting from: `cdo a b`
+    #                          1234 -> nchar = 4 in this example
+    # --> it seems multiple spaces count as single spaces
+    # --> it seems to be independet of the number of input files provided (29355 in this example)
 
     ## aliase
     # check aliase with 'type alias'
@@ -195,6 +201,17 @@
     printf "\$(hostname).\$(hostname -d): "
     echo $(hostname).$(hostname -d)
   
+    ## tty
+    printf "tty: "; tty
+    #set -o vi # unfortunatley this breaks ctrl+a/+e
+    # kill open remote sessions:
+    #ssh cdanek@stan1.awi.de w
+    #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
+    #ssh cdanek@stan1.awi.de pkill -u cdanek
+
+    ## shell
+    printf "\$SHELL: "; echo $SHELL
+
     ## check processors
     if check_existance lscpu; then
         printf "CPUs: "; nproc

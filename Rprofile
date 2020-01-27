@@ -75,10 +75,26 @@ if (T) { # set F for blank .Rprofile
         }
         Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
         Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
+        # e.g. "4.8.5-16)"
+
+        # replace special symbols by dots
+        Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
+        
+        # only use version numbers up to 2 dots
+        Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
+        if (all(Ccompiler_version_dotinds == -1)) { # no dots there
+            stop("case ", Ccompiler_version, " not defined here")
+        } else {
+            if (length(Ccompiler_version_dotinds) > 2) {
+                Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+            }
+        }
+        
         if (interactive()) {
             message("   automatically derived C compiler version number:")
             message("      ", Ccompiler_version)
         }
+
     } # find C compiler used to build this R
 
     # add own paths to .libPaths()

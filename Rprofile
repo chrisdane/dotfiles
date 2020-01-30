@@ -31,7 +31,8 @@
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
 #list.files(pattern = glob2rx('*.tif'))
 #list.files(pattern = '^.*\\.tif$')
-
+#sprintf("%02i", 1) --> 01
+#
 if (T) { # set F for blank .Rprofile
 
     # hostname, e.g. mlogin101, stan1.awi.de, K

@@ -198,28 +198,22 @@
     # watch -n 0.1 ls
 
     ## hostname
-    printf "\$(hostname).\$(hostname -d): "
-    echo $(hostname).$(hostname -d)
+    printf "[\$(hostname)][\$(hostname -d)]: "
+    echo "[$(hostname)][$(hostname -d)]"
   
-    ## tty
-    printf "tty: "; tty
-    #set -o vi # unfortunatley this breaks ctrl+a/+e
-    # kill open remote sessions:
-    #ssh cdanek@stan1.awi.de w
-    #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
-    #ssh cdanek@stan1.awi.de pkill -u cdanek
-
-    ## shell
-    printf "\$SHELL: "; echo $SHELL
-
     ## check processors
     if check_existance lscpu; then
-        printf "CPUs: "; nproc
+        printf "\$(nproc): "; nproc
         #lscpu | grep --color=never "^CPU(s):"
+        printf "/proc/cpuinfo: "
         cat /proc/cpuinfo | grep --color=never "model name" | head -1
         #printf "lscpu | grep Model name::"
         #lscpu | grep --color=never "Model name:"
     fi
+
+    ## uptime
+    printf "\$(uptime): "
+    uptime | awk -F'( |,|:)+' '{print $6,$7",",$8,"hours,",$9,"minutes"}'
 
     ## check which OS is used
     if [ -f /etc/os-release ]; then
@@ -230,6 +224,41 @@
         head -1 /etc/system-release
     else
         echo operating system unknown!
+    fi
+
+    ## tty
+    printf "\$(tty): "; tty
+    #set -o vi # unfortunatley this breaks ctrl+a/+e
+    # kill open remote sessions:
+    #ssh cdanek@stan1.awi.de w
+    #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
+    #ssh cdanek@stan1.awi.de pkill -u cdanek
+
+    ## shell
+    printf "\$SHELL: "; echo $SHELL
+
+    ## show what kind of shell (at this point it must be an interactive shell since)
+    # h: Remember the location of commands as they are looked up for execution.  This is enabled by default.
+    # i: interactive
+    # m: Monitor mode.  Job control is enabled
+    # B: The shell performs brace expansion (see Brace Expansion above).  This is on by default
+    # H: Enable !  style history substitution.  This option is on by default when the shell is interactive.
+    printf "\$- = \"$-\""
+    if [[ $- == *i* ]]; then
+        printf " --> \"i\" for interactive shell"
+    fi
+    echo
+
+    ## check if login shell (cannot check $0 from within this script)
+    if check_existance shopt; then
+        if shopt -q login_shell; then
+            echo "\$0 = \"-$(basename $SHELL)\" or \`shopt login_shell\` = on -> login shell"
+        else
+            echo "\$0 = \"$(basename $SHELL)\" or \`shopt login_shell\` = off -> not login shell"
+        fi
+    else
+        echo "cannot check if this is a login or non-login shell since \`shopt\` is not installed and"
+        echo "\$0 cannot be evaluated from within this .bashrc"
     fi
 
     ## which display manager (dm) is used?
@@ -303,26 +332,6 @@
             fi
         fi
     fi # if vim or vimx exist
-
-    ## show what kind of shell (at this point it must be an interactive shell since)
-    # h: Remember the location of commands as they are looked up for execution.  This is enabled by default.
-    # i: interactive
-    # m: Monitor mode.  Job control is enabled
-    # B: The shell performs brace expansion (see Brace Expansion above).  This is on by default
-    # H: Enable !  style history substitution.  This option is on by default when the shell is interactive.
-    echo "\$- = $-"
-
-    ## check if login shell (cannot check $0 from within this script)
-    if check_existance shopt; then
-        if shopt -q login_shell; then
-            echo "\$0 = -$(basename $SHELL) or \`shopt login_shell\` = on -> login shell"
-        else
-            echo "\$0 = $(basename $SHELL) or \`shopt login_shell\` = off -> not login shell"
-        fi
-    else
-        echo "cannot check if this is a login or non-login shell since \`shopt\` is not installed and"
-        echo "\$0 cannot be evaluated from within this .bashrc"
-    fi
 
     ## run bash stuff if available
     if ! check_existance nc-config; then

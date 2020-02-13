@@ -215,7 +215,7 @@
     printf "\$(uptime): "
     uptime | awk -F'( |,|:)+' '{print $6,$7",",$8,"hours,",$9,"minutes"}'
 
-    ## check which OS is used
+    ## which OS
     if [ -f /etc/os-release ]; then
         printf "\$(head -1 /etc/os-release): "
         head -1 /etc/os-release
@@ -226,16 +226,29 @@
         echo operating system unknown!
     fi
 
-    ## tty
+    ## which package manager 
+    declare -A osInfo;
+    osInfo[/etc/redhat-release]=yum
+    osInfo[/etc/arch-release]=pacman
+    osInfo[/etc/gentoo-release]=emerge
+    osInfo[/etc/SuSE-release]=zypp
+    osInfo[/etc/debian_version]=apt-get
+    for f in ${!osInfo[@]}; do
+        if [[ -f $f ]]; then
+            echo "\"$f\" exists -> package manager is ${osInfo[$f]}"
+        fi
+    done
+
+    ## which shell
+    printf "\$SHELL: "; echo $SHELL
+
+    ## which tty
     printf "\$(tty): "; tty
     #set -o vi # unfortunatley this breaks ctrl+a/+e
     # kill open remote sessions:
     #ssh cdanek@stan1.awi.de w
     #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
     #ssh cdanek@stan1.awi.de pkill -u cdanek
-
-    ## shell
-    printf "\$SHELL: "; echo $SHELL
 
     ## show what kind of shell (at this point it must be an interactive shell since)
     # h: Remember the location of commands as they are looked up for execution.  This is enabled by default.

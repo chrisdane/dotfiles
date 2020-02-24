@@ -201,14 +201,14 @@
     printf "[\$(hostname)][\$(hostname -d)]: "
     echo "[$(hostname)][$(hostname -d)]"
   
-    ## check processors
+    ## check cpus
     if check_existance lscpu; then
-        printf "\$(nproc): "; nproc
-        #lscpu | grep --color=never "^CPU(s):"
         printf "/proc/cpuinfo: "
         cat /proc/cpuinfo | grep --color=never "model name" | head -1
         #printf "lscpu | grep Model name::"
         #lscpu | grep --color=never "Model name:"
+        printf "\$(nproc): "; nproc
+        #lscpu | grep --color=never "^CPU(s):"
     fi
 
     ## uptime

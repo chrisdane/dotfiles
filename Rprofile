@@ -53,6 +53,8 @@ if (T) { # set F for blank .Rprofile
     # C compiler used to build this R 
     if (grepl("stan", host)) {
         Ccompiler_version <- "4.4.7"
+    } else if (grepl("paleosrv", host)) {
+        Ccompiler_version <- "5.4.0"
     } else {
         if (interactive()) message("C compiler used to build this R:")
         cmd <- "R CMD config CC"
@@ -62,13 +64,15 @@ if (T) { # set F for blank .Rprofile
         #       "gcc -std=gnu99"
         #       "x86_64-conda_cos6-linux-gnu-cc"
         #       "gcc -m64 -std=gnu99"
-        Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
+        Ccompiler <- strsplit(Ccompiler, " ")[[1]]
         if (interactive()) message("      ", Ccompiler)
-        
+        # first word
+        Ccompiler <- Ccompiler[1]
+
         # C compiler version used to build this R
         #cmd <- paste0("objdump -s --section .comment ", Rexe)
         #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
-        cmd <- paste0("strings -a ", Rexe, " | grep CC:")
+        cmd <- paste0("strings -a ", Rexe, " | grep CC")
         if (interactive()) message("   `", cmd, "`:")
         Ccompiler_version <- system(cmd, intern=T)
         if (interactive()) {

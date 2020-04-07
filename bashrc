@@ -151,6 +151,9 @@
     pwd2(){
         readlink -f .
     }
+    ddiff(){
+        diff $1 $2 | vim -R -
+    } # or `diff old new | colordiff`
     
     ## argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null

@@ -51,64 +51,64 @@ if (T) { # set F for blank .Rprofile
     if (interactive()) message("R executable: ", Rexe)
 
     # C compiler used to build this R 
-    if (grepl("stan", host)) {
-        Ccompiler_version <- "4.4.7"
-    } else if (grepl("paleosrv", host)) {
-        Ccompiler_version <- "5.4.0"
-    } else {
-        if (interactive()) message("C compiler used to build this R:")
-        cmd <- "R CMD config CC"
-        if (interactive()) message("   `", cmd, "`:")
-        Ccompiler <- system(cmd, intern=T)
-        # e.g.: "gcc"
-        #       "gcc -std=gnu99"
-        #       "x86_64-conda_cos6-linux-gnu-cc"
-        #       "gcc -m64 -std=gnu99"
-        Ccompiler <- strsplit(Ccompiler, " ")[[1]]
-        if (interactive()) message("      ", Ccompiler)
-        # first word
-        Ccompiler <- Ccompiler[1]
-
-        # C compiler version used to build this R
-        #cmd <- paste0("objdump -s --section .comment ", Rexe)
-        #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
-        cmd <- paste0("strings -a ", Rexe, " | grep CC")
-        if (interactive()) message("   `", cmd, "`:")
-        Ccompiler_version <- system(cmd, intern=T)
-        if (interactive()) {
-            for (i in 1:length(Ccompiler_version)) message("      ", Ccompiler_version[i])
-        }
-        Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
-        Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
-        # e.g. "4.8.5-16)"
-
-        # replace special symbols by dots
-        Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
-        
-        # only use version numbers up to 2 dots
-        Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
-        if (all(Ccompiler_version_dotinds == -1)) { # no dots there
-            stop("case ", Ccompiler_version, " not defined here")
+    if (F) { # building a package needs same C compiler that was used for building r itself
+        if (grepl("stan", host)) {
+            Ccompiler_version <- "4.4.7"
+        } else if (grepl("paleosrv", host)) {
+            Ccompiler_version <- "5.4.0"
         } else {
-            if (length(Ccompiler_version_dotinds) > 2) {
-                Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+            if (interactive()) message("C compiler used to build this R:")
+            cmd <- "R CMD config CC"
+            if (interactive()) message("   `", cmd, "`:")
+            Ccompiler <- system(cmd, intern=T)
+            # e.g.: "gcc"
+            #       "gcc -std=gnu99"
+            #       "x86_64-conda_cos6-linux-gnu-cc"
+            #       "gcc -m64 -std=gnu99"
+            Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
+            if (interactive()) message("      ", Ccompiler)
+            
+            # C compiler version used to build this R
+            #cmd <- paste0("objdump -s --section .comment ", Rexe)
+            #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
+            cmd <- paste0("strings -a ", Rexe, " | grep CC:")
+            if (interactive()) message("   `", cmd, "`:")
+            Ccompiler_version <- system(cmd, intern=T)
+            if (interactive()) {
+                for (i in 1:length(Ccompiler_version)) message("      ", Ccompiler_version[i])
             }
-        }
-        
-        if (interactive()) {
-            message("   automatically derived C compiler version number:")
-            message("      ", Ccompiler_version)
-        }
+            Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
+            Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
+            # e.g. "4.8.5-16)"
 
-    } # find C compiler used to build this R
+            # replace special symbols by dots
+            Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
+            
+            # only use version numbers up to 2 dots
+            Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
+            if (all(Ccompiler_version_dotinds == -1)) { # no dots there
+                stop("case \"", Ccompiler_version, "\" not defined here")
+            } else {
+                if (length(Ccompiler_version_dotinds) > 2) {
+                    Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+                }
+            }
+            
+            if (interactive()) {
+                message("   automatically derived C compiler version number:")
+                message("      ", Ccompiler_version)
+            }
+        } # find C compiler used to build this R
+    } # which C compiler
 
     # add own paths to .libPaths()
     # --> construct my libpath as function of R version and C compiler version used to build this R version
     #newLibPaths <- paste0("~/scripts/r/packages/", c("bin"))
-    newLibPaths <- paste0("~/scripts/r/packages/bin/R_", 
-                          #as.character(getRversion()),                            # e.g. 3.6.2
-	                      paste0(version$major, ".", substr(version$minor, 1, 1)), # e.g. 3.6
-                          "_C_", Ccompiler_version)
+    newLibPaths <- paste0("~/scripts/r/packages/bin/r_", 
+                          #as.character(getRversion()),                           # e.g. 3.6.2
+	                      paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. 3.6
+                          #, "_C_", Ccompiler_version
+                          )
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths)
 

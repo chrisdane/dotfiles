@@ -343,7 +343,7 @@
 
     ## run bash stuff if available
     if ! check_existance nc-config; then
-        echo nc-config is missing!!!
+        echo nc-config is missing!
     fi
     
     ## run R stuff if available
@@ -353,13 +353,6 @@
         fi
     fi
     
-    ## run bash stuff if available
-    if check_existance bash; then
-        if check_existance birthdays; then
-            birthdays
-        fi
-    fi
-
     ## find module binary
     # $?: last command return value
     # $*: list of all args

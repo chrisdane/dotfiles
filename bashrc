@@ -282,14 +282,6 @@
         echo "\$0 cannot be evaluated from within this .bashrc"
     fi
 
-    ## which display manager (dm) is used?
-    echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
-    printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "
-    tmp=$(ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$")
-    printf "%s" $tmp
-    echo
-    unset tmp
-
     ## check if module tun is available or not (it is not after system upgrade)
     modprobe tun &> /dev/null # silent output
     if [ $? -ne 0 ]; then # if not successfull either due to missing permissions or file not found
@@ -356,7 +348,7 @@
 
     ## run bash stuff if available
     if ! check_existance nc-config; then
-        echo nc-config is missing!!!
+        echo nc-config is missing!
     fi
     
     ## run R stuff if available
@@ -366,13 +358,6 @@
         fi
     fi
     
-    ## run bash stuff if available
-    if check_existance bash; then
-        if check_existance birthdays; then
-            birthdays
-        fi
-    fi
-
     ## find module binary
     # $?: last command return value
     # $*: list of all args
@@ -385,6 +370,8 @@
         echo "type module"
         echo $(type module)
         echo "loaded startup modules:"; module list
+    else
+        echo "module command is not set"
     fi
 
     ## load private stuff at the end to overwrite defaults (and conda) from above

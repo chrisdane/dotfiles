@@ -32,6 +32,7 @@
 #list.files(pattern = glob2rx('*.tif'))
 #list.files(pattern = '^.*\\.tif$')
 #sprintf("%02i", 1) --> 01
+#sudo R CMD javareconf
 #
 if (T) { # set F for blank .Rprofile
 
@@ -39,9 +40,9 @@ if (T) { # set F for blank .Rprofile
     host <- Sys.info()[4]
 
     if (interactive()) { 
-        message(paste0(c(rep("*", t=(getOption("width")/2 - 6)),
-                         " ~/.Rprofile ", 
-                         rep("*", t=(getOption("width")/2 - 6)))))
+        message(c(rep("*", t=(getOption("width")/2 - 6)),
+                  " ~/.Rprofile ", 
+                  rep("*", t=(getOption("width")/2 - 6))))
         message("This ", R.version.string, " runs on ", 
                 Sys.info()[4], " with PID ", Sys.getpid())
     }
@@ -54,6 +55,8 @@ if (T) { # set F for blank .Rprofile
     if (F) { # building a package needs same C compiler that was used for building r itself
         if (grepl("stan", host)) {
             Ccompiler_version <- "4.4.7"
+        } else if (grepl("paleosrv", host)) {
+            Ccompiler_version <- "5.4.0"
         } else {
             if (interactive()) message("C compiler used to build this R:")
             cmd <- "R CMD config CC"
@@ -98,6 +101,7 @@ if (T) { # set F for blank .Rprofile
             }
         } # find C compiler used to build this R
     } # which C compiler
+    rm(Rexe, host) 
 
     # add own paths to .libPaths()
     # --> construct my libpath as function of R version and C compiler version used to build this R version
@@ -112,7 +116,7 @@ if (T) { # set F for blank .Rprofile
 
     if (interactive()) {
         message("Set .libPaths() ...")
-        message(paste0("      ", .libPaths(), collapse="\n"))
+        message(paste0("   ", .libPaths(), collapse="\n"))
     }
     #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
     rm(newLibPaths)
@@ -164,41 +168,41 @@ if (T) { # set F for blank .Rprofile
         #packages <- NULL
         packages <- c("ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
         # "data.table", "forecast", "ncdf.tools", "crayon"
-        if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put first
+        if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put colorout first
 
         npkg <- length(packages)
         nchar_no <- nchar(npkg)
         cnt <- 0
         nchar_pkg <- nchar(packages)
 		failed <- NULL
-		for (i in packages) {
+		for (pkg in packages) {
             
             cnt <- cnt + 1
             # here, library() yields better error handling than require()
-		   	tc <- tryCatch(suppressMessages(suppressWarnings(library(i, character.only=T))),
+		   	tc <- tryCatch(suppressMessages(suppressWarnings(library(pkg, character.only=T))),
                            error=function(e) e, warning=function(w) w)
             
             # replace colorout with crayon if loading of colorout was not successful and crayon is not mentioned
-            if (i == "colorout" && !any(search() == paste0("package:", i)) &&
+            if (pkg == "colorout" && !any(search() == paste0("package:", pkg)) &&
                 !any(packages == "crayon")) {
                 #devtools::install_github("jalvesaq/colorout")
-                i <- "crayon"
-                packages[1] <- i
+                pkg <- "crayon"
+                packages[1] <- pkg
                 nchar_pkg <- nchar(packages)
-                suppressMessages(suppressWarnings(require(i, character.only=T)))
+                suppressMessages(suppressWarnings(require(pkg, character.only=T)))
             }
             # load my default colors once
-            if (i == "colorout" && any(search() == "package:colorout")) {
+            if (pkg == "colorout" && any(search() == "package:colorout")) {
                 mysetOutputColors()
             }
-            message("   ", sprintf(paste0("%", nchar_no, "i"), cnt), "/", npkg, "  ", i, "  ", 
-                    paste0(rep(" ", t=max(nchar_pkg) - nchar(i)), collapse=""), appendLF=F)
+            message("   ", sprintf(paste0("%", nchar_no, "i"), cnt), "/", npkg, "  ", pkg, "  ", 
+                    paste0(rep(" ", t=max(nchar_pkg) - nchar(pkg)), collapse=""), appendLF=F)
             # check if package load was successfull
-            if (any(search() == paste0("package:", i))) {
+            if (any(search() == paste0("package:", pkg))) {
 				checktext <- "ok"
 			} else {
 				checktext <- "failed"
-				failed <- c(failed, paste0(i, ": ", tc$message))
+				failed <- c(failed, paste0(pkg, ": ", tc$message))
 			}
             # apply colorout/crayon colors
             if (any(search() == "package:colorout")) {
@@ -221,12 +225,12 @@ if (T) { # set F for blank .Rprofile
 			message(checktext, appendLF=F)
 			# remove green/red colorout/crayon format
             if (any(search() == "package:colorout")) {
-                mysetOutputColors()
+                mysetOutputColors() # needs ~/scripts/r/functions/mysetOutputColors.r
             } else if (any(search() == "package:crayon")) {
-				checktext <- strip_style(checktext)
+				checktext <- crayon::strip_style(checktext)
 			}
             # show if cran or git package
-            repo <- suppressMessages(suppressWarnings(utils::packageDescription(i)))
+            repo <- suppressMessages(suppressWarnings(utils::packageDescription(pkg)))
             if (any(names(repo) == "RemoteType")) {
                 message("  ", repo$RemoteType, appendLF=F) # = "github"
             } else if (any(names(repo) == "Repository")) {
@@ -235,7 +239,7 @@ if (T) { # set F for blank .Rprofile
             }
 			# show library path
 			if (checktext == "ok") {
-                tmp <- base::find.package(i)
+                tmp <- base::find.package(pkg)
                 if (substr(tmp, 1, nchar(normalizePath("~"))) == normalizePath("~")) {
                     tmp <- paste0("~", substr(tmp, nchar(normalizePath("~")) + 1, nchar(tmp)))
                 }
@@ -243,15 +247,15 @@ if (T) { # set F for blank .Rprofile
                 rm(tmp)
 			}
 			# show additional text
-			if (F && checktext == "ok" && i == "oce") {
+			if (F && checktext == "ok" && pkg == "oce") {
 				checktext <- paste0("data('coastlineWorld', package='", i, "')")
 				message("   ", checktext, appendLF=F)
 				eval(parse(text=checktext))
 			}
             # linebreak
 			message("")
-		} # for i packages
-		rm(cnt, npkg, packages, tc, i, nchar_no, nchar_pkg, checktext, repo)
+		} # for pkg packages
+		rm(cnt, npkg, packages, tc, pkg, nchar_no, nchar_pkg, checktext, repo)
 		if (exists("fancy")) rm(fancy)
 
         # set some global options after packages loaded since some functions may need package functions
@@ -269,6 +273,8 @@ if (T) { # set F for blank .Rprofile
         #options(stringsAsFactors=F)
         message("   options(menu.graphics=F)")
         options(menu.graphics=F)
+        message("   options(browser=\"firefox\")")
+        options(browser="firefox")
         if (exists("~/.plotly")) {
             message("   Sys.setenv(\"plotly_username\"=\"...\")")
             message("   Sys.setenv(\"plotly_api_key\"=\"...\")")
@@ -316,9 +322,9 @@ if (T) { # set F for blank .Rprofile
         } # if any packages failed
         rm(failed)
 
-        message(paste0(c(rep("*", t=(getOption("width")/2 - 6)),
-                         " ~/.Rprofile ",
-                         rep("*", t=(getOption("width")/2 - 6)))))
+        message(c(rep("*", t=(getOption("width")/2 - 6)),
+                  " ~/.Rprofile ",
+                  rep("*", t=(getOption("width")/2 - 6))))
 
     } # if interactive
 

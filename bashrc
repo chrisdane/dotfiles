@@ -149,7 +149,12 @@
         echo "cdo -r copy in out"
     }
     pwd2(){
+        echo "readlink -f ."
         readlink -f .
+    }
+    pwd3(){
+        echo "lfs getstripe --mdt-index ."
+        lfs getstripe --mdt-index .
     }
     ddiff(){
         diff $1 $2 | vim -R -

@@ -106,11 +106,15 @@ if (T) { # set F for blank .Rprofile
     # add own paths to .libPaths()
     # --> construct my libpath as function of R version and C compiler version used to build this R version
     #newLibPaths <- paste0("~/scripts/r/packages/", c("bin"))
-    newLibPaths <- paste0("~/scripts/r/packages/bin/r_", 
-                          #as.character(getRversion()),                           # e.g. 3.6.2
-	                      paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. 3.6
-                          #, "_C_", Ccompiler_version
-                          )
+    if (T) { # path of current r version
+        newLibPaths <- paste0("~/scripts/r/packages/bin/r_", 
+                              #as.character(getRversion()),                           # e.g. 3.6.2
+                              paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. 3.6
+                              #, "_C_", Ccompiler_version
+                              )
+    } else if (F) { # all paths of all available r versions
+        newLibPaths <- rev(list.files("~/scripts/r/packages/bin", full.names=T)) # decreasing version order: 3.6, 3.5, ... 
+    }
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths)
 

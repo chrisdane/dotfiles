@@ -148,6 +148,16 @@
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "cdo -r copy in out"
     }
+    condahelp(){
+        echo "conda create -y -p /path <env>"
+        echo "source activate <env>"
+        echo "source deactivate"
+        echo "conda env list"
+        echo "conda list"
+        echo "conda install -c <chan> <pkg>"
+        echo "conda clean --all"
+        echo "conda env remove -n <env> \# this removes all packages installed in <env>"
+    }
     pwd2(){
         echo "readlink -f ."
         readlink -f .
@@ -367,7 +377,7 @@
     # $ ldd binary (executes the binary!)
     # $ readelf -d | grep NEEDED (does not execute the binary)
     if check_existance module; then
-        echo "type module"
+        printf "type module: "
         echo $(type module)
         echo "loaded startup modules:"; module list
     else
@@ -376,7 +386,7 @@
 
     ## load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
-        echo "source ~/.myprofile ..."
+        echo "------------------------- source ~/.myprofile -------------------------"
         source ~/.myprofile
     fi
 

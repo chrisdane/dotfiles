@@ -386,7 +386,7 @@
 
     ## load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
-        echo "------------------------- source ~/.myprofile -------------------------"
+        echo "------------------------- ~/.myprofile -------------------------"
         source ~/.myprofile
     fi
 

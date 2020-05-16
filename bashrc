@@ -317,7 +317,7 @@
                     fi
                 done < <(echo $tmp | grep -b -o "clipboard" | awk 'BEGIN {FS=":"}{print $1}')                
             fi            
-            if [[ ${vim_clipboard:0:1} == "-" ]] && [ ${vim_xterm_clipboard:0:1} == "-" ]; then
+            if [[ ${vim_clipboard:0:1} == "-" ]] && [[ ${vim_xterm_clipboard:0:1} == "-" ]]; then
                 vim_return=1
             else
                 vim_return=0
@@ -338,7 +338,7 @@
                     fi
                 done < <(echo $tmp | grep -b -o "clipboard" | awk 'BEGIN {FS=":"}{print $1}')                
             fi            
-            if [[ ${vimx_clipboard:0:1} == "-" ]] && [ ${vimx_xterm_clipboard:0:1} == "-" ]; then
+            if [[ ${vimx_clipboard:0:1} == "-" ]] && [[ ${vimx_xterm_clipboard:0:1} == "-" ]]; then
                 vimx_return=1
             else
                 vimx_return=0
@@ -355,7 +355,7 @@
             fi
         fi
     fi # if vim or vimx exist
-
+    
     ## run bash stuff if available
     if ! check_existance nc-config; then
         echo nc-config is missing!
@@ -386,7 +386,10 @@
 
     ## load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
-        echo "------------------------- ~/.myprofile -------------------------"
+        printf '%*s' "$ncol" | tr ' ' "-"
+        printf " ~/.myyprofile "
+        printf '%*s' "$ncol" | tr ' ' "-"
+        echo ""
         source ~/.myprofile
     fi
 

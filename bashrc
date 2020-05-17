@@ -387,7 +387,7 @@
     ## load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
         printf '%*s' "$ncol" | tr ' ' "-"
-        printf " ~/.myyprofile "
+        printf " ~/.myprofile "
         printf '%*s' "$ncol" | tr ' ' "-"
         echo ""
         source ~/.myprofile

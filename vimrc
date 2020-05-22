@@ -141,7 +141,8 @@ set encoding=utf8
 " Use Unix as the standard file type
 set ffs=unix,dos,mac
 " convert: `:set fileencoding=utf-8`
-
+" convet to linux (solves carriage return \r \M issue): `:set ff=unix`
+"
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

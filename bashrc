@@ -134,6 +134,7 @@
         echo "ln -sfn path/to/file-name link-name"
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
+        echo "rename [-n = dry] 's/\.DAT/\.dat/' *"
     }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
@@ -380,6 +381,14 @@
         printf "type module: "
         echo $(type module)
         echo "loaded startup modules:"; module list
+        modulegrep(){ # e.g. "^r/", "cdo"
+            if [ $# -eq 0 ]; then
+                echo "Usage: 'modulegrep cdo' or 'modulegrep ^r/' will run 'module avail -t 2>&1 | grep -i \$1'"
+            else
+                #echo "run 'module avail -t 2>&1 | grep -i $1'"
+                module avail -t 2>&1 | grep -i $1
+            fi
+        }
     else
         echo "module command is not set"
     fi

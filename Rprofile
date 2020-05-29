@@ -33,6 +33,7 @@
 #list.files(pattern = '^.*\\.tif$')
 #sprintf("%02i", 1) --> 01
 #sudo R CMD javareconf
+#cat(capture.output(str(dates_in_list)), sep="\n")
 #
 if (T) { # set F for blank .Rprofile
 

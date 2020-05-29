@@ -160,7 +160,7 @@
         echo "conda env remove -n <env> \# this removes all packages installed in <env>"
     }
     pwd2(){
-        echo "readlink -f ."
+        printf "\$(readlink -f .) = "
         readlink -f .
     }
     pwd3(){

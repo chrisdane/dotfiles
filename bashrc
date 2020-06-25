@@ -234,15 +234,12 @@
     printf "\$(uptime): "
     uptime | awk -F'( |,|:)+' '{print $6,$7",",$8,"hours,",$9,"minutes"}'
 
-    ## which OS
-    if [ -f /etc/os-release ]; then
-        printf "\$(head -1 /etc/os-release): "
-        head -1 /etc/os-release
-    elif [ -f /etc/system-release ]; then
-        printf "\$(head -1 /etc/system-release): "
-        head -1 /etc/system-release
+    ## which OS/distro
+    if [ -f /proc/version ]; then
+        echo "cat /proc/version:"
+        cat /proc/version
     else
-        echo operating system unknown!
+        echo "/proc/version does not exist. what crazy OS/distro is this!?"
     fi
 
     ## which package manager 

@@ -290,13 +290,14 @@ if (T) { # set F for blank .Rprofile
             if (any(ls(pos=which(search() == "myEnv")) == "myRPrompt")) {
                 message("   options(prompt=myRPrompt())   (setwd() is also changed)")
                 options(prompt=myRPrompt())
-            } # if myRPrompt function is loaded
+            } # if myRPrompt() is loaded
+            
             if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) { 
                 if (exists(".traceback")) { 
                     message("   options(error=myErrorFun)   (check with 'getOption(\"error\")')")
                     options(error=myErrorFun)
                 }
-            } # if myErrorFun is loaded
+            } # if myErrorFun() is loaded
         } # if environment myEnv was loaded
 
         ## do stuff after loading packages/functions
@@ -308,8 +309,7 @@ if (T) { # set F for blank .Rprofile
             #family <- "Droid Sans Mono" # "CM Roman"
             family <- "CM Roman"
             if (any(regexpr(family, extrafont::fonts()) != -1)) {
-                message("Set default plot font ...")
-                cmd <- paste0("   grDevices::pdf.options(family=", family, ")")
+                cmd <- paste0("   pdf.options(family=", family, ")")
                 message(cmd, " # and extrafont::embed_fonts()")
                 grDevices::pdf.options(family=family)
                 rm(cmd)
@@ -319,6 +319,12 @@ if (T) { # set F for blank .Rprofile
             rm(family)
         }
     
+        if (length(which(search() == "myEnv")) > 0) {
+            if (any(ls(pos=which(search() == "myEnv")) == "mynews")) {
+                message("Run mynews() to see R ", version$major, ".", version$minor, " news ...")
+            } # if mynews() is loaded
+        } # if environment myEnv was loaded
+
         # show error message if package load failed
         if (!is.null(failed)) {
             message("Messages of failed packages:")

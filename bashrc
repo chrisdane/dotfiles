@@ -134,7 +134,8 @@
         echo "ln -sfn path/to/file-name link-name"
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
-        echo "rename [-n = dry] 's/\.DAT/\.dat/' *"
+        echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
+        echo "wget -r -no-parent -e robots=off url"
     }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"

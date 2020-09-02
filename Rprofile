@@ -13,7 +13,8 @@
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
 # getSrcDirectory
 # anyNA(x) is more efficient than any(is.na(x))
-# which.min is more efficient than which(x == min(x))
+# which.min is more efficient than which(x == min(x)) but which.min(c(1,1,2)) = 1, i.e. the second (and 3rd,4th,...) minimum is negelected
+# cols_rgb_p <- rgb(t(col2rgb(cols_p)/255), alpha=alpha_rgb)
 # mean1 <- function(x) mean(x)
 # mean2 <- function(x) sum(x) / length(x)
 # --> mean2 is faster
@@ -29,12 +30,12 @@
 # sort(x, index.return=TRUE)$ix
 # pdf.options(useDingbats = TRUE) https://yihui.name/knitr/demo/graphics/
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
-#list.files(pattern = glob2rx('*.tif'))
-#list.files(pattern = '^.*\\.tif$')
-#sprintf("%02i", 1) --> 01
-#sudo R CMD javareconf
-#cat(capture.output(str(dates_in_list)), sep="\n")
-#
+# list.files(pattern = glob2rx('*.tif'))
+# list.files(pattern = '^.*\\.tif$')
+# sprintf("%02i", 1) --> 01
+# rJava pkg error: JDK is incomplete! Please make sure you have a complete JDK. JRE is *not* sufficient: sudo R CMD javareconf
+# cat(capture.output(str(dates_in_list)), sep="\n")
+
 if (T) { # set F for blank .Rprofile
 
     # hostname, e.g. mlogin101, stan1.awi.de, K

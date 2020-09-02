@@ -129,6 +129,13 @@
         echo `ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
+    archhelp(){
+        echo "update mirror: reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist"
+        echo "yarn cache clean"
+        echo "sudo paccache -r"
+        echo "yay -Yc \# clean unneeded dependencies"
+        echo "yay -Scc \# clean cache"
+    }
     bashhelp(){
         echo "./script > script.log 2>&1 &"
         echo "ln -sfn path/to/file-name link-name"
@@ -136,6 +143,10 @@
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
         echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
         echo "wget -r -no-parent -e robots=off url"
+        echo "while read -r f; do mv "$f" "${f//:/_}"; done <files.txt"
+    }
+    githelp(){
+        echo "rm -f .git/objects/*/tmp_*"
     }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
@@ -149,6 +160,10 @@
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "cdo -r copy in out"
+        echo "cdo trend in intercepts slopes"
+    }
+    ncohelp(){
+        echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
     }
     condahelp(){
         echo "conda create -y -p /path <env>"
@@ -256,8 +271,13 @@
         fi
     done
 
-    ## which shell
-    printf "\$SHELL: "; echo $SHELL
+    ## print free disk space on ~/ 
+    if check_existance tr; then
+        if check_existance cut; then
+            printf "Free disk space on ~/: "
+            df -h ~/ | tail -1 | tr -s ' ' | cut -d ' ' -f4
+        fi
+    fi
 
     ## which tty
     printf "\$(tty): "; tty
@@ -266,6 +286,9 @@
     #ssh cdanek@stan1.awi.de w
     #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
     #ssh cdanek@stan1.awi.de pkill -u cdanek
+
+    ## which shell
+    printf "\$SHELL: "; echo $SHELL
 
     ## show what kind of shell (at this point it must be an interactive shell since)
     # h: Remember the location of commands as they are looked up for execution.  This is enabled by default.

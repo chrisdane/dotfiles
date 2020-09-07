@@ -233,8 +233,8 @@
     # watch -n 0.1 ls
 
     ## hostname
-    printf "[\$(hostname)][\$(hostname -d)]: "
-    echo "[$(hostname)][$(hostname -d)]"
+    printf "\$(hostname)@\$(hostname -d): "
+    echo "$(hostname)@$(hostname -d)"
   
     ## check cpus
     if check_existance lscpu; then

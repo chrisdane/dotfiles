@@ -274,8 +274,8 @@
     ## print free disk space on ~/ 
     if check_existance tr; then
         if check_existance cut; then
-            printf "Free disk space on ~/: "
-            df -h ~/ | tail -1 | tr -s ' ' | cut -d ' ' -f4
+            printf "~/ "
+            df -h ~/
         fi
     fi
 

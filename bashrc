@@ -155,7 +155,7 @@
     githelp(){
         echo "rm -f .git/objects/*/tmp_*"
     }
-    llgit(){
+    llg(){
         repofiles=$(git ls-tree --full-tree --name-only -r HEAD) # string l=1
         if [ $? -ne 0 ]; then
             return 1
@@ -163,7 +163,7 @@
         declare -a repofiles_vec=($repofiles) # array l=n
         #printf ' %s' "${repofiles_vec[@]}"
         nrepofiles=${#repofiles_vec[@]} # n
-        rootpath=$(git rev-parse --show-toplevel)
+        rootpath=$(git rev-parse --show-toplevel) # may include unneeded prefixes
         declare -a vec=()
         for i in $(seq 0 $(( $nrepofiles - 1))); do # concatenate path and files
             #echo "$i: ${repofiles_vec[$i]}"
@@ -172,9 +172,10 @@
         #printf ' %s' "${vec[@]}"
         printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
         dus=$(du -hc $(echo $repofiles)) # for `du`, /home/user` cannot be abbreviated with `~/`
-        dus="${dus//$HOME/\~}" # convert "/home/user/repo" to "~/repo" here, not already `rootpath`
+        homeprefix=$(readlink -f ~/)
+        dus="${dus//$homeprefix/~}" # convert "[/optional/prefix]/home/user/repo" to "~/repo"
         printf '%s\n' "${dus[@]}"
-        echo "--> $nrepofiles tracked files in repo ${rootpath//$HOME/\~}"
+        echo "--> $nrepofiles tracked files in repo ${rootpath//$HOME/~}"
     }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
@@ -205,10 +206,10 @@
     }
     pwd2(){
         printf "\$(readlink -f .) = "
-        readlink -f .
+        readlink -f . # or pwd -P
     }
     pwd3(){
-        echo "lfs getstripe --mdt-index ."
+        printf "lfs getstripe --mdt-index $(readlink -f .): "
         lfs getstripe --mdt-index .
     }
     ddiff(){

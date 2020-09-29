@@ -173,7 +173,8 @@
         printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
         dus=$(du -hc $(echo $repofiles)) # for `du`, /home/user` cannot be abbreviated with `~/`
         homeprefix=$(readlink -f ~/)
-        dus="${dus//$homeprefix/"~"}" # convert "[/optional/prefix]/home/user/repo" to "~/repo"
+        repl='~' # need this extra variable for line below
+        dus="${dus//$homeprefix/$repl}" # replace "[/optional/prefix]/home/user" with $repl
         printf '%s\n' "${dus[@]}"
         echo "--> $nrepofiles tracked files in repo ${rootpath//$HOME/~}"
     }

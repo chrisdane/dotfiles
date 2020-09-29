@@ -13,7 +13,7 @@
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
 # getSrcDirectory
 # anyNA(x) is more efficient than any(is.na(x))
-# which.min is more efficient than which(x == min(x)) but which.min(c(1,1,2)) = 1, i.e. the second (and 3rd,4th,...) minimum is negelected
+# which.min is more efficient than which(x == min(x)). ATTENTION: which.min(c(1,1,2)) = 1, i.e. the second (and 3rd,4th,...) minimum is negelected
 # cols_rgb_p <- rgb(t(col2rgb(cols_p)/255), alpha=alpha_rgb)
 # mean1 <- function(x) mean(x)
 # mean2 <- function(x) sum(x) / length(x)

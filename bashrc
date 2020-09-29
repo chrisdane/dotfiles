@@ -145,8 +145,36 @@
         echo "wget -r -no-parent -e robots=off url"
         echo "while read -r f; do mv "$f" "${f//:/_}"; done <files.txt"
     }
+    tarhelp(){
+        echo "https://www.gnu.org/software/tar/manual/html_section/"
+        echo "tar -cvf archive.tar f1 f2 # [c]reate archive named <[f]ile>"
+        echo "tar -xvf archive.tar # e[x]tract archive named <[f]ile>"
+        echo "tar -xvf archive.tar --wildcards \"*.nc\""
+        echo "tar -xvf archive.tar --wildcards *{pat1,pat2}*nc"
+    }
     githelp(){
         echo "rm -f .git/objects/*/tmp_*"
+    }
+    llgit(){
+        repofiles=$(git ls-tree --full-tree --name-only -r HEAD) # string l=1
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+        declare -a repofiles_vec=($repofiles) # array l=n
+        #printf ' %s' "${repofiles_vec[@]}"
+        nrepofiles=${#repofiles_vec[@]} # n
+        rootpath=$(git rev-parse --show-toplevel)
+        declare -a vec=()
+        for i in $(seq 0 $(( $nrepofiles - 1))); do # concatenate path and files
+            #echo "$i: ${repofiles_vec[$i]}"
+            vec[$i]="$rootpath/${repofiles_vec[$i]}"
+        done # todo: without loop
+        #printf ' %s' "${vec[@]}"
+        printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
+        dus=$(du -hc $(echo $repofiles)) # for `du`, /home/user` cannot be abbreviated with `~/`
+        dus="${dus//$HOME/\~}" # convert "/home/user/repo" to "~/repo" here, not already `rootpath`
+        printf '%s\n' "${dus[@]}"
+        echo "--> $nrepofiles tracked files in repo ${rootpath//$HOME/\~}"
     }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"

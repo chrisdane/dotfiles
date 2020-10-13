@@ -1,0 +1,16 @@
+#!/bin/bash
+if [ -z "$1" ] || [ -z "$2" ] 
+    then echo "> nclnohup script-file log-file"
+    exit 1
+fi
+if [ "$1" == "$2" ]; then
+    echo "you provided the same log-file name as script-file name"
+    echo "use ${1}.log instead ..."
+    nohup ncl $1 > $1.log 2>&1 &
+    echo "$HOSTNAME: $!" > "${1}.log.$HOSTNAME.$!.pid"
+    echo "$HOSTNAME: $!"
+else
+    nohup ncl $1 > $2 2>&1 &
+    echo "$HOSTNAME: $!" > "${2}.$HOSTNAME.$!.pid"
+    echo "$HOSTNAME: $!"
+fi  

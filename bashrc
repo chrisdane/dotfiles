@@ -449,7 +449,7 @@
     fi
     
     # load dotfiles-repo functions
-    fs=(mycdotrend.r)
+    fs=(mem scpd rnohup mnohup nclnohup mycdotrend.r)
     for f in "${fs[@]}"; do
         if [ -f ~/dotfiles/functions/$f ]; then
             if [ ! -f ~/bin/$f ]; then

@@ -1,0 +1,7 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+   echo "Bash program to scp data from blizzard.dkrz.de to here. Usage:"
+   echo "> scpd path/to/file/at/DKRZ/starting/from/home" 
+else
+   rsync --partial --progress --rsh=ssh --archive a270073@blizzard.dkrz.de:/pf/a/a270073/$1 ${1##*/}
+fi

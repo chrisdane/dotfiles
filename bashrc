@@ -47,27 +47,27 @@
     printf '%*s' "$ncol" | tr ' ' "*"
     echo ""
 
-    ## Source global definitions
+    # Source global definitions
     if [ -f /etc/bashrc ]; then
         source /etc/bashrc
     fi
 
-    ## use bash completion, if installed
+    # use bash completion, if installed
     if [ -f /etc/bash_completion ]; then
         source /etc/bash_completion
     fi
 
-    ## git automplete
+    # git automplete
     # from https://apple.stackexchange.com/questions/55875/git-auto-complete-for-branches-at-the-command-line
-    ## does not work
+    # does not work
     #if [ -f ~/.git-completion.bash ]; then
     #    source ~/.git-completion.bash
     #fi
     
-    ## enable git colors
+    # enable git colors
     #git config --global color.ui auto
     
-    ## my bins (doing this recursively is not recommended; security)
+    # my bins (doing this recursively is not recommended; security)
     if [ -d ~/bin ]; then
         export PATH=~/bin/:$PATH
     fi
@@ -75,10 +75,10 @@
         export PATH=~/.local/bin/:$PATH
     fi
 
-    ## default prompt
+    # default prompt
     PS1='[\u@\h \W]\$ '
 
-    ## my prompt
+    # my prompt
     PS1='\[\033[0;34m\]\h:$(pwd)/>\[\033[0m\] '
 
     # attach cpu temp to prompt if available
@@ -108,7 +108,7 @@
     # https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
     complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
 
-    ## helper functions
+    # helper functions
     # check if program exists also if its masked by alias
     # if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
     # https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
@@ -129,6 +129,17 @@
         echo `ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
+    pwd2(){
+        printf "\$(readlink -f .) = "
+        readlink -f . # or pwd -P
+    }
+    pwd3(){
+        printf "lfs getstripe --mdt-index $(readlink -f .): "
+        lfs getstripe --mdt-index .
+    }
+    ddiff(){
+        diff $1 $2 | vim -R -
+    } # or `diff old new | colordiff`
     archhelp(){
         echo "update mirror: reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist"
         echo "yarn cache clean"
@@ -209,19 +220,8 @@
         echo "clip/mask: draw rectangle over area you want to clip. select both. objects -> clip -> set"
         echo "crop white space: select -> edit -> resize page to selection"
     }
-    pwd2(){
-        printf "\$(readlink -f .) = "
-        readlink -f . # or pwd -P
-    }
-    pwd3(){
-        printf "lfs getstripe --mdt-index $(readlink -f .): "
-        lfs getstripe --mdt-index .
-    }
-    ddiff(){
-        diff $1 $2 | vim -R -
-    } # or `diff old new | colordiff`
     
-    ## argument list too long
+    # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
     #/bin/echo "$(printf "%*s" 131072 ".")" > /dev/null --> too long
     # --> $(getconf PAGE_SIZE)*32 = 4096*32 = 131072
@@ -234,7 +234,7 @@
     # --> it seems multiple spaces count as single spaces
     # --> it seems to be independet of the number of input files provided (29355 in this example)
 
-    ## aliase
+    # aliase
     # check aliase with 'type alias'
     alias ll='ls --color=auto -lFh'
     alias la='ls --color=auto -alFh'
@@ -254,7 +254,7 @@
     alias less="less -i"
     alias more="less"
 
-    ## own variables
+    # own variables
     export VISUAL=vim
     export EDITOR="$VISUAL" # also applies to git
     # todo: need to convert these to functions:
@@ -266,11 +266,11 @@
     export crop='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
     # watch -n 0.1 ls
 
-    ## hostname
+    # hostname
     printf "\$(hostname)@\$(hostname -d): "
     echo "$(hostname)@$(hostname -d)"
   
-    ## check cpus
+    # check cpus
     if check_existance lscpu; then
         printf "/proc/cpuinfo: "
         cat /proc/cpuinfo | grep --color=never "model name" | head -1
@@ -280,11 +280,11 @@
         #lscpu | grep --color=never "^CPU(s):"
     fi
 
-    ## uptime
+    # uptime
     printf "\$(uptime): "
     uptime | awk -F'( |,|:)+' '{print $6,$7",",$8,"hours,",$9,"minutes"}'
 
-    ## which OS/distro
+    # which OS/distro
     if [ -f /proc/version ]; then
         echo "cat /proc/version:"
         cat /proc/version
@@ -292,7 +292,7 @@
         echo "/proc/version does not exist. what crazy OS/distro is this!?"
     fi
 
-    ## which package manager 
+    # which package manager 
     declare -A osInfo;
     osInfo[/etc/redhat-release]=yum
     osInfo[/etc/arch-release]=pacman
@@ -305,7 +305,7 @@
         fi
     done
 
-    ## print free disk space on ~/ 
+    # print free disk space on ~/ 
     if check_existance tr; then
         if check_existance cut; then
             printf "~/ "
@@ -313,7 +313,7 @@
         fi
     fi
 
-    ## which tty
+    # which tty
     printf "\$(tty): "; tty
     #set -o vi # unfortunatley this breaks ctrl+a/+e
     # kill open remote sessions:
@@ -321,10 +321,10 @@
     #ssh cdanek@stan1.awi.de pkill -9 -t pts/3
     #ssh cdanek@stan1.awi.de pkill -u cdanek
 
-    ## which shell
+    # which shell
     printf "\$SHELL: "; echo $SHELL
 
-    ## show what kind of shell (at this point it must be an interactive shell since)
+    # show what kind of shell (at this point it must be an interactive shell since)
     # h: Remember the location of commands as they are looked up for execution.  This is enabled by default.
     # i: interactive
     # m: Monitor mode.  Job control is enabled
@@ -336,7 +336,7 @@
     fi
     echo
 
-    ## check if login shell (cannot check $0 from within this script)
+    # check if login shell (cannot check $0 from within this script)
     if check_existance shopt; then
         if shopt -q login_shell; then
             echo "\$0 = \"-$(basename $SHELL)\" or \`shopt login_shell\` = on -> login shell"
@@ -348,7 +348,7 @@
         echo "\$0 cannot be evaluated from within this .bashrc"
     fi
 
-    ## check if module tun is available or not (it is not after system upgrade)
+    # check if module tun is available or not (it is not after system upgrade)
     modprobe tun &> /dev/null # silent output
     if [ $? -ne 0 ]; then # if not successfull either due to missing permissions or file not found
         tun_file=$(find /lib/modules/`uname -r` -print | grep -i "tun.ko")
@@ -358,7 +358,7 @@
         fi
     fi
 
-    ## check if vim/vimx is installed and supports clipboard pasting
+    # check if vim/vimx is installed and supports clipboard pasting
     if check_existance vim || check_existance vimx; then
         if check_existance vim; then
             tmp=$(vim --version | grep clipboard)
@@ -412,19 +412,19 @@
         fi
     fi # if vim or vimx exist
     
-    ## run bash stuff if available
+    # run bash stuff if available
     if ! check_existance nc-config; then
         echo nc-config is missing!
     fi
     
-    ## run R stuff if available
+    # run R stuff if available
     if check_existance Rscript; then
         if check_existance mytimes; then
             mytimes
         fi
     fi
     
-    ## find module binary
+    # find module binary
     # $?: last command return value
     # $*: list of all args
     # works: eval `/sw/rhel6-x64/tcl/modules-3.2.10/Modules/$MODULE_VERSION/bin/modulecmd bash list`
@@ -447,8 +447,19 @@
     else
         echo "module command is not set"
     fi
+    
+    # load dotfiles-repo functions
+    fs=(mycdotrend.r)
+    for f in "${fs[@]}"; do
+        if [ -f ~/dotfiles/functions/$f ]; then
+            if [ ! -f ~/bin/$f ]; then
+                echo "ln -s ~/dotfiles/functions/$f ~/bin/$f ..."
+                ln -s ~/dotfiles/functions/$f ~/bin/$f
+            fi
+        fi
+    done
 
-    ## load private stuff at the end to overwrite defaults (and conda) from above
+    # load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
         printf '%*s' "$ncol" | tr ' ' "-"
         printf " ~/.myprofile "
@@ -457,7 +468,7 @@
         source ~/.myprofile
     fi
 
-    ## Finish
+    # Finish
     printf '%*s' "$ncol" | tr ' ' "*"
     printf " ~/.bashrc finish "
     printf '%*s' "$ncol" | tr ' ' "*"

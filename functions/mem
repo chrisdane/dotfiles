@@ -1,2 +1,2 @@
 #!/bin/bash
-echo $HOSTNAME":" `cat /proc/meminfo | awk '/MemFree/ { print $2 /1024^2 }'`
+echo $HOSTNAME":" `cat /proc/meminfo | awk '/MemFree/ { print $2 /1024^2 }'` "GB"

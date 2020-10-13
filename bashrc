@@ -449,7 +449,16 @@
     fi
     
     # load dotfiles-repo functions
-    fs=(mem scpd rnohup mnohup nclnohup mycdotrend.r)
+    fs=(
+        psme cpu cpuall cpu_total mem scpd 
+        rnohup mnohup nclnohup 
+        finduser.r 
+        get_esm_version_exp get_esm_version_home get_mvstreams_from_atmout.r
+        mycdotrend.r
+        mycat_areadepth mycat_time mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
+        myncrcat.r
+        inertial.r
+        )
     for f in "${fs[@]}"; do
         if [ -f ~/dotfiles/functions/$f ]; then
             if [ ! -f ~/bin/$f ]; then

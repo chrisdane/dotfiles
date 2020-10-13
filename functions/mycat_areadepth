@@ -1,0 +1,64 @@
+#!/sw/rhel6-x64/r/r-3.3.3-gcc48/bin/Rscript --vanilla
+
+args <- commandArgs(trailingOnly=F)
+me <- basename(sub("--file=", "", args[grep("--file=", args)]))
+args <- commandArgs(trailingOnly=T)
+
+if (length(args) == 0 ||
+    (length(args) != 0 && length(args) < 3)) {
+
+    message("\nUsage:\n",
+            me, " outname files_to_cat_seperated_by_space\n")
+    quit()
+    
+} else if (length(args) != 0 && length(args) >= 3) {
+
+    outname <- args[1]
+    fs <- args[2:length(args)] # files to cat
+    
+    if (F) {
+        cat("******************\n")
+        cat(paste0("outname=", outname), "\n")
+        for (i in 1:length(fs)) {
+            cat(paste0("   ", i, ": ", fs[i]), "\n")
+        }
+        print(args)
+        stop("asd")
+    }
+
+    cat("******************\n")
+   
+    # make time a record dimension
+    for (i in 1:length(fs)) {
+        cmd <- paste0("ncks -4 --mk_rec_dmn time ", 
+                      dirname(fs[i]), "/", basename(fs[i]), " ", 
+                      dirname(fs[i]), "/r_", basename(fs[i]))
+        cat(paste0(i, ": ", cmd, " ..."), "\n")
+        system(cmd)
+    }
+
+    # cat together all the files
+    cmd <- paste0("ncrcat -O ", 
+                  paste0(dirname(fs), "/r_", basename(fs), collapse=" "), " ",
+                  dirname(outname), "/r_", basename(outname))
+    cat(paste0(cmd, " ..."), "\n")
+    system(cmd)
+
+    # reorder dimensions from (depth,time,lat,lon) --> (time,depth,lat,lon)
+    cmd <- paste0("ncpdq -O -a time,depth,lat,lon ",
+                  dirname(outname), "/r_", basename(outname), " ",
+                  dirname(outname), "/", basename(outname))
+    cat(paste0(cmd, " ..."), "\n")
+    system(cmd)
+
+    # redo the time dimension from record to normal dimension
+    cmd <- paste0("ncks -O --fix_rec_dmn time ", 
+                  dirname(outname), "/", basename(outname), " ", 
+                  dirname(outname), "/", basename(outname))
+    cat(paste0(cmd, " ..."), "\n")
+    system(cmd)
+
+    cat("******************\n")
+
+}
+

@@ -1,0 +1,57 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo "Error: Provide an esm model experiment path."
+    exit 0
+else
+    if [ "$1" == "-h" ]; then
+        echo "Usage: `basename $0` path/to/esm/model/experiment/"
+        exit 0
+    else
+        if [ -d "$1" ]; then
+            if [ -d "$1/scripts/esm-tools" ]; then
+                esm_master_dir=$(cd $1/scripts/esm-tools; pwd)
+            else
+                echo "Error: Directory $1/scripts/esm-tools not found. Provide a correct esm model experiment path."
+                exit 0
+            fi
+        else 
+            echo "Error: $1 does not exist. Provide a correct esm model experiment path."
+            exit 0 
+        fi
+    fi
+fi
+
+# go into esm-master and check branches and revisions
+cd -- $esm_master_dir/esm-master
+master_branch=$(grep "On branch" gitstatus)
+master_branch=${master_branch#*On branch }
+master_revision=$(grep -A2 "git log -1 --oneline" gitstatus | tail -n 1 | cut -d " " -f1)
+
+cd -- $esm_master_dir/esm-environment
+environment_branch=$(grep "On branch" gitstatus)
+environment_branch=${environment_branch#*On branch }
+environment_revision=$(grep -A2 "git log -1 --oneline" gitstatus | tail -n 1 | cut -d " " -f1)
+
+cd -- $esm_master_dir/esm-runscripts
+runscripts_branch=$(grep "On branch" gitstatus) # default: some branch
+runscripts_branch=${runscripts_branch#*On branch }
+
+if [ ${#runscripts_branch} == 0 ]; then # special branches
+    runscripts_branch=$(grep "HEAD detached at" gitstatus)
+    if [ ${#runscripts_branch} != 0 ]; then # HEAD detached
+        runscripts_branch=${runscripts_branch#*HEAD detached at }
+    else 
+        echo "Unknown runscripts branch format: '$runscripts_branch'"
+        exit 0
+    fi
+fi
+runscripts_revision=$(grep -A2 "git log -1 --oneline" gitstatus | tail -n 1 | cut -d " " -f1)
+
+echo "*  \`<modelname>\`"
+echo "*  \`$esm_master_dir\`"
+echo "*  \`esm-master\` \`$master_branch\` \`$master_revision\`"
+echo "*  \`esm-environment\` \`$environment_branch\` \`$environment_revision\`"
+echo "*  \`esm-runscripts\` \`$runscripts_branch\` \`$runscripts_revision\`"
+
+

@@ -1,0 +1,48 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    if [ -d "$HOME/esm-master" ]; then
+        export esm_master_dir=$HOME/esm-master
+    else
+        echo "Error: $HOME/esm-master does not exist. Provide a correct esm-master path"
+        exit 0
+    fi
+else
+    if [ "$1" == "-h" ]; then
+        echo "Usage: `basename $0`"
+        echo "       or"
+        echo "       `basename $0` path/to/esm-master"
+        exit 0
+    else
+        if [ -d "$1" ]; then
+            if [ -d "$1/.esm" ]; then
+                export esm_master_dir=$1
+            else
+                echo "Error: no .esm/ found in $1. Provide a correct esm-master path"
+                exit 0
+            fi
+        else 
+            echo "Error: $1 does not exist. Provide a correct esm-master path"
+            exit 0 
+        fi
+    fi
+fi
+
+echo "get stats of esm-master directory $esm_master_dir:"
+
+# go into esm-master and check branches and revisions
+cd -- $esm_master_dir
+export master_branch=$(git status | head -1 | cut -d " " -f4)
+export master_revision=$(git rev-parse --short HEAD)
+cd -- $esm_master_dir/esm-environment
+export environment_branch=$(git status | head -1 | cut -d " " -f4)
+export environment_revision=$(git rev-parse --short HEAD)
+cd -- $esm_master_dir/esm-runscripts
+export runscripts_branch=$(git status | head -1 | cut -d " " -f4)
+export runscripts_revision=$(git rev-parse --short HEAD)
+
+echo "*  \`esm-master\` \`$master_branch\` \`$master_revision\`"
+echo "*  \`esm-environment\` \`$environment_branch\` \`$environment_revision\`"
+echo "*  \`esm-runscripts\` \`$runscripts_branch\` \`$runscripts_revision\`"
+
+

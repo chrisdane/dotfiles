@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ] && [ "$#" -ne 2 ]; then
+    echo Usage for example:
+    echo "$ checkall [-pp] 'command'"
+    echo "checkall -pp 'whoami'"
+    echo "checkall 'source /etc/bashrc && module load cdo && cdo --version 2>&1 | head -1'"
+    echo "checkall 'echo $0' # login/non-login shell"
+    echo "checkall 'echo $-' # interactive/non-interactive shell"
+    echo "checkall 'top -b -n 1 -U \$(whoami)'"
+    echo "checkall 'ps -u \$(whoami)'"
+    exit 1
+fi
+
+# default: 1 argument
+cmd=$1
+hosts=(mlogin100 mlogin101 mlogin102 mlogin103 mlogin104 mlogin105 mlogin108)
+
+# if 2 arguments
+if [ "$#" -eq 2 ]; then
+    if [ $1 == "-pp" ]; then
+        cmd=$2
+        hosts=(mistralpp1 mistralpp2 mistralpp3 mistralpp4 mistralpp5)
+    else
+        echo "only '-pp' allowed as non-command argument"
+        exit 1
+    fi
+fi
+
+for i in "${hosts[@]}"
+do
+    echo "-----------------------------------"
+    echo -e $ ssh $i "'$cmd'"
+    echo "`ssh $i $cmd`"
+done
+
+echo "-----------------------------------"
+

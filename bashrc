@@ -419,8 +419,8 @@
     
     # run R stuff if available
     if check_existance Rscript; then
-        if check_existance mytimes; then
-            mytimes
+        if check_existance mytimes.r; then
+            mytimes.r
         fi
     fi
     

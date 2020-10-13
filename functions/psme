@@ -1,2 +1,2 @@
 #!/bin/bash
-ps -u a270073
+ps -u $(whoami)

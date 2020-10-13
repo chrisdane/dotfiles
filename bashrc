@@ -205,6 +205,10 @@
         echo "conda clean --all"
         echo "conda env remove -n <env> \# this removes all packages installed in <env>"
     }
+    inkscapehelp(){
+        echo "clip/mask: draw rectangle over area you want to clip. select both. objects -> clip -> set"
+        echo "crop white space: select -> edit -> resize page to selection"
+    }
     pwd2(){
         printf "\$(readlink -f .) = "
         readlink -f . # or pwd -P

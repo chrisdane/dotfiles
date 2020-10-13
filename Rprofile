@@ -4,16 +4,17 @@
 
 ## usefull commands
 # options(warn=-1) # turn off
-# options(warn=-0) # turn on
+# options(warn=0) # turn on
 # options(warn = 2) # stop on warnings
 # options(error = recover)
 # options(error = NULL)
-# save output to file: sink("file.txt") <do stuff> sink() # sink() closes the connection
+# save output to file: sink("file.txt"); <do stuff>; sink()
 # file.edit()
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
 # getSrcDirectory
 # anyNA(x) is more efficient than any(is.na(x))
 # which.min is more efficient than which(x == min(x)). ATTENTION: which.min(c(1,1,2)) = 1, i.e. the second (and 3rd,4th,...) minimum is negelected
+#which(abs(zlevels - center_around) == min(abs(zlevels - center_around)))
 # cols_rgb_p <- rgb(t(col2rgb(cols_p)/255), alpha=alpha_rgb)
 # mean1 <- function(x) mean(x)
 # mean2 <- function(x) sum(x) / length(x)
@@ -35,6 +36,11 @@
 # sprintf("%02i", 1) --> 01
 # rJava pkg error: JDK is incomplete! Please make sure you have a complete JDK. JRE is *not* sufficient: sudo R CMD javareconf
 # cat(capture.output(str(dates_in_list)), sep="\n")
+# return(as.list(environment())) # return everything defined in function
+#‘isTRUE(x)’ is the same as ‘{ is.logical(x) && length(x) == 1 &&
+#     !is.na(x) && x }’; ‘isFALSE()’ is defined analogously.
+#     Consequently, ‘if(isTRUE(cond))’ may be preferable to ‘if(cond)’
+#     because of ‘NA’s.
 
 if (T) { # set F for blank .Rprofile
 
@@ -50,8 +56,14 @@ if (T) { # set F for blank .Rprofile
     }
     
     # R executable
+    Rwrapper <- Sys.which("R")
     Rexe <- file.path(R.home(), "bin", "exec", "R")
-    if (interactive()) message("R executable: ", Rexe)
+    if (interactive()) {
+        message("R wrapper: ", Rwrapper)
+        message("R executable: ", Rexe)
+        message("numeric tolerance `sqrt(.Machine$double.eps)` = ", 
+                sqrt(.Machine$double.eps))
+    }
 
     # C compiler used to build this R 
     if (F) { # building a package needs same C compiler that was used for building r itself
@@ -311,11 +323,11 @@ if (T) { # set F for blank .Rprofile
             family <- "CM Roman"
             if (any(regexpr(family, extrafont::fonts()) != -1)) {
                 cmd <- paste0("   pdf.options(family=", family, ")")
-                message(cmd, " # and extrafont::embed_fonts()")
+                message(cmd, " # and grDevcices::embedFonts() or extrafont::embed_fonts()")
                 grDevices::pdf.options(family=family)
                 rm(cmd)
             } else {
-                message("   warn: family '", family, "' is not installed: font_install(\"fontcm\")")
+                message("   family '", family, "' is not installed: extrafont::font_install(\"fontcm\")")
             }
             rm(family)
         }

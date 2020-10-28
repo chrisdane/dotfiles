@@ -184,10 +184,10 @@
         printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
         dus=$(du -hc $(echo $repofiles)) # for `du`, /home/user` cannot be abbreviated with `~/`
         homeprefix=$(readlink -f ~/)
-        repl='~' # need this extra variable for line below
-        dus="${dus//$homeprefix/$repl}" # replace "[/optional/prefix]/home/user" with $repl
+        patt='~' # need this extra variable for line below
+        dus="${dus//$homeprefix/$patt}" # replace "[/optional/prefix]/home/user" with pattern $patt
         printf '%s\n' "${dus[@]}"
-        echo "--> $nrepofiles tracked files in repo ${rootpath//$HOME/~}"
+        echo "--> $nrepofiles tracked files in repo ${rootpath//$HOME/$patt}"
     }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"

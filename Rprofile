@@ -41,7 +41,9 @@
 #     !is.na(x) && x }’; ‘isFALSE()’ is defined analogously.
 #     Consequently, ‘if(isTRUE(cond))’ may be preferable to ‘if(cond)’
 #     because of ‘NA’s.
-
+#me <- paste0(normalizePath(getSrcDirectory(read_gnip)), "/", getSrcFilename(read_gnip))
+#remotes::install_github("nickmckay/LiPD-Utilities", subdir="R")
+#
 if (T) { # set F for blank .Rprofile
 
     # hostname, e.g. mlogin101, stan1.awi.de, K
@@ -115,7 +117,7 @@ if (T) { # set F for blank .Rprofile
             }
         } # find C compiler used to build this R
     } # which C compiler
-    rm(Rexe, host) 
+    rm(Rwrapper, Rexe, host) 
 
     # add own paths to .libPaths()
     # --> construct my libpath as function of R version and C compiler version used to build this R version

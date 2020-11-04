@@ -3,9 +3,9 @@
 # https://csgillespie.github.io/efficientR/3-3-r-startup.html#r-startup
 
 ## usefull commands
+#options(warn=2) # stop on warnings
+#options(warn=0) # back to default
 # options(warn=-1) # turn off
-# options(warn=0) # turn on
-# options(warn = 2) # stop on warnings
 # options(error = recover)
 # options(error = NULL)
 # save output to file: sink("file.txt"); <do stuff>; sink()
@@ -25,6 +25,8 @@
 # unlist(x, use.names=F) is faster than unlist(x)
 # check stats:::t.test.default()
 # library(pryr) --> object_size(), mem_used(), mem_change() 
+#file_sizes_byte <- file.size(files)
+#file_sizes_pretty <- sapply(file_sizes_byte, utils:::format.object_size, "auto")
 # getAnywhere(objectname)
 # system.file("extdata", "2012.csv", package = "testdat")
 # options(menu.graphics=FALSE) #graphics dialogs always seem to crash R

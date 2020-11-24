@@ -4,6 +4,7 @@
 # except
 !README.md
 !functions/
+!tex_template/
 !Rprofile
 !bash_profile
 !bash_profile_clean

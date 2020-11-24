@@ -30,7 +30,7 @@
 # getAnywhere(objectname)
 # system.file("extdata", "2012.csv", package = "testdat")
 # options(menu.graphics=FALSE) #graphics dialogs always seem to crash R
-# sort(x, index.return=TRUE)$ix
+# sort(x, index.return=T)$ix
 # pdf.options(useDingbats = TRUE) https://yihui.name/knitr/demo/graphics/
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
 # list.files(pattern = glob2rx('*.tif'))

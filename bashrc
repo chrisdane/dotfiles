@@ -202,6 +202,7 @@
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "cdo -r copy in out"
         echo "cdo trend in intercepts slopes"
+        echo "cdo -f nc -t ecmwf -setgridtype,regular"
     }
     ncohelp(){
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"

@@ -322,7 +322,7 @@ if (T) { # set F for blank .Rprofile
         #if (any(ls(pos=which(search() == "myEnv")) == "myhelp")) myhelp()
        
         # set default plot fonts
-        if (any(search() == "package:extrafont")) {
+        if (F && any(search() == "package:extrafont")) {
             #family <- "Droid Sans Mono" # "CM Roman"
             family <- "CM Roman"
             if (any(regexpr(family, extrafont::fonts()) != -1)) {

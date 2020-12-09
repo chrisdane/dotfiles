@@ -165,6 +165,7 @@
     }
     githelp(){
         echo "rm -f .git/objects/*/tmp_*"
+        echo "git diff 6843db8 -- '*.functions'"
     }
     llg(){
         repofiles=$(git ls-tree --full-tree --name-only -r HEAD) # string l=1
@@ -445,6 +446,7 @@
                 module avail -t 2>&1 | grep -i $1
             fi
         }
+        echo "defined modulegrep()"
     else
         echo "module command is not set"
     fi

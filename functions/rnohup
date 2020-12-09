@@ -8,11 +8,47 @@ if [ "$1" == "$2" ]; then
     echo "log file must be different from script file and end with .log"
     exit 1
 
-elif [ ${2: -4} != ".log" ]; then
+elif [[ ${2: -4} != ".log" ]]; then
     echo "log file must end with .log"
     exit 1
 
 else
+    if ! [ -x "$(command -v Rscript)" ]; then
+        echo "'Rscript' not available."
+        if module -v $1 > /dev/null 2>&1; then
+            echo "try to find R via module ..."
+            ravail=""
+            ravail=$(module avail -t 2>&1 | grep -i ^r/)
+            if [[ $ravail != "" ]]; then
+                declare -a ravail_arr=($ravail)
+                navail=${#ravail_arr[@]}
+                echo "--> found $navail entries starting with 'r':"
+                cnt=0
+                for f in "${ravail_arr[@]}"; do 
+                    cnt_show=$((cnt+1))
+                    echo "$cnt_show: ${ravail_arr[$cnt]}"
+                    cnt=$((cnt+1))
+                done
+                read -p "Which number you want to load via module?" -n 1 -r
+                echo
+                if [[ "$REPLY" =~ ^[0-9]+$ ]]; then
+                    select=$((REPLY-1))
+                    rversion=${ravail_arr[$select]}
+                    echo "run 'module load $rversion' ..."
+                    module load $rversion
+                else
+                    echo "Answer is not an integer. Stop here."
+                    exit 1 
+                fi
+            else # if any modules starting with 'r' are available
+                echo "--> not any module starts with 'r'. Stop here."
+                exit 1 
+            fi # if no modules start with 'r'
+        else # if module available
+            echo "'module' also not available. Stop here."
+            exit 1 
+        fi # if module not available
+    fi # if Rscript not available
     nohup Rscript $1 > $2 2>&1 &
     echo "$HOSTNAME: $!" > "${2}.$HOSTNAME.$!.pid"
     echo "$HOSTNAME: $!"

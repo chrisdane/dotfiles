@@ -188,7 +188,12 @@ if (T) { # set F for blank .Rprofile
 		# but this has not such a nice handling
         
         #packages <- NULL
-        packages <- c("ncdf4", "fields", "oce", "extrafont", "bookdown", "devtools", "dtupdate")
+        packages <- c("ncdf4", "fields", "oce" 
+                      #, "extrafont" 
+                      #, "bookdown" 
+                      , "devtools"
+                      #, "dtupdate" # for github_update
+                      )
         # "data.table", "forecast", "ncdf.tools", "crayon"
         if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put colorout first
 

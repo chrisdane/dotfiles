@@ -146,6 +146,7 @@
         echo "sudo paccache -r"
         echo "yay -Yc \# clean unneeded dependencies"
         echo "yay -Scc \# clean cache"
+        echo "ip addr / ip link / ip r / ip tuntap show / ifconfig -a"
     }
     bashhelp(){
         echo "./script > script.log 2>&1 &"

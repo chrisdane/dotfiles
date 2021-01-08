@@ -47,7 +47,7 @@ message("--> varnameout = \"", varnameout, "\"")
 # check outpath
 if (!any(grepl("--outdir", args))) { # outdir not provided
     outdir <- dirname(fin)
-    message("outdir not provided. use dirname(fin) = \"", outdir, "\"")
+    message("outdir not provided. use `dirname(fin)` = \"", outdir, "\"")
 } else { # outdir provided
     outdir <- sub("--outdir=", "", args[grep("--outdir=", args)])
 }

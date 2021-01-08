@@ -152,6 +152,7 @@
         echo "./script > script.log 2>&1 &"
         echo "ln -sfn path/to/file-name link-name"
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
+        echo "find / -iname openssl.pc 2>/dev/null \# locate alternative"
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
         echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
         echo "wget -r -no-parent -e robots=off url"
@@ -196,6 +197,7 @@
         echo "cdo --operators"
         echo "cdo -h [operator] # e.g. cdo -h after"
         echo "cdo [-t echam6] -f nc copy file.grb file.nc"
+        echo "cdo -f nc -t ecmwf -setgridtype,regular"
         echo "for f in *01.grb; do echo \$f; cdo -t echam6 -f nc copy \$f \$f.nc; done"
         echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
         echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
@@ -204,7 +206,10 @@
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "cdo -r copy in out"
         echo "cdo trend in intercepts slopes"
-        echo "cdo -f nc -t ecmwf -setgridtype,regular"
+        echo "export CDO_WEIGHT_MODE=off; export MAX_JACOBI_ITER=100"
+        echo "cdo sub fin -timmean fin anom_fin"
+        echo "cdo eof,40 anom_fin eigen_val eigen_vec" 
+        echo "cdo eofcoeff eigen_vec anom_fin obase"
     }
     ncohelp(){
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"

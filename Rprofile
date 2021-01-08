@@ -163,7 +163,7 @@ if (T) { # set F for blank .Rprofile
                             "update.check.r", "mysetOutputColors.r", 
                             "myRPrompt.r", "label_function.r",
                             "leap_function.r"))
-        for (i in 1:length(scripts)) {
+        for (i in seq_along(scripts)) {
             if (file.exists(scripts[i])) {
                 if (!exists("myEnv")) {
                     myEnv <- new.env()
@@ -177,7 +177,7 @@ if (T) { # set F for blank .Rprofile
         }
         if (exists("myEnv")) {
             attach(myEnv, warn.conflicts=F) # if masked functions exist
-            rm(myEnv)
+            rm(cmd,myEnv)
         }
         rm(scripts, i)
 

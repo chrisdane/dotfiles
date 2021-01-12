@@ -191,7 +191,7 @@ if (T) { # set F for blank .Rprofile
         packages <- c("ncdf4", "fields", "oce" 
                       #, "extrafont" 
                       #, "bookdown" 
-                      , "devtools"
+                      #, "devtools"
                       #, "dtupdate" # for github_update
                       )
         # "data.table", "forecast", "ncdf.tools", "crayon"

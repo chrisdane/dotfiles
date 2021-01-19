@@ -140,6 +140,14 @@
     ddiff(){
         diff $1 $2 | vim -R -
     } # or `diff old new | colordiff`
+    myfind(){
+        if [ $# -eq 0 ]; then
+            echo "Usage: myfind search_pattern"
+            return 1
+        else
+            find -print 2>/dev/null | grep -i $1 
+        fi
+    }
     archhelp(){
         echo "update mirror: reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist"
         echo "yarn cache clean"

@@ -15,7 +15,7 @@ trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\
 }
 
 # check
-usage <- paste0("\nUsage:\n $ ", me, " [--method=eof] [--cdo_weight_mode=off] [--max_jacobi_iter=100] [--P=4] [--neof=3] [--dry] --anom_file=<anom_file> [--varname=<varname>] [--outdir=<outdir>]\n")
+usage <- paste0("\nUsage:\n $ ", me, " [--method=eof] [--cdo_weight_mode=off] [--max_jacobi_iter=100] [--P=4] [--neof=3] [--dry] --anom_file=<anom_file> [--outdir=`dirname(anom_file)`]\n")
 if (length(args) == 0) {
     message(usage)
     quit()
@@ -28,6 +28,7 @@ if (!any(grepl("--anom_file", args))) {
     anom_file <- sub("--anom_file=", "", args[grep("--anom_file=", args)])
     message("anom_file = ", anom_file)
     if (!file.exists(anom_file)) stop("anom_file = \"", anom_file, "\" does not exist")
+    indir <- normalizePath(dirname(anom_file))
 }
 # check if input is monthly or not
 monthly <- F
@@ -99,23 +100,10 @@ if (any(args == "--dry")) {
     dry <- T
 }
 
-# check varname
-if (!any(grepl("--varname", args))) {
-    cmd <- paste0("cdo -s showname ", anom_file)
-    message("varname not provided. run `", cmd, "` ... ", appendLF=F)
-    varname <- trimws(system(cmd, intern=T))
-    message("\"", varname, "\"")
-} else {
-    varname <- sub("--varname=", "", args[grep("--varname=", args)])
-    message("provided varname = \"", varname, "\"")
-}
-#varnameout <- paste0("lm_", varname, "_as_time_slope")
-#message("--> varnameout = \"", varnameout, "\"")
-
 # check outdir
 if (!any(grepl("--outdir", args))) { # outdir not provided
-    outdir <- dirname(anom_file)
-    message("outdir not provided. use `dirname(anom_file)` = \"", outdir, "\"")
+    outdir <- normalizePath(dirname(anom_file))
+    message("outdir not provided. use default `dirname(anom_file)`")
 } else { # outdir provided
     outdir <- sub("--outdir=", "", args[grep("--outdir=", args)])
 }
@@ -125,7 +113,7 @@ if (file.access(outdir, mode=0) == -1) { # not existing
     if (!file.exists(outdir)) {
         stop("not successful. error msg:")
     } else {
-        message("success")
+        message("ok")
     }
 } else { # outdir exists
     if (file.access(outdir, mode=2) == -1) { # not writable
@@ -188,13 +176,12 @@ for (fi in seq_along(fin_all)) {
     message("***************** file ", fi, "/", length(fin_all), " ********************")
 
     # cdo eof
-    fout_eigval <- sub(varname, paste0(varname, "_", neof, "_", method, "_eigval"), fin_all[fi])
-    fout_eigvec <- sub(varname, paste0(varname, "_", neof, "_", method, "_eigvec"), fin_all[fi])
+    fout_eigval <- paste0(fin_all[fi], "_", neof, "_", method, "_eigval.nc")
+    fout_eigvec <- paste0(fin_all[fi], "_", neof, "_", method, "_eigvec.nc")
     cmd <- paste0("export CDO_WEIGHT_MODE=", cdo_weight_mode, "; ", 
                   "export MAX_JACOBI_ITER=", max_jacobi_iter, "; ", 
-                  "cdo -v -P ", nparallel, " ", method, ",", neof, " ", fin_all[fi], " ", 
-                  outdir, "/", fout_eigval, " ", 
-                  outdir, "/", fout_eigvec)
+                  "cdo -v -P ", nparallel, " ", method, ",", neof, " ", indir, "/", fin_all[fi], " ", 
+                  outdir, "/", fout_eigval, " ", outdir, "/", fout_eigvec)
     message("run `", cmd, "` ...")
     if (!dry) {
         tic <- Sys.time()
@@ -215,24 +202,24 @@ for (fi in seq_along(fin_all)) {
     } # if not dry
 
     # cdo eofcoeff
-    fout_pc <- sub(varname, paste0(varname, "_", neof, "_", method, "_pc"), fin_all[fi])
+    fout_pc <- paste0(fin_all[fi], "_", neof, "_", method, "_pc.nc")
     cmd <- paste0("export CDO_FILE_SUFFIX=NULL; ",
-                  "cdo -v eofcoeff ", fout_eigvec, " ", fin_all[fi], " ",
+                  "cdo -v eofcoeff ", outdir, "/", fout_eigvec, " ", indir, "/", fin_all[fi], " ",
                   outdir, "/", fout_pc)
     message("run `", cmd, "` ...")
     if (!dry) system(cmd)
 
     # rename the *nc00000, *.nc000001, ... files
     for (i in seq_len(neof)-1) { # 0, 1, 2, ...
-        fout_pc_i <- sub(varname, paste0(varname, "_", neof, "_", method, "_pc", i+1), fin_all[fi])
+        fout_pc_i <- paste0(fin_all[fi], "_", neof, "_", method, "_pc", i+1, ".nc")
         cmd <- paste0("mv ", outdir, "/", fout_pc, sprintf("%05i", i), " ", 
                       outdir, "/", fout_pc_i)
         message("run `", cmd, "` ...")
         if (!dry) system(cmd)
     }
 
-    # derive and cat variance explained
-    fout_explvar <- sub(varname, paste0(varname, "_", neof, "_", method, "_explvar"), fin_all[fi])
+    # derive and cat described variance
+    fout_explvar <- paste0(fin_all[fi], "_", neof, "_", method, "_descrvar.nc")
     cmd <- paste0("cdo -seltimestep,1/", neof, " -div ", fout_eigval, " -timsum ", 
                   fout_eigval, " ", outdir, "/", fout_explvar)
     message("run `", cmd, "` ...")
@@ -245,7 +232,7 @@ for (fi in seq_along(fin_all)) {
         dump <- gsub(";", "", dump)
         dump <- trimws(dump)
         dump <- as.numeric(dump)
-        message("explained variance:\n",
+        message("described variance:\n",
                 paste(paste0("   ", method, seq_len(neof), ": ", 100*dump, "%"), collapse="\n"))
     }
 

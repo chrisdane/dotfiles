@@ -45,6 +45,7 @@
 #     because of ‘NA’s.
 #me <- paste0(normalizePath(getSrcDirectory(read_gnip)), "/", getSrcFilename(read_gnip))
 #remotes::install_github("nickmckay/LiPD-Utilities", subdir="R")
+#pid=system("sleep 100 & echo $!", intern=T) leads to `sh <defunct>` zombie
 #
 if (T) { # set F for blank .Rprofile
 

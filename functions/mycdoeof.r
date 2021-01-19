@@ -38,7 +38,7 @@ if (grepl("Jan-Dec", anom_file)) monthly <- T
 if (any(grepl("--method", args))) {
     method <- sub("--method=", "", args[grep("--method=", args)])
     method <- as.character(method)
-    if (!any(method != c("eof", "eoftime", "eofspatial"))) {
+    if (!any(method == c("eof", "eoftime", "eofspatial"))) {
         stop("provided method = ", method, 
              " must be either \"eof\" (default), \"eoftime\" or \"eofspatial\"")
     } else {

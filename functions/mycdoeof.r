@@ -15,7 +15,7 @@ trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\
 }
 
 # check
-usage <- paste0("\nUsage:\n $ ", me, " [--method=eof] [--cdo_weight_mode=off] [--max_jacobi_iter=100] [--P=4] [--neof=3] [--dry] --anom_file=<anom_file> [--outdir=`dirname(anom_file)`]\n")
+usage <- paste0("\nUsage:\n $ ", me, " --anom_file=<anom_file> --outdir=`dirname(anom_file)` --dry --neof=3 --method=eof --cdo_weight_mode=off --max_jacobi_iter=100 --P=`min($nproc, 4)`\n")
 if (length(args) == 0) {
     message(usage)
     quit()

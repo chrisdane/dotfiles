@@ -242,6 +242,7 @@ for (vi in seq_along(data)) {
     fout <- paste0(outdir, "/", basename(anom_file), "_", names(data)[vi], 
                    "_eof_", neof, "_", gsub("::", "_", method), ".nc")
     message("save results to ", fout, " ...")
+    nc_eigenval_dim <- ncdim_def(name="eigenval_no", units="", vals=seq_along(eofs[[vi]]$eigenval))                          
     dimname <- names(dims)[temporal_inds]
     nc_time_dim <- ncin$dim[[dimname]]
     nc_spatial_dims <- vector("list", l=length(spatial_inds))
@@ -249,18 +250,18 @@ for (vi in seq_along(data)) {
         dimname <- names(dims)[spatial_inds[i]]
         nc_spatial_dims[[i]] <- ncin$dim[[dimname]]
     }
-    nc_eof_dim <- ncdim_def(name="eof", units="", vals=seq_len(neof))                          
-    eigenval_var <- ncvar_def(name="eigenval", units="", dim=nc_time_dim)
-    eigenval_pcnt_var <- ncvar_def(name="eigenval_pcnt", units="%", dim=nc_time_dim)
+    nc_eof_dim <- ncdim_def(name="eof_no", units="", vals=seq_len(neof))                          
+    eigenval_var <- ncvar_def(name="eigenval", units="", dim=nc_eigenval_dim)
+    eigenval_pcnt_var <- ncvar_def(name="eigenval_pcnt", units="%", dim=nc_eigenval_dim)
     eigenvec_var <- ncvar_def(name="eigenvec", units="", dim=c(nc_spatial_dims, list(nc_eof_dim)))
     if (F) { # save all PCs in matrix (ntime,neof)
-        pc_var <- ncvar_def(name="pc", units="", dim=list(nc_time_dim, nc_eof_dim))
+        pc_var <- ncvar_def(name="pc_scaled", units="", dim=list(nc_time_dim, nc_eof_dim))
         outnc <- nc_create(filename=fout, force_v4=T,
                            vars=list(eigenval_var, eigenval_pcnt_var, eigenvec_var, pc_var))
     } else if (T) { # save each PC as own variable that it can be viewed with ncview
         pc_var <- vector("list", l=min(neof, 10)) # maximum first 10 PCs
         for (i in seq_along(pc_var)) {
-            pc_var[[i]] <- ncvar_def(name=paste0("pc", i), units="", dim=nc_time_dim)
+            pc_var[[i]] <- ncvar_def(name=paste0("pc", i, "_scaled"), units="", dim=nc_time_dim)
         }
         outnc <- nc_create(filename=fout, force_v4=T,
                            vars=c(list(eigenval_var, eigenval_pcnt_var, eigenvec_var), pc_var))

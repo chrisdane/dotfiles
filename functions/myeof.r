@@ -214,6 +214,12 @@ for (vi in seq_along(eofs)) {
     for (eofi in seq_len(min(neof, length(eofs[[vi]]$eigenval)))) {
         message("EOF", eofi, ": ", round(eofs[[vi]]$eigenval_pcnt[eofi]), "%")
     }
+
+    # save scaled PCs
+    for (i in seq_along(neof)) {
+        eofs[[vi]]$pc[,i] <- scale(eofs[[vi]]$pc[,i])
+    }
+
 } # for vi 
 
 # reorder eigenvecs to correct spatial dimensions
@@ -247,16 +253,31 @@ for (vi in seq_along(data)) {
     eigenval_var <- ncvar_def(name="eigenval", units="", dim=nc_time_dim)
     eigenval_pcnt_var <- ncvar_def(name="eigenval_pcnt", units="%", dim=nc_time_dim)
     eigenvec_var <- ncvar_def(name="eigenvec", units="", dim=c(nc_spatial_dims, list(nc_eof_dim)))
-    pc_var <- ncvar_def(name="pc", units="", dim=list(nc_time_dim, nc_eof_dim))
-    outnc <- nc_create(filename=fout, force_v4=T,
-                       vars=list(eigenval_var, eigenval_pcnt_var, eigenvec_var, pc_var))
+    if (F) { # save all PCs in matrix (ntime,neof)
+        pc_var <- ncvar_def(name="pc", units="", dim=list(nc_time_dim, nc_eof_dim))
+        outnc <- nc_create(filename=fout, force_v4=T,
+                           vars=list(eigenval_var, eigenval_pcnt_var, eigenvec_var, pc_var))
+    } else if (T) { # save each PC as own variable that it can be viewed with ncview
+        pc_var <- vector("list", l=min(neof, 10)) # maximum first 10 PCs
+        for (i in seq_along(pc_var)) {
+            pc_var[[i]] <- ncvar_def(name=paste0("pc", i), units="", dim=nc_time_dim)
+        }
+        outnc <- nc_create(filename=fout, force_v4=T,
+                           vars=c(list(eigenval_var, eigenval_pcnt_var, eigenvec_var), pc_var))
+    }
     ncatt_put(outnc, 0, "anom_file", anom_file)
     ncatt_put(outnc, 0, "weights", "sqrt(cos(lat))")
     ncatt_put(outnc, 0, "method", method)
     ncvar_put(nc=outnc, varid=eigenval_var, vals=eofs[[vi]]$eigenval)
     ncvar_put(nc=outnc, varid=eigenval_pcnt_var, vals=eofs[[vi]]$eigenval_pcnt)
     ncvar_put(nc=outnc, varid=eigenvec_var, vals=eofs[[vi]]$eigenvec)
-    ncvar_put(nc=outnc, varid=pc_var, vals=eofs[[vi]]$pc)
+    if (F) {
+        ncvar_put(nc=outnc, varid=pc_var, vals=eofs[[vi]]$pc)
+    } else if (T) {
+        for (i in seq_along(pc_var)) {
+            ncvar_put(nc=outnc, varid=pc_var[[i]], vals=eofs[[vi]]$pc[,i])
+        }
+    }
     nc_close(outnc)
 } # for vi
 

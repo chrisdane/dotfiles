@@ -349,6 +349,7 @@ for (vi in seq_along(data)) {
     fout <- paste0(outdir, "/", basename(anom_file), "_", varnames[vi], 
                    "_eof_", neof, "_", gsub("::", "_", method), ".nc")
     message("save results to ", fout, " ...")
+    nc_eigenval_dim <- ncdim_def(name="eigenval_no", units="", vals=seq_along(eofs[[vi]]$eigenval))                          
     dimname <- names(dims)[temporal_inds]
     nc_time_dim <- ncin$dim[[dimname]]
     nc_spatial_dims <- vector("list", l=length(spatial_inds))

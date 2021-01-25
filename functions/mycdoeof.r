@@ -21,6 +21,9 @@ if (length(args) == 0) {
     quit()
 }
 
+# check if cdo exists
+if (Sys.which("cdo") == "") stop("could not find cdo program")
+
 # check anom_file
 if (!any(grepl("--anom_file", args))) {
     stop("must provide --anom_file=<anom_file> argument", usage)
@@ -75,12 +78,16 @@ if (any(grepl("--max_jacobi_iter", args))) {
 }
 
 # check P
+if (Sys.which("nproc") == "") stop("could not find nproc program")
+nproc <- as.integer(system("nproc", intern=T))
 if (any(grepl("--P", args))) {
     nparallel <- sub("--P=", "", args[grep("--P=", args)])
-    nparallel<- as.numeric(nparallel)
-    message("provided P = ", nparallel)
+    nparallel<- as.integer(nparallel)
+    if (nparallel > nproc) stop("--P = ", nparallel, " > $(nproc) = ", nproc)
+    message("provided --P = ", nparallel)
 } else {
-    nparallel <- 4
+    #nparallel <- min(nproc, 4) # cdo 1.9.9 parallel data race bug solved?
+    nparallel <- 1
     message("--P not provided. use default ", nparallel) 
 }
 

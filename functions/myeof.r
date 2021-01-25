@@ -207,7 +207,7 @@ for (vi in seq_along(data)) {
         # correct dim order
         weights_arr <- aperm(weights_arr, seq_along(dim(weights_arr))[c(lat_dimind, repeat_diminds)])
         # apply weights
-        message("calc sqrt(", weight, ")*data ...")
+        message("calc weighted data = sqrt(", weight, ")*data ...")
         data$dataw <- sqrt(weights_arr) * data$data
 
     } else { 

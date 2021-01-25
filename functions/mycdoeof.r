@@ -87,6 +87,7 @@ if (any(grepl("--P", args))) {
 # check neof
 if (any(grepl("--neof", args))) {
     neof <- sub("--neof=", "", args[grep("--neof=", args)])
+    neof <- as.numeric(neof)
     if (!is.numeric(neof)) stop("provided neof=", neof, " is not numeric")
 } else {
     neof <- 3

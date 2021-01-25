@@ -217,13 +217,37 @@ for (fi in seq_along(fin_all)) {
     message("run `", cmd, "` ...")
     if (!dry) system(cmd)
 
-    # rename the *nc00000, *.nc000001, ... files
+    # rename the *nc00000, *.nc000001, ... files and calc normalized PC = pc_i/sqrt(eigenval_i)
+    # --> eq. 13.21 von stoch and zwiers 1999
     for (i in seq_len(neof)-1) { # 0, 1, 2, ...
+        
+        # rename
         fout_pc_i <- paste0(fin_all[fi], "_", neof, "_", method, "_pc", i+1, ".nc")
         cmd <- paste0("mv ", outdir, "/", fout_pc, sprintf("%05i", i), " ", 
                       outdir, "/", fout_pc_i)
         message("run `", cmd, "` ...")
         if (!dry) system(cmd)
+        
+        # setname
+        cmd <- paste0("cdo setname,PC", i+1, " ", outdir, "/", fout_pc_i, " ", 
+                      outdir, "/tmp && mv ", outdir, "/tmp", " ", outdir, "/", fout_pc_i)
+        message("run `", cmd, "` ...")
+        if (!dry) system(cmd)
+        
+        # normalized pc
+        fout_normalized_pc_i <- paste0(fin_all[fi], "_", neof, "_", method, "_normalized_pc", i+1, ".nc")
+        cmd <- paste0("cdo -seltimestemp,", i, " ", outdir, "/", fout_eigval, " ",
+                      outdir, "/", fout_normalized_pci)
+        message("run `", cmd, "` ...")
+        if (!dry) system(cmd)
+        cmd <- paste0("cdo -div ", outdir, "/", fout_pc_i, " -sqrt ", outdir, "/", fout_normalized_pc_i, " ",
+                      outdir, "/tmp && mv ", outdir, "/tmp ", outdir, "/", fout_normalized_pc_i)
+        message("run `", cmd, "` ...")
+        if (!dry) system(cmd)
+
+    }
+
+    for (i in seq_len(neof)) {
     }
 
     # derive and cat described variance

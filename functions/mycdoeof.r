@@ -15,7 +15,16 @@ trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\
 }
 
 # check
-usage <- paste0("\nUsage:\n $ ", me, " --anom_file=<anom_file> --outdir=`dirname(anom_file)` --dry --neof=3 --method=eof --cdo_weight_mode=off --max_jacobi_iter=100 --P=`min($nproc, 4)`\n")
+usage <- paste0("\nUsage:\n $ ", me, " ",
+                "--dry ",
+                "--neof=3 ",
+                "--anom_file=<anom_file> ",
+                "--varname=`cdo showname anom_file` ",
+                "--outdir=`dirname(anom_file)` ",
+                "--method=eof ",
+                "--cdo_weight_mode=off ",
+                "--max_jacobi_iter=100 ",
+                "--P=`min($nproc, 4)`\n")
 if (length(args) == 0) {
     message(usage)
     quit()
@@ -36,6 +45,21 @@ if (!any(grepl("--anom_file", args))) {
 # check if input is monthly or not
 monthly <- F
 if (grepl("Jan-Dec", anom_file)) monthly <- T
+
+# check varname
+if (!any(grepl("--varname", args))) {
+    message("`--varname=<varname>` or `--varname=varname1,varname2` not provided --> run `cdo showname` ...") 
+    if (Sys.which("cdo") == "") stop("did not find cdo command")
+    cmd <- paste0("cdo -s showname ", anom_file)
+    varnames <- system(cmd, intern=T)
+    varnames <- strsplit(varnames, " ")[[1]]
+} else {
+    varnames <- sub("--varname=", "", args[grep("--varname=", args)])
+    varnames <- strsplit(varnames, ",")[[1]]
+}
+if (any(varnames == "")) varnames <- varnames[-which(varnames == "")]
+message("--> varnames = \"", paste(varnames, collapse="\", \""), "\"")
+if (length(varnames) == 0) stop("found zero varnames")
 
 # check method
 if (any(grepl("--method", args))) {
@@ -178,97 +202,220 @@ if (monthly) { # if input is monthly
 
 } # if monthly
     
-# calc eof for all files
-for (fi in seq_along(fin_all)) {
+# calc eof for all variables and files
+for (vi in seq_along(varnames)) {
 
-    message("***************** file ", fi, "/", length(fin_all), " ********************")
+    message("***************** varname ", vi, "/", length(varnames), " ********************")
+    
+        for (fi in seq_along(fin_all)) {
 
-    # cdo eof
-    fout_eigval <- paste0(fin_all[fi], "_", neof, "_", method, "_eigval.nc")
-    fout_eigvec <- paste0(fin_all[fi], "_", neof, "_", method, "_eigvec.nc")
-    cmd <- paste0("export CDO_WEIGHT_MODE=", cdo_weight_mode, "; ", 
-                  "export MAX_JACOBI_ITER=", max_jacobi_iter, "; ", 
-                  "cdo -v -P ", nparallel, " ", method, ",", neof, " ", indir, "/", fin_all[fi], " ", 
-                  outdir, "/", fout_eigval, " ", outdir, "/", fout_eigvec)
-    message("run `", cmd, "` ...")
-    if (!dry) {
-        tic <- Sys.time()
-        system(cmd)
-        toc <- Sys.time()
-        elapsed <- toc - tic
-        elapsed <- paste0("cdo ", method, " call took ", round(elapsed), " ", attr(elapsed, "units"))
-        message(elapsed)
-        # set elapsed time as global nc attribute
-        cmd <- paste0("ncatted -O -a cdo_", method, "_elapsed,global,c,c,\"", elapsed, "\" ",
-                      outdir, "/", fout_eigval, " ", outdir, "/", fout_eigval)
+        message("***************** file ", fi, "/", length(fin_all), " ********************")
+
+        # cdo eof
+        fout_eigval <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigval.nc")
+        fout_eigvec <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigvec.nc")
+        cmd <- paste0("export CDO_WEIGHT_MODE=", cdo_weight_mode, "; ", 
+                      "export MAX_JACOBI_ITER=", max_jacobi_iter, "; ", 
+                      "cdo -v -P ", nparallel, " ", method, ",", neof, " -selvar,", varnames[vi], " ",
+                      indir, "/", fin_all[fi], " ", 
+                      outdir, "/", fout_eigval, " ", outdir, "/", fout_eigvec)
         message("run `", cmd, "` ...")
-        system(cmd)
-        cmd <- paste0("ncatted -O -h -a cdo_", method, "_elapsed,global,c,c,\"", elapsed, "\" ",
-                      outdir, "/", fout_eigvec, " ", outdir, "/", fout_eigvec)
-        message("run `", cmd, "` ...")
-        system(cmd)
-    } # if not dry
+        if (!dry) {
+            tic <- Sys.time()
+            system(cmd)
+            toc <- Sys.time()
+            elapsed <- toc - tic
+            elapsed <- paste0("cdo ", method, " call took ", round(elapsed), " ", attr(elapsed, "units"))
+            message(elapsed)
 
-    # cdo eofcoeff
-    fout_pc <- paste0(fin_all[fi], "_", neof, "_", method, "_pc.nc")
-    cmd <- paste0("export CDO_FILE_SUFFIX=NULL; ",
-                  "cdo -v eofcoeff ", outdir, "/", fout_eigvec, " ", indir, "/", fin_all[fi], " ",
-                  outdir, "/", fout_pc)
-    message("run `", cmd, "` ...")
-    if (!dry) system(cmd)
-
-    # rename the *nc00000, *.nc000001, ... files and calc normalized PC = pc_i/sqrt(eigenval_i)
-    # --> eq. 13.21 von stoch and zwiers 1999
-    for (i in seq_len(neof)-1) { # 0, 1, 2, ...
+            # set elapsed time as global nc attribute
+            cmd <- paste0("ncatted -O -a cdo_", method, "_elapsed,global,c,c,\"", elapsed, "\" ",
+                          outdir, "/", fout_eigval, " ", outdir, "/", fout_eigval)
+            message("\nrun `", cmd, "` ...")
+            system(cmd)
+            cmd <- paste0("ncatted -O -h -a cdo_", method, "_elapsed,global,c,c,\"", elapsed, "\" ",
+                          outdir, "/", fout_eigvec, " ", outdir, "/", fout_eigvec)
+            message("run `", cmd, "` ...")
+            system(cmd)
+        } # if not dry
         
-        # rename
-        fout_pc_i <- paste0(fin_all[fi], "_", neof, "_", method, "_pc", i+1, ".nc")
-        cmd <- paste0("mv ", outdir, "/", fout_pc, sprintf("%05i", i), " ", 
-                      outdir, "/", fout_pc_i)
+        # cdo eofcoeff
+        fout_pc <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_pc.nc")
+        cmd <- paste0("export CDO_FILE_SUFFIX=NULL; ",
+                      "cdo -v eofcoeff ", outdir, "/", fout_eigvec, " ", indir, "/", fin_all[fi], " ",
+                      outdir, "/", fout_pc)
+        message("\nrun `", cmd, "` ...")
+        if (!dry) system(cmd)
+
+        # rename the *nc00000, *.nc000001, ... files and calc normalized PC = pc_i/sqrt(eigenval_i)
+        merge_files <- rep(NA, t=2*neof)
+        cnt <- 0
+        for (i in seq_len(neof)-1) { # 0, 1, 2, ...
+            message("\nprocess pc ", i+1, ":")
+            
+            # rename
+            fout_pc_i <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_pc", i+1, ".nc")
+            cmd <- paste0("mv ", outdir, "/", fout_pc, sprintf("%05i", i), " ", 
+                          outdir, "/", fout_pc_i)
+            message("run `", cmd, "` ...")
+            if (!dry) system(cmd)
+            cnt <- cnt+1
+            merge_files[cnt] <- paste0(outdir, "/", fout_pc_i)
+            
+            # setname
+            cmd <- paste0("cdo -s setname,pc", i+1, " ", outdir, "/", fout_pc_i, " ", 
+                          outdir, "/tmp && mv ", outdir, "/tmp", " ", outdir, "/", fout_pc_i)
+            message("run `", cmd, "` ...")
+            if (!dry) system(cmd)
+            
+            # normalized pc = pc/sqrt(eigenval); eq. 13.21 von stoch and zwiers 1999
+            fout_normalized_pc_i <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", 
+                                           method, "_normalized_pc", i+1, ".nc")
+            cmd <- paste0("cdo -s -setname,pc", i+1, "_normalized -div ", outdir, "/", fout_pc_i, 
+                          " -sqrt -seltimestep,", i+1, " ", outdir, "/", fout_eigval, " ",
+                          outdir, "/", fout_normalized_pc_i)
+            message("run `", cmd, "` ...")
+            if (!dry) system(cmd)
+            cnt <- cnt+1
+            merge_files[cnt] <- paste0(outdir, "/", fout_normalized_pc_i)
+        } # for i neof
+
+        # merge default and normalized eigenvec PCs together
+        message("\nmerge ", neof, " default and normalized PCs together ...")
+        cmd <- paste0("cdo -s -O merge ", 
+                      paste(merge_files, collapse=" "), " ",
+                      outdir, "/", fout_pc)
+        message("run `", cmd, "` ...")
+        if (!dry) {
+            system(cmd)
+            file.remove(merge_files)
+        }
+
+        # setname eigenval and eigenvec
+        cmd <- paste0("cdo -s --reduce_dim setname,eigenval_abs ", outdir, "/", fout_eigval, " ",
+                      outdir, "/tmp && mv ", outdir, "/tmp ",
+                      outdir, "/", fout_eigval)
+        message("\nrun `", cmd, "` ...")
+        if (!dry) system(cmd)
+        cmd <- paste0("cdo -s setname,eigenvec ", outdir, "/", fout_eigvec, " ",
+                      outdir, "/tmp && mv ", outdir, "/tmp ",
+                      outdir, "/", fout_eigvec)
         message("run `", cmd, "` ...")
         if (!dry) system(cmd)
+
+        # calc eigenval in percent
+        fout_eigval_pcnt <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigval_pcnt.nc")
+        cmd <- paste0("cdo -s -setname,eigenval_pcnt -mulc,100 -div ", outdir, "/", fout_eigval, " ",
+                      "-timsum ", outdir, "/", fout_eigval, " ",
+                      outdir, "/", fout_eigval_pcnt)
+        message("\nrun `", cmd, "` ...")
+        if (!dry) system(cmd)
+
+        # merge eigenval abs and pcnt together
+        message("\nmerge absolute eigenvals and in percent together ...")
+        cmd <- paste0("cdo -s merge ", outdir, "/", fout_eigval, " ",
+                      outdir, "/", fout_eigval_pcnt, " ",
+                      outdir, "/tmp && mv ", outdir, "/tmp ",
+                      outdir, "/", fout_eigval)
+        message("run `", cmd, "` ...")
+        if (!dry) {
+            system(cmd)
+            file.remove(paste0(outdir, "/", fout_eigval_pcnt))
+        }
+
+        # calc normalized eigenvec = sqrt(eigenval_eofi) * eigenvec_eofi; eq. 13.22 von stoch and zwiers 1999
+        fout_sqrt_eigval <- fout_normalized_eigvec <- rep(NA, t=neof)
+        for (i in seq_len(neof)) {
+            message("\nprocess eigenvec ", i, " ...")
+            
+            fout_sqrt_eigval_i <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", 
+                                         method, "_sqrt_eigval", i, ".nc")
+            cmd <- paste0("cdo -s -setname,sqrt_eigenval -sqrt -seltimestep,", i, " -selvar,eigenval_abs ",
+                          outdir, "/", fout_eigval, " ",
+                          outdir, "/", fout_sqrt_eigval_i)
+            message("run `", cmd, "` ...")
+            if (!dry) system(cmd)
+            fout_sqrt_eigval[i] <- fout_sqrt_eigval_i
+
+            fout_normalized_eigvec_i <- paste0(fin_all[fi], "_", varnames[vi], "_eof", neof, "_cdo", 
+                                               method, "_normalized_eigvec_", i, ".nc")
+            cmd <- paste0("cdo -s -seltimestep,", i, " ", 
+                          outdir, "/", fout_eigvec, " ",
+                          outdir, "/", fout_normalized_eigvec_i)
+            message("run `", cmd, "` ...")
+            if (!dry) system(cmd)
+            fout_normalized_eigvec[i] <- fout_normalized_eigvec_i
+
+            cmd <- paste0("cdo -s merge ", outdir, "/", fout_sqrt_eigval_i, " ",
+                          outdir, "/", fout_normalized_eigvec_i, " ",
+                          outdir, "/tmp && mv ", outdir, "/tmp ", 
+                          outdir, "/", fout_normalized_eigvec_i)
+            message("run `", cmd, "` ...")
+            if (!dry) system(cmd)
+
+            cmd <- paste0("cdo -s -expr,normalized_eigenvec=\"eigenvec*sqrt_eigenval\" ", 
+                          outdir, "/", fout_normalized_eigvec_i, " ",
+                          outdir, "/tmp && mv ", outdir, "/tmp ", 
+                          outdir, "/", fout_normalized_eigvec_i)
+            message("run `", cmd, "` ...")
+            if (!dry) system(cmd)
+        } # for i neof
+
+        # merge all normalized eigenvecs
+        message("\nmerge ", neof, " normalized eigenvecs together ...")
+        fout_eigvec_normalized <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", 
+                                         method, "_normalized_eigvec.nc")
+        cmd <- paste0("cdo -s -O mergetime ", paste(paste0(outdir, "/", fout_normalized_eigvec), collapse=" "), " ",
+                      outdir, "/", fout_eigvec_normalized)
+        message("run `", cmd, "` ...")
+        if (!dry) system(cmd)
+
+        # merge default and normalized eigenvecs
+        message("\nmerge ", neof, " default and normalized eigenvecs together ...")
+        cmd <- paste0("cdo -s merge ", outdir, "/", fout_eigvec, " ", 
+                      outdir, "/", fout_eigvec_normalized, " ",
+                      outdir, "/tmp && mv ", outdir, "/tmp ",
+                      outdir, "/", fout_eigvec)
+        message("run `", cmd, "` ...")
+        if (!dry) {
+            system(cmd)
+            file.remove(paste0(outdir, "/", fout_sqrt_eigval))
+            file.remove(paste0(outdir, "/", fout_normalized_eigvec))
+            file.remove(paste0(outdir, "/", fout_eigvec_normalized))
+        }
         
-        # setname
-        cmd <- paste0("cdo setname,PC", i+1, " ", outdir, "/", fout_pc_i, " ", 
-                      outdir, "/tmp && mv ", outdir, "/tmp", " ", outdir, "/", fout_pc_i)
+        # merge eigenvals and pcs together
+        fout_eigval_pc <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigval_pc.nc")
+        message("\nmerge eigenvals and pcs together ...")
+        cmd <- paste0("cdo -s merge ", outdir, "/", fout_eigval, " ",
+                      outdir, "/", fout_pc, " ", outdir, "/", fout_eigval_pc)
         message("run `", cmd, "` ...")
-        if (!dry) system(cmd)
-        
-        # normalized pc
-        fout_normalized_pc_i <- paste0(fin_all[fi], "_", neof, "_", method, "_normalized_pc", i+1, ".nc")
-        cmd <- paste0("cdo -seltimestemp,", i, " ", outdir, "/", fout_eigval, " ",
-                      outdir, "/", fout_normalized_pci)
-        message("run `", cmd, "` ...")
-        if (!dry) system(cmd)
-        cmd <- paste0("cdo -div ", outdir, "/", fout_pc_i, " -sqrt ", outdir, "/", fout_normalized_pc_i, " ",
-                      outdir, "/tmp && mv ", outdir, "/tmp ", outdir, "/", fout_normalized_pc_i)
-        message("run `", cmd, "` ...")
-        if (!dry) system(cmd)
+        if (!dry) {
+            system(cmd)
+            file.remove(paste0(outdir, "/", c(fout_eigval, fout_pc)))
+        }
 
-    }
+        # described variance
+        if (!dry) {
+            cmd <- paste0("ncdump -v eigenval_pcnt ", outdir, "/", fout_eigval_pc)
+            dump <- system(cmd, intern=T)
+            dump <- dump[(grep("data:", dump)):(length(dump)-1)]
+            dump <- dump[3:length(dump)]
+            dump <- sub("eigenval_pcnt = ", "", dump)
+            dump <- gsub(",", "", dump)
+            dump <- gsub(";", "", dump)
+            dump <- trimws(dump)
+            dump <- paste(dump, collapse=" ")
+            dump <- strsplit(dump, " ")[[1]]
+            dump <- as.numeric(dump)
+            message("\ndescribed variance:\n",
+                    paste(paste0("   ", method, seq_len(neof), ": ", 
+                                 round(dump[seq_len(neof)], 1), "%"), collapse="\n"))
+        }
 
-    for (i in seq_len(neof)) {
-    }
+    } # for fi in fin_all
+} # for vi in varnames
 
-    # derive and cat described variance
-    fout_explvar <- paste0(fin_all[fi], "_", neof, "_", method, "_descrvar.nc")
-    cmd <- paste0("cdo -seltimestep,1/", neof, " -div ", fout_eigval, " -timsum ", 
-                  fout_eigval, " ", outdir, "/", fout_explvar)
-    message("run `", cmd, "` ...")
-    if (!dry) {
-        system(cmd)
-        cmd <- paste0("ncdump ", fout_explvar)
-        dump <- system(cmd, intern=T)
-        dump <- dump[(length(dump)-neof):(length(dump)-1)]
-        dump <- gsub(",", "", dump)
-        dump <- gsub(";", "", dump)
-        dump <- trimws(dump)
-        dump <- as.numeric(dump)
-        message("described variance:\n",
-                paste(paste0("   ", method, seq_len(neof), ": ", 100*dump, "%"), collapse="\n"))
-    }
-
-} # for fi in fin_all
 
 # transfer to other server if wanted
 if (F && grepl("stan", Sys.info()["nodename"])) {
@@ -280,4 +427,6 @@ if (F && grepl("stan", Sys.info()["nodename"])) {
     message("run `", cmd, "` ...")
     if (!dry) system(cmd)
 } # if on stan
+
+message("\nfinished")
 

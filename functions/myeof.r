@@ -152,8 +152,6 @@ for (vi in seq_along(data)) {
     message("detected spatial dim", ifelse(length(spatial_inds) > 1, "s", ""), 
             " (all others than time dim", ifelse(length(temporal_inds) > 1, "s", ""), 
             "): \"", paste(names(dims)[spatial_inds], collapse="\", \""), "\"")
-    
-    # distinguish time and space dims
     temporal_diminds <- match(data$dims, names(dims)[temporal_inds])
     temporal_diminds <- which(!is.na(temporal_diminds))
     ntime <- prod(sapply(dims, length)[temporal_diminds])
@@ -162,9 +160,9 @@ for (vi in seq_along(data)) {
     nspace <- prod(sapply(dims, length)[spatial_diminds])
    
     # check if neof is possible
+    neof_max <- min(ntime, nspace)
     if (neof > min(ntime, nspace)) {
-        stop("neof = ", neof, " > min(ntime,nspace) = min(", 
-             ntime, ",", nspace, ") = ", min(ntime, nspace))
+        stop("neof = ", neof, " > min(ntime,nspace) = min(", ntime, ",", nspace, ") = ", neof_max)
     }
 
     # apply weights if necessary
@@ -349,7 +347,7 @@ for (vi in seq_along(data)) {
     fout <- paste0(outdir, "/", basename(anom_file), "_", varnames[vi], 
                    "_eof_", neof, "_", gsub("::", "_", method), ".nc")
     message("save results to ", fout, " ...")
-    nc_eigenval_dim <- ncdim_def(name="eigenval_no", units="", vals=seq_along(eof$eigenval))                          
+    # make dims
     dimname <- names(dims)[temporal_inds]
     nc_time_dim <- ncin$dim[[dimname]]
     nc_spatial_dims <- vector("list", l=length(spatial_inds))
@@ -357,9 +355,11 @@ for (vi in seq_along(data)) {
         dimname <- names(dims)[spatial_inds[i]]
         nc_spatial_dims[[i]] <- ncin$dim[[dimname]]
     }
+    nc_eigenval_dim <- ncdim_def(name="eigenval_no", units="", vals=seq_len(neof_max))                          
     nc_eof_dim <- ncdim_def(name="eof", units="", vals=seq_len(neof))                          
-    eigenval_abs_var <- ncvar_def(name="eigenval_abs", units="", dim=nc_time_dim)
-    eigenval_pcnt_var <- ncvar_def(name="eigenval_pcnt", units="%", dim=nc_time_dim)
+    # make vars
+    eigenval_abs_var <- ncvar_def(name="eigenval_abs", units="", dim=nc_eigenval_dim)
+    eigenval_pcnt_var <- ncvar_def(name="eigenval_pcnt", units="%", dim=nc_eigenval_dim)
     eigenvec_var <- ncvar_def(name="eigenvec", units="", dim=c(nc_spatial_dims, list(nc_eof_dim)))
     eigenvec_normalized_var <- ncvar_def(name="eigenvec_normalized", units=data$units, 
                                          dim=c(nc_spatial_dims, list(nc_eof_dim)))
@@ -391,7 +391,7 @@ for (vi in seq_along(data)) {
     }
     nc_close(outnc)
 
-} # for vi
+} # for vi in varnames
 
 message("finished")
 

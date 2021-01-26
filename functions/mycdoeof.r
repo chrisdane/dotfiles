@@ -383,21 +383,10 @@ for (vi in seq_along(varnames)) {
             file.remove(paste0(outdir, "/", fout_normalized_eigvec))
             file.remove(paste0(outdir, "/", fout_eigvec_normalized))
         }
-        
-        # merge eigenvals and pcs together
-        fout_eigval_pc <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigval_pc.nc")
-        message("\nmerge eigenvals and pcs together ...")
-        cmd <- paste0("cdo -s merge ", outdir, "/", fout_eigval, " ",
-                      outdir, "/", fout_pc, " ", outdir, "/", fout_eigval_pc)
-        message("run `", cmd, "` ...")
-        if (!dry) {
-            system(cmd)
-            file.remove(paste0(outdir, "/", c(fout_eigval, fout_pc)))
-        }
 
         # described variance
         if (!dry) {
-            cmd <- paste0("ncdump -v eigenval_pcnt ", outdir, "/", fout_eigval_pc)
+            cmd <- paste0("ncdump -v eigenval_pcnt ", outdir, "/", fout_eigval)
             dump <- system(cmd, intern=T)
             dump <- dump[(grep("data:", dump)):(length(dump)-1)]
             dump <- dump[3:length(dump)]

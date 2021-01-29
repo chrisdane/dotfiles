@@ -148,6 +148,17 @@
             find -print 2>/dev/null | grep -i $1 
         fi
     }
+    when(){
+        mydate="$@"
+        if [ "z$mydate" != "z" ] && date -d "$mydate" > /dev/null; then
+            #echo "date \"$mydate\" valid"
+            tz=$(tzselect)
+            #echo "tz: \"$tz\""
+            echo "$tz time $mydate is $(date -d "TZ=\"$tz\" $mydate")."
+        else
+            return 1
+        fi
+    }
     archhelp(){
         echo "update mirror: reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist"
         echo "yarn cache clean"

@@ -15,16 +15,18 @@ trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\
 }
 
 # check
-usage <- paste0("\nUsage:\n $ ", me, " ",
-                "--dry ",
-                "--neof=3 ",
-                "--anom_file=<anom_file> ",
-                "--varname=`cdo showname anom_file` ",
-                "--outdir=`dirname(anom_file)` ",
-                "--method=eof ",
-                "--cdo_weight_mode=off ",
-                "--max_jacobi_iter=100 ",
-                "--P=`min($nproc, 4)`\n")
+usage <- paste0("\nUsage:\n $ ", me, " args\n",
+                " must have arg:\n",
+                "   --anom_file=<anom_file>\n",
+                " optional args:\n",
+                "   --dry\n",
+                "   --neof=3\n",
+                "   --varname=`cdo showname anom_file`\n",
+                "   --outdir=`dirname(anom_file)`\n",
+                "   --method=eof (eof, eoftime, eofspatial)\n",
+                "   --cdo_weight_mode=off\n",
+                "   --max_jacobi_iter=100\n",
+                "   --P=`min($nproc, 4)` (only applies if cdo version >= 1.9.10, --P=1 otherwise)\n")
 if (length(args) == 0) {
     message(usage)
     quit()
@@ -32,6 +34,25 @@ if (length(args) == 0) {
 
 # check if cdo exists
 if (Sys.which("cdo") == "") stop("could not find cdo program")
+cdo_version <- paste0("cdo --version 2>&1")
+cdo_version <- system(cdo_version, intern=T)
+cdo_version <- cdo_version[1] # e.g. "Climate Data Operators version 1.7.0 (http://mpimet.mpg.de/cdo)"
+cdo_version <- strsplit(cdo_version, " ")[[1]]
+cdo_version <- sapply(cdo_version, strsplit, split="\\.")
+cdo_version <- suppressWarnings(lapply(cdo_version, as.numeric))
+tmp <- sapply(cdo_version, is.na)
+tmp <- lapply(tmp, "==", "FALSE")
+tmp <- sapply(tmp, any)
+if (any(tmp)) {
+    if (length(which(tmp)) == 1) {
+        cdo_version <- cdo_version[[which(tmp)]] # numeric vector of length 3; e.g.: 1 7 0
+    } else {
+        stop("the case of more than 1 as.numeric() of `cdo --version?` is not implemented here")
+    }
+} else {
+    stop("the case of 0 as.numeric() of `cdo --version?` is not implemented here")
+}
+message("cdo_version = ", paste(cdo_version, collapse="."))
 
 # check anom_file
 if (!any(grepl("--anom_file", args))) {
@@ -101,18 +122,41 @@ if (any(grepl("--max_jacobi_iter", args))) {
     message("--max_jacobi_iter not provided. use default ", max_jacobi_iter) 
 }
 
-# check P
-if (Sys.which("nproc") == "") stop("could not find nproc program")
-nproc <- as.integer(system("nproc", intern=T))
-if (any(grepl("--P", args))) {
+# check parallel processors P; only for cdo version >= 1.9.10
+# if cdo version <= 1.9.9, --P must equal 1
+if (any(grepl("--P", args))) { # --P is given
     nparallel <- sub("--P=", "", args[grep("--P=", args)])
     nparallel<- as.integer(nparallel)
-    if (nparallel > nproc) stop("--P = ", nparallel, " > $(nproc) = ", nproc)
+    if (cdo_version[1] < 1 ||
+        cdo_version[1] == 1 && cdo_version[2] < 9 || 
+        cdo_version[1] == 1 && cdo_version[2] >= 9 && cdo_version[3] < 10) {
+        message("--P = ", nparallel, " is given but cdo_version = ", cdo_version, 
+                " < 1.9.10. there is a data race bug in `eof,neof --P`. set --P=1 ...")
+        nparallel <- 1
+    } 
     message("provided --P = ", nparallel)
-} else {
-    #nparallel <- min(nproc, 4) # cdo 1.9.9 parallel data race bug solved?
-    nparallel <- 1
+} else { # --P not given
+    if (cdo_version[1] < 1 ||
+        cdo_version[1] == 1 && cdo_version[2] < 9 || 
+        cdo_version[1] == 1 && cdo_version[2] >= 9 && cdo_version[3] < 10) { # cdo < 1.9.10
+        nparallel <- 1
+    } else { # cdo >= 1.9.10
+        if (Sys.which("nproc") == "") stop("could not find nproc program")
+        nproc <- as.integer(system("nproc", intern=T))
+        nparallel <- min(nproc, 4) 
+    }
     message("--P not provided. use default ", nparallel) 
+}
+if (nparallel > 1) {
+    if (!exists("nproc")) {
+        if (Sys.which("nproc") == "") stop("could not find nproc program")
+        nproc <- as.integer(system("nproc", intern=T))
+    }
+    if (nparallel > nproc) {
+        message("--P = ", nparallel, " > $(nproc) = ", nproc, 
+                ". set --P=", nproc, " ...")
+        nparallel <- nproc
+    }
 }
 
 # check neof
@@ -209,14 +253,14 @@ for (vi in seq_along(varnames)) {
     
         for (fi in seq_along(fin_all)) {
 
-        message("***************** file ", fi, "/", length(fin_all), " ********************")
+        if (length(fin_all) > 1) message("***************** file ", fi, "/", length(fin_all), " ********************")
 
         # cdo eof
         fout_eigval <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigval.nc")
         fout_eigvec <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigvec.nc")
         cmd <- paste0("export CDO_WEIGHT_MODE=", cdo_weight_mode, "; ", 
                       "export MAX_JACOBI_ITER=", max_jacobi_iter, "; ", 
-                      "cdo -v -P ", nparallel, " ", method, ",", neof, " -selvar,", varnames[vi], " ",
+                      "cdo -v -L -P ", nparallel, " ", method, ",", neof, " -selvar,", varnames[vi], " ",
                       indir, "/", fin_all[fi], " ", 
                       outdir, "/", fout_eigval, " ", outdir, "/", fout_eigvec)
         message("run `", cmd, "` ...")
@@ -225,7 +269,7 @@ for (vi in seq_along(varnames)) {
             system(cmd)
             toc <- Sys.time()
             elapsed <- toc - tic
-            elapsed <- paste0("cdo ", method, " call took ", round(elapsed), " ", attr(elapsed, "units"))
+            elapsed <- paste0("\n--> `cdo ", method, "` call took ", round(elapsed), " ", attr(elapsed, "units"))
             message(elapsed)
 
             # set elapsed time as global nc attribute
@@ -246,6 +290,8 @@ for (vi in seq_along(varnames)) {
                       outdir, "/", fout_pc)
         message("\nrun `", cmd, "` ...")
         if (!dry) system(cmd)
+
+        #stop("asd")
 
         # rename the *nc00000, *.nc000001, ... files and calc normalized PC = pc_i/sqrt(eigenval_i)
         merge_files <- rep(NA, t=2*neof)
@@ -271,7 +317,7 @@ for (vi in seq_along(varnames)) {
             # normalized pc = pc/sqrt(eigenval); eq. 13.21 von stoch and zwiers 1999
             fout_normalized_pc_i <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", 
                                            method, "_normalized_pc", i+1, ".nc")
-            cmd <- paste0("cdo -s -setname,pc", i+1, "_normalized -div ", outdir, "/", fout_pc_i, 
+            cmd <- paste0("cdo -L -s -setname,pc", i+1, "_normalized -div ", outdir, "/", fout_pc_i, 
                           " -sqrt -seltimestep,", i+1, " ", outdir, "/", fout_eigval, " ",
                           outdir, "/", fout_normalized_pc_i)
             message("run `", cmd, "` ...")
@@ -305,7 +351,7 @@ for (vi in seq_along(varnames)) {
 
         # calc eigenval in percent
         fout_eigval_pcnt <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", method, "_eigval_pcnt.nc")
-        cmd <- paste0("cdo -s -setname,eigenval_pcnt -mulc,100 -div ", outdir, "/", fout_eigval, " ",
+        cmd <- paste0("cdo -s -L -setname,eigenval_pcnt -mulc,100 -div ", outdir, "/", fout_eigval, " ",
                       "-timsum ", outdir, "/", fout_eigval, " ",
                       outdir, "/", fout_eigval_pcnt)
         message("\nrun `", cmd, "` ...")
@@ -330,7 +376,7 @@ for (vi in seq_along(varnames)) {
             
             fout_sqrt_eigval_i <- paste0(fin_all[fi], "_", varnames[vi], "_eof_", neof, "_cdo", 
                                          method, "_sqrt_eigval", i, ".nc")
-            cmd <- paste0("cdo -s -setname,sqrt_eigenval -sqrt -seltimestep,", i, " -selvar,eigenval_abs ",
+            cmd <- paste0("cdo -s -L -setname,sqrt_eigenval -sqrt -seltimestep,", i, " -selvar,eigenval_abs ",
                           outdir, "/", fout_eigval, " ",
                           outdir, "/", fout_sqrt_eigval_i)
             message("run `", cmd, "` ...")

@@ -389,45 +389,39 @@
     if check_existance vim || check_existance vimx; then
         if check_existance vim; then
             tmp=$(vim --version | grep clipboard)
-            if [[ $tmp == *clipboard* ]]; then
-                while read -r pos ; do
-                    # test if +/-clipboard or +/-xterm_clipboard
-                    clipboard="${tmp:(($pos-5)):15}" # xterm_clipboard
-                    if [[ $clipboard == "xterm_clipboard" ]]; then
-                        vim_xterm_clipboard="${tmp:(($pos-6)):16}"
-                    else # or +/-clipboard
-                        vim_clipboard="${tmp:(($pos-1)):10}"
-                    fi
-                done < <(echo $tmp | grep -b -o "clipboard" | awk 'BEGIN {FS=":"}{print $1}')                
-            fi            
-            if [[ ${vim_clipboard:0:1} == "-" ]] && [[ ${vim_xterm_clipboard:0:1} == "-" ]]; then
-                vim_return=1
+            vim_clipboard=1 # default: no clipboard
+            vim_xterm_clipboard=1
+            if [[ "$tmp" == *"+clipboard"* ]]; then 
+                vim_clipboard=0 # vim has +clipboard 
+            fi
+            if [[ "$tmp" == *"+xterm_clipboard"* ]]; then 
+                vim_xterm_clipboard=0 # vim has +xterm_clipboard 
+            fi
+            if [[ $vim_clipboard == 1 ]] && [[ $vim_xterm_clipboard == 1 ]]; then
+                vim_return=1 # -clipboard
             else
-                vim_return=0
+                vim_return=0 # +clipboard
             fi
         else
-            vim_return=1
+            vim_return=1 # no vim
         fi
         if check_existance vimx; then
             tmp=$(vimx --version | grep clipboard)
-            if [[ $tmp == *clipboard* ]]; then
-                while read -r pos ; do
-                    # test if +/-clipboard or +/-xterm_clipboard
-                    clipboard="${tmp:(($pos-5)):15}" # xterm_clipboard
-                    if [[ $clipboard == "xterm_clipboard" ]]; then
-                        vimx_xterm_clipboard="${tmp:(($pos-6)):16}"
-                    else # or +/-clipboard
-                        vimx_clipboard="${tmp:(($pos-1)):10}"
-                    fi
-                done < <(echo $tmp | grep -b -o "clipboard" | awk 'BEGIN {FS=":"}{print $1}')                
-            fi            
-            if [[ ${vimx_clipboard:0:1} == "-" ]] && [[ ${vimx_xterm_clipboard:0:1} == "-" ]]; then
-                vimx_return=1
-            else
-                vimx_return=0
+            vimx_clipboard=1 # default: no clipboard
+            vimx_xterm_clipboard=1
+            if [[ "$tmp" == *"+clipboard"* ]]; then 
+                vimx_clipboard=0 # vimx has +clipboard 
             fi
-        else 
-            vimx_return=1
+            if [[ "$tmp" == *"+xterm_clipboard"* ]]; then 
+                vimx_xterm_clipboard=0 # vimx has +xterm_clipboard 
+            fi
+            if [[ $vimx_clipboard == 1 ]] && [[ $vimx_xterm_clipboard == 1 ]]; then
+                vimx_return=1 # -clipboard
+            else
+                vimx_return=0 # +clipboard
+            fi
+        else
+            vimx_return=1 # no vimx
         fi
         if [[ $vim_return == 1 ]] && [[ $vimx_return == 1 ]]; then
             if check_existance vim; then

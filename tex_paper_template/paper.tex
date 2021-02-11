@@ -1,0 +1,174 @@
+\documentclass[11pt]{article} % default font size: 10pt 
+\usepackage[margin=1in]{geometry} % 0.7in
+\usepackage[parfill]{parskip}
+\usepackage[utf8]{inputenc} % utf8 or latin1
+\usepackage[english]{babel} % USenglish, english or german
+\usepackage{float} % for [H] position
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage[pdfpagelabels,plainpages=false,hypertexnames=false]{hyperref}
+\hypersetup{
+    colorlinks = true,
+    allcolors = blue
+    %linkcolor % red
+    %anchorcolor % black
+    %citecolor % green
+    %filecolor % cyan
+    %menucolor % red
+    %runcolor % cyan - same as file color
+    %urlcolor % magenta
+    %allcolors % use this if you want to set all links to the same color
+    %citebordercolor % rgb 0 1 0
+    %filebordercolor % rgb 0 .5 .5
+    %linkbordercolor % rgb 1 0 0
+    %menubordercolor % rgb 1 0 0
+    %urlbordercolor % rgb 0 1 1
+    %runbordercolor % rgb 0 .7 .7
+    %allbordercolors
+}
+\usepackage{lineno}
+\linenumbers
+\usepackage[round]{natbib}
+
+\begin{document}
+
+\thispagestyle{empty} % first page without page number
+\begin{center}
+
+\vspace*{2cm}
+\LARGE{\textbf{Title}}\\
+\vspace{2cm}
+
+\normalsize
+My Name
+
+\end{center}
+\vfill
+\textit{Corresponding author}: My Name, \href{mailto:me.de}{myname@myprovider.org}
+
+\newpage
+\pagenumbering{arabic} % page numbers for rest of the document
+
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+This is the abstract.
+
+\section{Introduction}
+
+Fig. \ref{fig:a} is the A-figure by \citet{einstein}.
+
+\begin{figure}[H]
+\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
+\caption{Example A-figure.}
+\label{fig:a}
+\end{figure}
+
+Fig. \ref{fig:b} is the B-figure \citep{einstein}.
+
+\begin{figure}[H]
+\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-b}
+\caption{Example B-figure.}
+\label{fig:b}
+\end{figure}
+
+\section{Methods}
+
+Fig. \ref{fig:a2} is the A-figure again.
+
+\begin{figure}[H]
+\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
+\caption{Example A-figure again.}
+\label{fig:a2}
+\end{figure}
+
+Tab. \ref{tab:table} is a table example.
+
+\begin{table}[H]
+\centering
+\caption{This is the caption of a table example.}
+\label{tab:table}
+\begin{tabular}{llr}
+\toprule
+\multicolumn{2}{c}{Item}\\
+\cmidrule(r){1-2}
+Animal & Description & Price (\$)\\
+\midrule
+Gnat & per gram & 13.65\\
+& each & 0.01\\
+Gnu & stuffed & 92.50\\
+Emu & stuffed & 33.33\\
+Armadillo & frozen & 8.99\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Results}
+
+Tab. \ref{tab:longtable_default} is a longtable example.
+
+\begin{longtable}{lll}
+\caption{This is the caption of a longtable example.}\label{tab:longtable_default}\\
+\toprule
+Animal & Description & Price (\$)\\
+\midrule
+Gnat & per gram & 13.65\\
+Gnu & stuffed & 92.50\\
+Emu & stuffed & 33.33\\
+Armadillo & frozen & 8.99\\
+\bottomrule
+\end{longtable}
+
+\bibliography{paper} % also creates the section header ``References''
+\bibliographystyle{ametsoc2014}
+\addcontentsline{toc}{section}{References}
+
+%\appendix
+%\appendixpage
+%\addappheadtotoc
+%\counterwithin{figure}{section}
+%\counterwithin{table}{section}
+%\appendix
+%\renewcommand\thefigure{\thesection.\arabic{figure}}
+%\renewcommand\the{\thesection.\arabic{figure}}
+\section*{Appendix A}\addcontentsline{toc}{section}{Appendix A}
+\renewcommand\thefigure{A\arabic{figure}}
+\renewcommand{\thetable}{A\arabic{table}}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+
+Fig. \ref{fig:appendix1} is an appendix figure with a specific appendix prefix.
+
+\begin{figure}[H]
+\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
+\caption{Example figure with a specific appendix prefix.}
+\label{fig:appendix1}
+\end{figure}
+
+Tab. \ref{tab:longtable_reduced_row_height} is a longtable example with reduced row height and specific appendix prefix.
+
+\begin{longtable}{lll}
+\caption{This is the caption of a longtable with reduced row height example and a specifix appendix prefix.}\label{tab:longtable_reduced_row_height}\\
+\begin{footnotesize}
+\bgroup
+\def\arraystretch{0.8} % change rowsize; 1=default
+\begin{tabular}{lll}
+\toprule
+Animal & Description & Price (\$)\\
+\midrule
+Gnat & per gram & 13.65\\
+Gnu & stuffed & 92.50\\
+Emu & stuffed & 33.33\\
+Armadillo & frozen & 8.99\\
+\bottomrule
+\end{tabular}
+\egroup
+\end{footnotesize}
+\end{longtable}
+
+\end{document}

@@ -1,16 +1,23 @@
 \documentclass[11pt]{article} % default font size: 10pt 
 \usepackage[margin=1in]{geometry} % 0.7in
 \usepackage[parfill]{parskip}
-\usepackage[utf8]{inputenc} % utf8 or latin1
+%\usepackage[utf8]{inputenc} % utf8 or latin1; default: utf8 
 \usepackage[english]{babel} % USenglish, english or german
 \usepackage{float} % for [H] position
+\usepackage{lmodern}
+\usepackage{setspace} % \singlespacing, \onehalfspacing, \doublespacing
+\doublespacing
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{array}
 \usepackage{graphicx}
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{multirow}
-\usepackage{makecell}
+\usepackage{makecell} % \thead
+% overwrite \thead for nicer vertical orientation in multi-line table headers:
+\newcommand*{\mythead}[1]{\multicolumn{1}{c}{\bfseries\begin{tabular}{@{}c@{}}#1\end{tabular}}}
+\newcommand*{\mytheadl}[1]{\multicolumn{1}{l}{\bfseries\begin{tabular}{@{}c@{}}#1\end{tabular}}}
+\usepackage{caption} % \captionsetup
 \usepackage[pdfpagelabels,plainpages=false,hypertexnames=false]{hyperref}
 \hypersetup{
     colorlinks = true,
@@ -30,6 +37,7 @@
     %urlbordercolor % rgb 0 1 1
     %runbordercolor % rgb 0 .7 .7
     %allbordercolors
+    %breaklinks = true
 }
 \usepackage{lineno}
 \linenumbers
@@ -77,7 +85,7 @@ Fig. \ref{fig:b} is the B-figure \citep{einstein}.
 \label{fig:b}
 \end{figure}
 
-\section{Methods}
+\subsection{This is a section title with an equation in it; namely \texorpdfstring{$\delta^{18}$}{d}O}
 
 Fig. \ref{fig:a2} is the A-figure again.
 
@@ -128,18 +136,10 @@ Armadillo & frozen & 8.99\\
 \bibliographystyle{ametsoc2014}
 \addcontentsline{toc}{section}{References}
 
-%\appendix
-%\appendixpage
-%\addappheadtotoc
-%\counterwithin{figure}{section}
-%\counterwithin{table}{section}
-%\appendix
-%\renewcommand\thefigure{\thesection.\arabic{figure}}
-%\renewcommand\the{\thesection.\arabic{figure}}
 \section*{Appendix A}\addcontentsline{toc}{section}{Appendix A}
 \renewcommand\thefigure{A\arabic{figure}}
-\renewcommand{\thetable}{A\arabic{table}}
 \setcounter{figure}{0}
+\renewcommand{\thetable}{A\arabic{table}}
 \setcounter{table}{0}
 
 Fig. \ref{fig:appendix1} is an appendix figure with a specific appendix prefix.
@@ -153,7 +153,7 @@ Fig. \ref{fig:appendix1} is an appendix figure with a specific appendix prefix.
 Tab. \ref{tab:longtable_reduced_row_height} is a longtable example with reduced row height and specific appendix prefix.
 
 \begin{longtable}{lll}
-\caption{This is the caption of a longtable with reduced row height example and a specifix appendix prefix.}\label{tab:longtable_reduced_row_height}\\
+\caption{This is the caption of a longtable with reduced row height example with a specifix appendix prefix.}\label{tab:longtable_reduced_row_height}\\
 \begin{footnotesize}
 \bgroup
 \def\arraystretch{0.8} % change rowsize; 1=default
@@ -170,5 +170,46 @@ Armadillo & frozen & 8.99\\
 \egroup
 \end{footnotesize}
 \end{longtable}
+
+Tab. \ref{tab:longtable_reduced_row_height_and_linebreaks} is a longtable example with reduced row height and line breaks in the table headers and a specific appendix prefix.
+
+\fontsize{9}{6}\selectfont
+\begin{longtable}{@{}rcrrcc@{}}
+\caption{This is the caption of a longtable with reduced row height and multi-row table headers example with a specifix appendix prefix.}\label{tab:longtable_reduced_row_height_and_linebreaks}\\
+\toprule
+\thead{ID} & \thead{Database name} & \thead{Size\\(MB)} & \thead{No. of\\records} & \thead{Time stamp\\1st record} & \thead{Time stamp\\last record}\\
+\midrule
+1 & dummie & 2.1 & 33 & dummie & dummie\\
+2 & dummie & 4.3 & 67 & dummie & dummie\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+Text default size after the longtable with the reduced font size.
+
+Tab. \ref{tab:longtable_reduced_row_height_and_linebreaks2} is another longtable example with reduced row height and line breaks in the table headers and a specific appendix prefix.
+
+\captionsetup{width=\textwidth}
+\fontsize{9}{6}\selectfont
+\begin{longtable}{@{}rlrrrrrr@{}}
+\caption{This is the caption of a longtable with reduced row height and multi-row table headers example with a specifix appendix prefix. Note the escape of the [ symbol with \{[\} in the 5th header. This is necessary since the linebreak shall be just before the [ symbol. \href{www.example.com}{This is a href in a caption.}}\label{tab:longtable_reduced_row_height_and_linebreaks2}\\
+\toprule
+\thead{No} & \thead{LiPD ref} & \thead{lon [$^{\circ}$]} & \thead{lat [$^{\circ}$]} & \thead{Start} & \thead{End} & \thead{P\\trend} & \thead{trend\\summary}\\
+\midrule
+1 & \href{http://lipdverse.org/globalHolocene/1_0_0/31Lake.Eisner.1995.html}{31Lake.Eisner.1995} & -50.47 & 67.05 & 5769 & 667 & 408 & r=0.64, p=1e-04, df=30\\
+2 & \href{http://lipdverse.org/globalHolocene/1_0_0/AgeroedsMosse.Nilsson.1964.html}{AgeroedsMosse.Nilsson.1964} & 13.42 & 55.83 & 6910 & 19 & -711 & r=0.79, p<1e-5, df=74\\
+3 & \href{http://lipdverse.org/globalHolocene/1_0_0/AlpidiRobieiValBavona.Welten.1982.html}{AlpidiRobieiValBavona.Welten.1982} & 8.52 & 46.45 & 6826 & 63 & 244 & r=0.73, p=1e-04, df=21\\
+4 & \href{http://lipdverse.org/globalHolocene/1_0_0/Altenweiher.DeValk.1981.html}{Altenweiher.DeValk.1981} & 6.99 & 48.01 & 6970 & 139 & 185 & r=0.47, p=2e-04, df=55\\
+5 & \href{http://lipdverse.org/globalHolocene/1_0_0/BeaufortBirkenbach.EPD.html}{BeaufortBirkenbach.EPD} & 6.13 & 49.85 & 3702 & 5 & 158 & r=0.48, p=3e-04, df=50\\
+6 & \href{http://lipdverse.org/globalHolocene/1_0_0/BebrukasLake.Shulija.1967.html}{BebrukasLake.Shulija.1967} & 24.12 & 54.09 & 6721 & 286 & 249 & r=0.72, p<1e-5, df=28\\
+7 & \href{http://lipdverse.org/globalHolocene/1_0_0/Besbog.EPD.html}{Besbog.EPD} & 23.67 & 41.75 & 6904 & 169 & 474 & r=0.81, p<1e-5, df=19\\
+8 & \href{http://lipdverse.org/globalHolocene/1_0_0/BledowoLake.Binka.1988.html}{BledowoLake.Binka.1988} & 20.67 & 52.55 & 6976 & 157 & -83 & r=0.46, p<1e-5, df=144\\
+9 & \href{http://lipdverse.org/globalHolocene/1_0_0/BoehnigseeGoldmoos.Markgraf.1969.html}{BoehnigseeGoldmoos.Markgraf.1969} & 7.84 & 46.26 & 6967 & 248 & 178 & r=0.57, p=2e-04, df=36\\
+10 & \href{http://lipdverse.org/globalHolocene/1_0_0/Breitnau-Neuhof.Roesch.2009.html}{Breitnau-Neuhof.Roesch.2009} & 8.07 & 47.93 & 6915 & 199 & 142 & r=0.43, p=0.004, df=42\\
+\bottomrule
+\end{longtable}
+\normalsize
+
+Text default size after the longtable with the reduced font size.
 
 \end{document}

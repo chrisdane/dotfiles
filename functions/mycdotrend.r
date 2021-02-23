@@ -17,7 +17,14 @@ trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\
 }
 
 # check
-usage <- paste0("\nUsage:\n $ ", me, " --fin=<fin> [--dry] [--outdir=<outdir>] [--varname=<varname>]\n")
+usage <- paste0("\nUsage:\n $ ", me, " ",
+                "--fin=<provide input filename>",
+                "--dry=F",
+                "--outdir=`dirname fin` ",
+                "--varname_cdo_in=`cdo showname fin` ",
+                "--varname_cdo_out=`lm_<varname_in>_as_time_slope` ",
+                "--varname_fname_in=<varname_cdo_in> ",
+                "--varname_fname_out=<varname_cdo_out>\n")
 if (length(args) == 0) {
     message(usage)
     quit()
@@ -32,17 +39,42 @@ if (!any(grepl("--fin", args))) {
     if (!file.exists(fin)) stop("fin = \"", fin, "\" does not exist")
 }
 
-# check varname
-if (!any(grepl("--varname", args))) {
+# check varname_cdo_in
+if (!any(grepl("--varname_cdo_in", args))) {
     cmd <- paste0("cdo -s showname ", fin)
-    message("varname not provided. run `", cmd, "` ... ", appendLF=F)
-    varname <- trimws(system(cmd, intern=T))
-    message("\"", varname, "\"")
+    message("varname_cdo_in not provided. run `", cmd, "` ... ", appendLF=F)
+    varname_cdo_in <- trimws(system(cmd, intern=T))
+    message("\"", varname_cdo_in, "\"")
 } else {
-    varname <- sub("--varname=", "", args[grep("--varname=", args)])
+    varname_cdo_in <- sub("--varname_cdo_in=", "", args[grep("--varname_cdo_in=", args)])
 }
-varnameout <- paste0("lm_", varname, "_as_time_slope")
-message("--> varnameout = \"", varnameout, "\"")
+
+# check varname_cdo_out
+if (!any(grepl("--varname_cdo_out", args))) {
+    varname_cdo_out <- paste0("lm_", varname_cdo_in, "_as_time_slope")
+    message("varname_cdo_out not provided. use default.")
+} else {
+    varname_cdo_out <- sub("--varname_cdo_out=", "", args[grep("--varname_cdo_out=", args)])
+}
+message("--> varname_cdo_out = \"", varname_cdo_out, "\"")
+
+# check varname_fname_in
+if (!any(grepl("--varname_fname_in", args))) {
+    varname_fname_in <- varname_cdo_in
+    message("varname_fname_in not provided. use default.")
+} else {
+    varname_fname_in <- sub("--varname_fname_in=", "", args[grep("--varname_fname_in=", args)])
+}
+message("--> varname_fname_in = \"", varname_fname_in, "\"")
+
+# check varname_fname_out
+if (!any(grepl("--varname_fname_out", args))) {
+    varname_fname_out <- varname_cdo_out
+    message("varname_fname_out not provided. use default.")
+} else {
+    varname_fname_out <- sub("--varname_fname_out=", "", args[grep("--varname_fname_out=", args)])
+}
+message("--> varname_fname_out = \"", varname_fname_out, "\"")
 
 # check outpath
 if (!any(grepl("--outdir", args))) { # outdir not provided
@@ -131,8 +163,8 @@ for (fi in seq_along(fin_all)) {
     message("***************** file ", fi, "/", length(fin_all), " ********************")
 
     # cdo trend
-    fout_intercept <- sub(varname, paste0("lm_", varname, "_as_time_intercept"), fin_all[fi])
-    fout_slope <- sub(varname, varnameout, fin_all[fi])
+    fout_intercept <- sub(varname_fname_in, paste0(varname_fname_out, "_intercept"), fin_all[fi])
+    fout_slope <- sub(varname_fname_in, varname_fname_out, fin_all[fi])
     fout_all[fi] <- fout_slope
     cmd <- paste0("cdo trend ", fin_all[fi], " ", 
                   outdir, "/", fout_intercept, " ", 
@@ -148,7 +180,7 @@ for (fi in seq_along(fin_all)) {
     } else {
         nyears <- "<cdo nyear>"
     }
-    cmd <- paste0("cdo -setname,", varnameout, " -mulc,", nyears, " ",
+    cmd <- paste0("cdo -setname,", varname_cdo_out, " -mulc,", nyears, " ",
                   outdir, "/", fout_slope, " ", outdir, "/tmp && mv ", outdir, "/tmp ",
                   outdir, "/", fout_slope)
     message("run `", cmd, "` ...")
@@ -157,7 +189,7 @@ for (fi in seq_along(fin_all)) {
     # change units 
     cmd <- paste0("cdo showunit ", fin)
     unit <- trimws(system(cmd, intern=T))
-    cmd <- paste0("ncatted -O -a units,", varnameout, ",o,c,\"", unit, "/", nyears, " years\" ", outdir, "/", fout_slope)
+    cmd <- paste0("ncatted -O -a units,", varname_cdo_out, ",o,c,\"", unit, "/", nyears, " years\" ", outdir, "/", fout_slope)
     message("run `", cmd, "` ...")
     if (!dry) system(cmd)
 
@@ -165,7 +197,7 @@ for (fi in seq_along(fin_all)) {
     if (F) { # command for getting longname?
         cmd <- ""
         longname <- system(cmd, intern=T)
-        cmd <- paste0("ncatted -O -a long_name,", varnameout, ",o,c,\"", longname, " trend\" ", outdir, "/", fout_slope) 
+        cmd <- paste0("ncatted -O -a long_name,", varname_cdo_out, ",o,c,\"", longname, " trend\" ", outdir, "/", fout_slope) 
         message("run `", cmd, "` ...")
         if (!dry) system(cmd)
     }

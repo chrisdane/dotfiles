@@ -215,6 +215,7 @@
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
         echo "cdo --operators"
         echo "cdo -h [operator] # e.g. cdo -h after"
+        echo "cdo -b f32 copy  infile ofile \# convert short to float with add_offset and scale_factor" 
         echo "cdo [-t echam6] -f nc copy file.grb file.nc"
         echo "cdo -f nc -t ecmwf -setgridtype,regular"
         echo "for f in *01.grb; do echo \$f; cdo -t echam6 -f nc copy \$f \$f.nc; done"

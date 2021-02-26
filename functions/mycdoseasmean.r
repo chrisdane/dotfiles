@@ -126,9 +126,14 @@ if (!year_crossing_season) {
             x), right = mysub(paste0(whitespace, "+$"), x), both = mysub(paste0(whitespace,
             "+$"), mysub(paste0("^", whitespace, "+"), x)))
     }
+    # in case of many years and old R versions, `cdo showyear` may raise warning:
+    #    line 1 may be truncated in call to system(, intern = TRUE)
+    # --> prevent warnings with `suppressWarnings`
+    # --> in this case, the result is chunked based on some internal `n_max`
     cmd <- paste0("cdo -s showyear ", fin)
     message("get input years with `", cmd, "` ...")
-    years <- system(cmd, intern=T)
+    years <- suppressWarnings(system(cmd, intern=T))
+    if (length(years) > 1) years <- paste(years, collapse=" ") # in case the warning was rasied 
     years <- as.integer(strsplit(trimws(years), "\\s+")[[1]])
     year_range <- range(years)
     message("  --> input years from ", year_range[1], " to ", year_range[2])

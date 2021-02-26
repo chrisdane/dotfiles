@@ -96,16 +96,6 @@ if (any(tmp)) {
 }
 #message("cdo_version = ", paste(cdo_version, collapse="."))
 
-# from R > 3.2 in case used R version is <= 3.2
-trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\n]")
-{
-    which <- match.arg(which)
-    mysub <- function(re, x) sub(re, "", x, perl = TRUE)
-    switch(which, left = mysub(paste0("^", whitespace, "+"),
-        x), right = mysub(paste0(whitespace, "+$"), x), both = mysub(paste0(whitespace,
-        "+$"), mysub(paste0("^", whitespace, "+"), x)))
-}
-
 # calc seasonal mean
 if (!year_crossing_season) {
     cmd <- paste0("cdo -seasmean,", season, " ", fin, " ", fout)
@@ -127,10 +117,22 @@ if (!year_crossing_season) {
     message("  --> ", length(months_year_n), " months of year n: ", paste(months_year_n, collapse=","))
 
     # get years of input
+    # from R > 3.2 in case used R version is <= 3.2
+    trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\n]")
+    {
+        which <- match.arg(which)
+        mysub <- function(re, x) sub(re, "", x, perl = TRUE)
+        switch(which, left = mysub(paste0("^", whitespace, "+"),
+            x), right = mysub(paste0(whitespace, "+$"), x), both = mysub(paste0(whitespace,
+            "+$"), mysub(paste0("^", whitespace, "+"), x)))
+    }
     cmd <- paste0("cdo -s showyear ", fin)
+    message("get input years with `", cmd, "` ...")
     years <- system(cmd, intern=T)
-    years <- as.integer(strsplit(trimws(years), " ")[[1]])
+    years <- as.integer(strsplit(trimws(years), "\\s+")[[1]])
     year_range <- range(years)
+    message("  --> input years from ", year_range[1], " to ", year_range[2])
+    if (any(is.na(year_range))) stop("this should not happen")
 
     # construct cdo command:
     # for 11,12,1,2,3:

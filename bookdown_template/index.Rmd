@@ -1,0 +1,81 @@
+--- 
+title: "Template title"
+author: "author"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+knit: "bookdown::render_book"
+documentclass: krantz
+bibliography: [references.bib]
+biblio-style: apalike
+link-citations: yes
+colorlinks: yes
+lot: yes
+lof: yes
+fontsize: 12pt
+monofont: "Source Code Pro"
+monofontoptions: "Scale=0.7"
+site: bookdown::bookdown_site
+description: "description"
+url: 'https\://myurl.com'
+github-repo: rstudio/bookdown
+favicon: "figs/favicon.ico"
+<!-- cover-image: figs/cover.jpg -->
+---
+
+<!-- set options here; see index.Rmd from bookdown package -->
+```{r setup, include=F}
+rm(list=ls())
+options(
+  show.error.locations=T
+)
+```
+
+```{r htmlTemp3, echo=F, eval=T}
+# https://stackoverflow.com/questions/45360998/code-folding-in-bookdown
+# https://github.com/twbs/bootstrap/tree/v3.3.7/js
+# https://github.com/rstudio/bookdown/issues/395
+codejs <- readr::read_lines("js/codefolding.js")
+collapsejs <- readr::read_lines("js/collapse.js")
+transitionjs <- readr::read_lines("js/transition.js")
+#dropdownjs <- readr::read_lines("js/dropdown.js") # only needed for global button
+
+htmlhead <- 
+  paste('
+<script>',
+paste(transitionjs, collapse = "\n"),
+'</script>
+<script>',
+paste(collapsejs, collapse = "\n"),
+'</script>
+<script>',
+paste(codejs, collapse = "\n"),
+'</script>
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+.row { display: flex; }
+.collapse { display: none; }
+.in { display:block }
+</style>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+', sep = "\n")
+
+readr::write_lines(htmlhead, path="header.html")
+```
+
+# Preface {-}
+
+Hi  
+
+This is a template.
+
+```{r fig.align='center', results="hide", eval=F, echo=F, include=identical(knitr:::pandoc_to(), 'html'), fig.link='https://www.crcpress.com/product/isbn/9781138700109'}
+knitr::include_graphics('figs/cover.jpg', dpi=NA)
+```
+
+```{r, collapse=T}
+utils::sessionInfo()
+```
+

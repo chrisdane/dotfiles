@@ -1,0 +1,49 @@
+\mainmatter
+
+# Notes
+
+Build the book:
+
+```{r eval=F}
+bookdown::render_book("index.Rmd", "bookdown::gitbook")
+bookdown::render_book("index.Rmd", "bookdown::pdf_book")
+bookdown::render_book("index.Rmd", "all") # builds all outputs defined in _output.yml
+```
+Build a specific chapter only:
+
+```{r eval=F}
+bookdown::preview_chapter("chapter.Rmd", "bookdown::gitbook")
+```
+
+Auto-update view in browser ([http://127.0.0.1:4321](http://127.0.0.1:4321)) when saving a `.Rmd` file (from [here](https://bookdown.org/yihui/bookdown/serve-the-book.html)). To stop the server, run `servr::daemon_stop("140206388818696")` or restart your R session:
+
+```{r eval=F}
+bookdown::serve_book(dir=".", output_dir="_book", preview=TRUE, in_session=TRUE, quiet=FALSE, ...)
+```
+
+Cache time consuming code chunks not to run them in every new knit
+
+    `r ''````{r important-computing, cache=T}
+
+Run a script 
+
+    `r ''````{r code=readLines("myscript.R")}
+
+Create bib entries from a package:
+
+```{r eval=F}
+knitr::write_bib(c("knitr", "stringr"), "", width = 60)
+```
+
+In labels, no `.` signs are allowed. 
+
+Here comes a citet ref @kelley_2018 and here the citep example [@kelley_2018].
+
+## Code-folding button
+
+This button is based on
+
+- https://stackoverflow.com/questions/45360998/code-folding-in-bookdown
+- https://github.com/twbs/bootstrap/tree/v3.3.7/js
+- https://github.com/rstudio/bookdown/issues/395
+

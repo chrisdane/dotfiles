@@ -3,6 +3,7 @@
 
 # except
 !README.md
+!bookdown_template
 !functions/
 !tex_paper_template/
 !Rprofile

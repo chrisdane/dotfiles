@@ -1,0 +1,7 @@
+# bookdown template
+
+compile with
+```
+bookdown::render_book("index.Rmd", "bookdown::gitbook")
+```
+

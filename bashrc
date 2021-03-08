@@ -495,13 +495,13 @@
         echo "module command is not set"
     fi
     
-    # load dotfiles-repo functions
+    # link dotfiles-repo functions to bin
     fs=(
         psme cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall finduser.r 
         get_esm_version_exp get_esm_version_home get_mvstreams_from_atmout.r
-        mycdoseasmean.r mycdotrend.r mycdoeof.r
+        mycdoseasmean.r mycdoseassum.r mycdotrend.r mycdoeof.r
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r
         myncrcat.r

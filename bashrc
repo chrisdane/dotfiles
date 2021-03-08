@@ -148,13 +148,36 @@
             find -print 2>/dev/null | grep -i $1 
         fi
     }
-    when(){
-        mydate="$@"
-        if [ "z$mydate" != "z" ] && date -d "$mydate" > /dev/null; then
-            #echo "date \"$mydate\" valid"
+    when(){ 
+        # info: /usr/share/zoneinfo and timedatectl list-timezones
+        remote_date_user="$@"
+        if [ "z$remote_date_user" != "z" ] && date -d "$remote_date_user" > /dev/null; then
+            #echo "date \"$remote_date_user\" valid"
+            echo "run tzselect ..."
             tz=$(tzselect)
             #echo "tz: \"$tz\""
-            echo "$tz time $mydate is $(date -d "TZ=\"$tz\" $mydate")."
+            # get correct remote date
+            remote_date=$(TZ="$tz" date -d "$remote_date_user")
+            local_date=$(date -d "TZ=\"$tz\" $remote_date_user")
+            remote_dh_to_utc_char=$(TZ="$tz" date -d "$remote_date_user" +%z)
+            local_dh_to_utc_char=$(date -d "TZ=\"$tz\" $remote_date_user" +%z)
+            remote_dh_to_utc_num=$(TZ="$tz" date -d "$remote_date_user" +%z | sed -E 's/^([+-])(..)(..)/scale=2;0\1(\2 + \3\/60)/' | bc)
+            local_dh_to_utc_num=$(date -d "TZ=\"$tz\" $remote_date_user" +%z | sed -E 's/^([+-])(..)(..)/scale=2;0\1(\2 + \3\/60)/' | bc)
+            # calc diff
+            dt_hour=$( bc <<<"$local_dh_to_utc_num - $remote_dh_to_utc_num" )
+            #echo "dt_hour = $dt_hour"
+            echo "" 
+            echo "Provided $tz time $remote_date_user is"
+            echo "$remote_date (UTC $remote_dh_to_utc_char = $remote_dh_to_utc_num), i.e. my corresponding local time"
+            printf "$local_date (UTC $local_dh_to_utc_char = $local_dh_to_utc_num) is "
+            if (( $(echo "$dt_hour == 0" |bc -l) )); then
+                echo "at the same time)"
+            else
+                printf "%s" "abs($local_dh_to_utc_num - $remote_dh_to_utc_num) = ${dt_hour#-} hour"
+                (( $(echo "${dt_hour#-} > 1" |bc -l) )) && printf "s"
+                (( $(echo "$dt_hour >= 0" |bc -l) )) && echo " later"
+                (( $(echo "$dt_hour < 0" |bc -l) )) && echo " earlier"
+            fi
         else
             return 1
         fi
@@ -225,6 +248,7 @@
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "cdo -r copy in out"
+        echo "cdo -seltimestep,$(cat steps | tr ' ' ',') in out"
         echo "cdo trend in intercepts slopes"
         echo "export CDO_WEIGHT_MODE=off; export MAX_JACOBI_ITER=100"
         echo "cdo sub fin -timmean fin anom_fin"

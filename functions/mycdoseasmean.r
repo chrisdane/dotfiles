@@ -11,8 +11,7 @@ usage <- paste0("\nUsage:\n $ ", me, " season in.nc out.nc\n",
                 "\n",
                 "  The order of `season` is important: \"1,2,12\" will average over months 1,2,12 of year n, while\n",
                 "  \"12,1,2\" calculates the average of year n over month 12 of year n-1 and the months 1 and 2 of year n.\n",
-                "  If season = e.g. \"1,2,3\", i.e. if annual averages over a non-year-crossing season is requested, \n",
-                "  the default `cdo seasmean,1,2,3 in.nc out.nc` is executed.",
+                "  If n the first case, the default `cdo seasmean,1,2,12 in.nc out.nc` is executed.",
                 "\n")
 # check
 if (length(args) != 3) {
@@ -140,6 +139,7 @@ if (!year_crossing_season) {
     if (any(is.na(year_range))) stop("this should not happen")
 
     # construct cdo command:
+    # https://code.mpimet.mpg.de/boards/1/topics/9121?r=9128#message-9128
     # for 11,12,1,2,3:
     # cdo -shifttime,3mo -yearmean -selyear,6970/6999 -selmon,8,9,10,11,12 -shifttime,-3mo in_6971-7000.nc out.nc
     # for 12,1,2:

@@ -19,9 +19,10 @@ if (mode == "seasmean") {
                     "    season = e.g. \"12,1,2\" or \"11,12,1,2,3\" (the '\"' are not needed) for annual averages over ",
                     "these year-crossing seasons\n",
                     "\n",
-                    "  The order of `season` is important: \"1,2,12\" will average over months 1,2,12 of year n, while\n",
-                    "  \"12,1,2\" calculates the average of year n over month 12 of year n-1 and the months 1 and 2 of year n.\n",
-                    "  In the first case, the default `cdo -yearmean -selmon,1,2,12 in.nc out.nc` is executed.",
+                    "  The order of `season` is important: \"1,2,3,11,12\" will average over months 1,2,3,11,12 of year n, while\n",
+                    "  \"11,12,1,2,3\" calculates the average of year n over months 11,12 of year n-1 and the months 1,2,3 of year n.\n",
+                    "  In the first case, the default `cdo -yearmean -selmon,1,2,3,11,12 in.nc out.nc` is executed.\n",
+                    "  Season 12,1,2 (i.e. DJF) is implemented in cdo (-seasmean -select,season=DJF).",
                     "\n")
 } else if (mode == "seassum") {
     usage <- paste0("\nUsage:\n $ ", me, " season in.nc out.nc\n",
@@ -29,9 +30,10 @@ if (mode == "seasmean") {
                     "    season = e.g. \"12,1,2\" or \"11,12,1,2,3\" (the '\"' are not needed) for annual sums over ",
                     "these year-crossing seasons\n",
                     "\n",
-                    "  The order of `season` is important: \"1,2,12\" will sum over months 1,2,12 of year n, while\n",
-                    "  \"12,1,2\" calculates the sum of year n over month 12 of year n-1 and the months 1 and 2 of year n.\n",
-                    "  In the first case, the default `cdo -yearsum -selmon,1,2,12 in.nc out.nc` is executed.",
+                    "  The order of `season` is important: \"1,2,3,11,12\" will sum over months 1,2,3,11,12 of year n, while\n",
+                    "  \"11,12,1,2,3\" calculates the sum of year n over months 11,12 of year n-1 and the months 1,2,3 of year n.\n",
+                    "  In the first case, the default `cdo -yearsum -selmon,1,2,3,11,12 in.nc out.nc` is executed.\n",
+                    "  Season 12,1,2 (i.e. DJF) is implemented in cdo (-seassum -select,season=DJF).",
                     "\n")
 }
 

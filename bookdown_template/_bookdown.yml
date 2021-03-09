@@ -1,11 +1,10 @@
 book_filename: bookdown
-  #repo: https://github.com/rstudio/bookdown/
-repo: https://github.com/chrisdane/chrisdane.github.io
+  #repo: url
 output_dir: docs
 clean: [bookdown.bbl]
 delete_merged_file: true
-view: https://github.com/chrisdane/chrisdane.github.io/blob/master/%s
-edit: https://github.com/chrisdane/chrisdane.github.io/edit/master/%s
+  #view: url
+  #edit: url
 language:
   label:
     fig: "Fig. "
@@ -16,4 +15,5 @@ language:
 rmd_files:
   html: ["index.Rmd", "chapters/notes.Rmd", "chapters/references.Rmd"]
   latex: ["index.Rmd", "chapters/notes.Rmd", "chapters/references.Rmd"]
+    #rmd_subdir: ["chapters/"]
 

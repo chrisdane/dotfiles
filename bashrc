@@ -497,6 +497,7 @@
     
     # link dotfiles-repo functions to bin
     fs=(
+        mydiff.r
         psme cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall finduser.r 

@@ -27,7 +27,7 @@
 # library(pryr) --> object_size(), mem_used(), mem_change() 
 #file_sizes_byte <- file.size(files)
 #file_sizes_pretty <- sapply(file_sizes_byte, utils:::format.object_size, "auto")
-# strsplit(x, "\\s+")[[1]] arbirtrary number of spaces
+# strsplit(x, "\\s+")[[1]] arbitrary number of spaces blanks
 # getAnywhere(objectname)
 # system.file("extdata", "2012.csv", package = "testdat")
 # options(menu.graphics=FALSE) #graphics dialogs always seem to crash R

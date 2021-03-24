@@ -4,7 +4,7 @@ args <- commandArgs(trailingOnly=F)
 me <- basename(sub("--file=", "", args[grep("--file=", args)]))
 args <- commandArgs(trailingOnly=T)
 
-usage <- paste0("\nUsage:\n $ ", me, " file_list1.txt file_list2.txt\n")
+usage <- paste0("\nUsage:\n $ ", me, " file_list1.txt file_list2.txt\n\n")
 
 # check
 if (length(args) != 2) {

@@ -26,7 +26,7 @@ usage <- paste0("\nUsage:\n $ ", me, " args\n",
                 "   --method=eof (eof, eoftime, eofspatial)\n",
                 "   --cdo_weight_mode=off\n",
                 "   --max_jacobi_iter=100\n",
-                "   --P=`min($nproc, 4)` (only applies if cdo version >= 1.9.10, --P=1 otherwise)\n")
+                "   --P=`min($nproc, 4)` (only applies if cdo version > 1.9.9, P=1 otherwise)\n")
 if (length(args) == 0) {
     message(usage)
     quit()
@@ -415,6 +415,26 @@ for (vi in seq_along(varnames)) {
                       outdir, "/", fout_eigvec_normalized)
         message("run `", cmd, "` ...")
         if (!dry) system(cmd)
+        
+        # correct units
+        if (!dry) {
+            message("\ncorrect units ...")
+            data_unit <- system(paste0("cdo showunit ", outdir, "/", fout_eigvec), intern=T)
+            data_unit <- trimws(data_unit)
+            cmd <- paste0("cdo setunit,\"", data_unit, "\" ", 
+                          outdir, "/", fout_eigvec_normalized, " ",
+                          outdir, "/tmp && mv ", outdir, "/tmp ",
+                          outdir, "/", fout_eigvec_normalized)
+            message("run `", cmd, "` ...")
+            system(cmd)
+            # delete old units attribute "<nco_ncatted> -O -a code,aprt_times_temp2,d,,",
+            cmd <- paste0("ncatted -O -a units,,d,, ",
+                          outdir, "/", fout_eigvec)#, " ",
+                          #outdir, "/tmp && mv ", outdir, "/tmp ",
+                          #outdir, "/", fout_eigvec)
+            message("run `", cmd, "` ...")
+            system(cmd)
+        }
 
         # merge default and normalized eigenvecs
         message("\nmerge ", neof, " default and normalized eigenvecs together ...")
@@ -429,6 +449,7 @@ for (vi in seq_along(varnames)) {
             file.remove(paste0(outdir, "/", fout_normalized_eigvec))
             file.remove(paste0(outdir, "/", fout_eigvec_normalized))
         }
+
 
         # described variance
         if (!dry) {

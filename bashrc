@@ -268,6 +268,9 @@
         echo "conda clean --all"
         echo "conda env remove -n <env> \# this removes all packages installed in <env>"
     }
+    texhelp(){
+        echo "latexdiff -t CFONT old.tex new.tex > changes.tex \# for error"
+    }
     inkscapehelp(){
         echo "clip/mask: draw rectangle over area you want to clip. select both. objects -> clip -> set"
         echo "crop white space: select -> edit -> resize page to selection"
@@ -504,7 +507,7 @@
         get_esm_version_exp get_esm_version_home get_mvstreams_from_atmout.r
         mycdoseasmean.r mycdoseassum.r mycdotrend.r mycdoeof.r
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
-        myeof.r
+        myeof.r plotmyeof.r
         myncrcat.r
         inertial.r
         )

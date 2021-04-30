@@ -1,7 +1,7 @@
 ## R
 
 # https://csgillespie.github.io/efficientR/3-3-r-startup.html#r-startup
-
+# image white lines: http://cran.stat.auckland.ac.nz/doc/FAQ/R-FAQ.html#Why-are-there-unwanted-borders
 ## usefull commands
 #options(warn=2) # stop on warnings
 #options(warn=0) # back to default

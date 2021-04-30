@@ -200,6 +200,9 @@
         echo "wget -r -no-parent -e robots=off url"
         echo "while read -r f; do mv "$f" "${f//:/_}"; done <files.txt"
     }
+    vimhelp(){
+        echo "find missing bracket: 1) cursor on open or close bracket 2) %"
+    }
     tarhelp(){
         echo "https://www.gnu.org/software/tar/manual/html_section/"
         echo "tar -cvf archive.tar f1 f2 # [c]reate archive named <[f]ile>"
@@ -511,6 +514,7 @@
         myncrcat.r
         inertial.r
         )
+    mkdir -p ~/bin
     for f in "${fs[@]}"; do
         if [ -f ~/dotfiles/functions/$f ]; then
             if [ ! -f ~/bin/$f ]; then

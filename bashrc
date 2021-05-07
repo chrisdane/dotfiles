@@ -471,9 +471,9 @@
         if [[ $ct ]]; then # is set and it is not empty
             #echo ""
             #echo "$ct"
-            readarray -t a <<<$ct # split vector by \n to array
+            readarray -t arr <<<$ct # split vector by \n to array
             cnt=0
-            for line in "${a[@]}"; do
+            for line in "${arr[@]}"; do
                 #if [[ "$line" =~ ^#.* ]]; then # starts with "#"
                 if [[ "$line" != \#* && ${#line} != 0 ]]; then # starts not with "#"
                     cnt=$((cnt+1))
@@ -486,7 +486,52 @@
             elif [[ ! $ct ]]; then # is not set or it is set to an empty string
             printf " no active cronjob running\n"
         fi
-    fi
+    fi # if crontab exists
+    
+    # check if there are systemctl timers running
+    if check_existance systemctl; then
+        printf "systemctl list-timers ... "
+        timers=$(systemctl list-timers) #; echo "$timers"
+        readarray -t arr <<<$timers # split vector by \n to array #; echo "$arr"
+        from=1
+        to=${#arr[@]} #; echo "$to lines"
+        to=$((to-4)) #; echo "select lines $((from+1)) to $((to+1)) ..."
+        arr2=("${arr[@]:$from:$to}") #; echo "--> ${#arr2[@]} lines"
+        system_services=(systemd-tmpfiles-clean.service 
+                         logrotate.service
+                         man-db.service
+                         shadow.service
+                         updatedb.service
+                         motd-news.service
+                         apt-daily.service
+                         apt-daily-upgrade.service
+                         fstrim.service
+                         snapd.snap-repair.service
+                         ureadahead-stop.service)
+        for line in "${arr2[@]}"; do
+            #echo $line
+            if [[ "$line" = *" ago "* ]]; then # check if valid line
+                service=${line##* } # get active service --> last component of line
+                # exclude default system services
+                #if [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # if included
+                #    printf "\n  service \"$service\" is included in system_services. skip."
+                if ! [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # if not included
+                    printf "\n  active service \"$service\" runs:"
+                    status=$(systemctl status $service) #; echo "$status"
+                    readarray -t arr3 <<<$status # split vector by \n to array
+                    #echo "$arr3"
+                    for line in "${arr3[@]}"; do
+                        if [[ "$line" =~ ^"    Process: ".* ]]; then # starts with "#"
+                            #echo $line
+                            cmd=${line##*"ExecStart="}
+                            printf "\n    $cmd"
+                        fi
+                    done    
+                fi
+            fi
+        done
+        echo
+    fi # if systemctl exists
 
     # run bash stuff if available
     if ! check_existance nc-config; then

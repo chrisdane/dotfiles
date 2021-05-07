@@ -269,7 +269,7 @@ for (vi in seq_along(data)) {
     }
     
     # normalized eigenvecs: eigenvec_normalized_eofi = sqrt(eigenval_eofi) * e_eofi
-    # eq. 13.22 von stoch and zwiers 1999
+    # eq. 13.22 von storch and zwiers 1999
     # --> normalized eigenvectors have same units as data
     # --> normalized eigenvectors represent a "typical event"
     eof$eigenvec_normalized <- array(NA, dim=dim(eof$eigenvec))

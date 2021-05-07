@@ -463,7 +463,31 @@
             fi
         fi
     fi # if vim or vimx exist
-    
+   
+    # check if there are cronjobs running
+    if check_existance crontab; then
+        printf "crontab -l ..."
+        ct=$(crontab -l 2>/dev/null)
+        if [[ $ct ]]; then # is set and it is not empty
+            #echo ""
+            #echo "$ct"
+            readarray -t a <<<$ct # split vector by \n to array
+            cnt=0
+            for line in "${a[@]}"; do
+                #if [[ "$line" =~ ^#.* ]]; then # starts with "#"
+                if [[ "$line" != \#* && ${#line} != 0 ]]; then # starts not with "#"
+                    cnt=$((cnt+1))
+                    if (( $cnt == 1 )); then
+                        echo
+                    fi
+                    echo "active cronjob $cnt: $line"
+                fi
+            done
+            elif [[ ! $ct ]]; then # is not set or it is set to an empty string
+            printf " no active cronjob running\n"
+        fi
+    fi
+
     # run bash stuff if available
     if ! check_existance nc-config; then
         echo nc-config is missing!

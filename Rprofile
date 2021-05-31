@@ -126,7 +126,7 @@ if (T) { # set F for blank .Rprofile
     # add own paths to .libPaths()
     # --> construct my libpath as function of R version and C compiler version used to build this R version
     #newLibPaths <- paste0("~/scripts/r/packages/", c("bin"))
-    if (T) { # path of current r version
+    if (F) { # path of current r version
         newLibPaths <- paste0("~/scripts/r/packages/bin/r_", 
                               #as.character(getRversion()),                           # e.g. 3.6.2
                               paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. 3.6
@@ -134,14 +134,14 @@ if (T) { # set F for blank .Rprofile
                               )
     } else if (F) { # all paths of all available r versions
         newLibPaths <- rev(list.files("~/scripts/r/packages/bin", full.names=T)) # decreasing version order: 3.6, 3.5, ... 
+    } else if (T) { # all paths of available `r_version$major` directories
+        newLibPaths <- rev(list.files("~/scripts/r/packages/bin", pattern=paste0("r_", version$major), full.names=T))
     }
+    if (interactive()) message("Set .libPaths() ...")
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths)
-
-    if (interactive()) {
-        message("Set .libPaths() ...")
-        message(paste0("   ", .libPaths(), collapse="\n"))
-    }
+    if (interactive()) message(paste0("   ", .libPaths(), collapse="\n"))
+    
     #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
     rm(newLibPaths)
        

@@ -480,7 +480,7 @@
                     if (( $cnt == 1 )); then
                         echo
                     fi
-                    echo "active cronjob $cnt: $line"
+                    echo "  active cronjob $cnt: $line"
                 fi
             done
             elif [[ ! $ct ]]; then # is not set or it is set to an empty string
@@ -516,7 +516,7 @@
                 #if [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # if included
                 #    printf "\n  service \"$service\" is included in system_services. skip."
                 if ! [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # if not included
-                    printf "\n  active service \"$service\" runs:"
+                    printf "\n  systemctl status $service:"
                     status=$(systemctl status $service) #; echo "$status"
                     readarray -t arr3 <<<$status # split vector by \n to array
                     #echo "$arr3"
@@ -576,6 +576,7 @@
         psme cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall finduser.r 
+        get_timestep.r get_energy.r 
         get_esm_version_exp get_esm_version_home get_mvstreams_from_atmout.r
         mycdoseasmean.r mycdoseassum.r mycdotrend.r mycdoeof.r
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r

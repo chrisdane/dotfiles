@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+   echo
+   echo "> slurm_wait jobid"
+   echo
+   exit
+fi
+
+while sleep 1; do 
+    
+    status=$(scontrol show jobid -dd $1 | grep JobState) # "JobState=PENDING Reason=Resources Dependency=(null)"
+    status=$(echo $status | cut -d' ' -f1) # "JobState=PENDING"
+    status=$(echo $status | cut -d'=' -f2) # "PENDING" or "RUNNING"
+    #echo "job $1 JobState:"
+    #echo $status
+    if [ "$status" != "RUNNING" ]; then
+        echo "job $1 is not running ($status)"
+    else  # running
+        if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
+            zenity --info --text="job $1 runs!"
+        else # inform just in terminal
+            echo "job $1 runs!"
+        fi
+        exit
+    fi # if job is running or not
+
+done # while 
+

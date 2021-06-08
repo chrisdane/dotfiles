@@ -575,7 +575,8 @@
         mydiff.r
         psme cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
-        checkall finduser.r 
+        checkall 
+        myfinger.r finduser.r 
         get_timestep.r get_energy.r 
         get_esm_version_exp get_esm_version_home get_mvstreams_from_atmout.r
         mycdoseasmean.r mycdoseassum.r mycdotrend.r mycdoeof.r

@@ -572,7 +572,7 @@
     
     # link dotfiles-repo functions to bin
     fs=(
-        mydiff.r
+        diff_filelists.r diff_namelists.r
         psme cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall 

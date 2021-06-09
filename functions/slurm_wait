@@ -6,22 +6,45 @@ if [ -z "$1" ]; then
    echo
    exit
 fi
+        
+if ! command -v scontrol &> /dev/null; then
+    echo program scontrol not found
+    exit
+fi
 
-while sleep 1; do 
+if ! command -v hostname &> /dev/null; then
+    echo program hostname not found
+    exit
+fi
     
+if command -v host &> /dev/null; then
+    hostname=$(host $(hostname)) # ollie1.awi.de has address 172.18.20.82
+    hostname=$(echo $hostname | cut -d' ' -f1)
+else
+    hostname=$(hostname)
+fi
+    
+echo "scontrol show jobid -dd $1"
+while sleep 1; do 
+
     status=$(scontrol show jobid -dd $1 | grep JobState) # "JobState=PENDING Reason=Resources Dependency=(null)"
+    if ! [ $? -eq 0 ]; then
+        exit
+    fi
     status=$(echo $status | cut -d' ' -f1) # "JobState=PENDING"
     status=$(echo $status | cut -d'=' -f2) # "PENDING" or "RUNNING"
-    #echo "job $1 JobState:"
-    #echo $status
     if [ "$status" != "RUNNING" ]; then
-        echo "job $1 is not running ($status)"
+        echo "$hostname job $1 not running yet ($status)"
     else  # running
+        msg="$hostname job $1 started"
         if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
-            zenity --info --text="job $1 runs!"
+            echo "run zenity ..."
+            zenity --info --text="$msg"
         else # inform just in terminal
-            echo "job $1 runs!"
+            echo "program zenity not found"
+            echo $msg
         fi
+        echo "stopping slurm_wait"
         exit
     fi # if job is running or not
 

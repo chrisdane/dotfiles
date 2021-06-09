@@ -17,7 +17,7 @@ if (any(grepl("--help", args))) {
     quit()
 }
 
-# run `grep -Ein "warn|err|\!"` on every log
+# run `grep -Ein "warn|err|severe|\!"` on every log
 logs <- commandArgs(trailingOnly=T)
 if (length(logs) == 0) {
     message("no log files given. use default") 
@@ -28,7 +28,7 @@ for (logi in seq_along(logs)) {
     message("***********************************************\n",
             "log ", logi, "/", length(logs), ": ", log, appendLF=F)
     if (file.exists(log)) {
-        cmd <- paste0("grep -Ein \"warn|err|\\!\" ", logs[logi])
+        cmd <- paste0("grep -Ein \"warn|err|severe|\\!\" ", logs[logi])
         message(" --> run `", cmd, "` ...")
         system(cmd)
     } else {

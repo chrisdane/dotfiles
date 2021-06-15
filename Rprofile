@@ -135,7 +135,7 @@ if (T) { # set F for blank .Rprofile
     } else if (F) { # all paths of all available r versions
         newLibPaths <- rev(list.files("~/scripts/r/packages/bin", full.names=T)) # decreasing version order: 3.6, 3.5, ... 
     } else if (T) { # all paths of available `r_version$major` directories
-        newLibPaths <- rev(list.files("~/scripts/r/packages/bin", pattern=paste0("r_", version$major), full.names=T))
+        newLibPaths <- list.files("~/scripts/r/packages/bin", pattern=paste0("r_", version$major), full.names=T)
     }
     if (interactive()) message("Set .libPaths() ...")
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))

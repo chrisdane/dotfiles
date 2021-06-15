@@ -116,26 +116,20 @@ if (T) { # set F for blank .Rprofile
             }
             
             if (interactive()) {
-                message("   automatically derived C compiler version number:")
-                message("      ", Ccompiler_version)
+                message("   automatically derived C compiler version number:\n",
+                        "      ", Ccompiler_version)
             }
         } # find C compiler used to build this R
     } # which C compiler
     rm(Rwrapper, Rexe, host) 
 
-    # add own paths to .libPaths()
-    # --> construct my libpath as function of R version and C compiler version used to build this R version
-    #newLibPaths <- paste0("~/scripts/r/packages/", c("bin"))
-    if (F) { # path of current r version
-        newLibPaths <- paste0("~/scripts/r/packages/bin/r_", 
-                              #as.character(getRversion()),                           # e.g. 3.6.2
-                              paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. 3.6
-                              #, "_C_", Ccompiler_version
-                              )
-    } else if (F) { # all paths of all available r versions
-        newLibPaths <- rev(list.files("~/scripts/r/packages/bin", full.names=T)) # decreasing version order: 3.6, 3.5, ... 
-    } else if (T) { # all paths of available `r_version$major` directories
-        newLibPaths <- list.files("~/scripts/r/packages/bin", pattern=paste0("r_", version$major), full.names=T)
+    # where should new packages be installed?
+    # default: `Sys.getenv("R_LIBS_USER")` = e.g. "~/R/x86_64-pc-linux-gnu-library/3.6"
+    # --> within minor version changes, recompilation is not necessary, e.g. from 3.6.1 to 3.6.2  
+    rversion_x.y <- paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. 3.6
+    newLibPaths <- list.files("~/scripts/r/packages/bin", pattern=paste0("r_", version$major), full.names=T)
+    if (length(newLibPaths) == 0) {
+        newLibPaths <- paste0("~/scripts/r/packages/bin/r_", rversion_x.y)
     }
     if (interactive()) message("Set .libPaths() ...")
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
@@ -143,7 +137,7 @@ if (T) { # set F for blank .Rprofile
     if (interactive()) message(paste0("   ", .libPaths(), collapse="\n"))
     
     #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
-    rm(newLibPaths)
+    rm(newLibPaths, rversion_x.y)
        
 	if (interactive()) {
 

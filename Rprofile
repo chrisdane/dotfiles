@@ -197,7 +197,9 @@ if (T) { # set F for blank .Rprofile
                       #, "dtupdate" # for github_update
                       )
         # "data.table", "forecast", "ncdf.tools", "crayon"
-        if (Sys.getenv("TERM") == "xterm-256color") packages <- c("colorout", packages) # put colorout first
+        if (Sys.getenv("TERM") == "xterm-256color") {
+            packages <- c("colorout", packages) # try to load colorout package first
+        }
 
         npkg <- length(packages)
         nchar_no <- nchar(npkg)
@@ -207,33 +209,50 @@ if (T) { # set F for blank .Rprofile
 		for (pkg in packages) {
             
             cnt <- cnt + 1
-            # here, library() yields better error handling than require()
-		   	tc <- tryCatch(suppressMessages(suppressWarnings(library(pkg, character.only=T))),
-                           error=function(e) e, warning=function(w) w)
-            
-            # replace colorout with crayon if loading of colorout was not successful and crayon is not mentioned
-            if (pkg == "colorout" && !any(search() == paste0("package:", pkg)) &&
-                !any(packages == "crayon")) {
-                #devtools::install_github("jalvesaq/colorout")
-                pkg <- "crayon"
-                packages[1] <- pkg
-                nchar_pkg <- nchar(packages)
-                suppressMessages(suppressWarnings(require(pkg, character.only=T)))
-            }
-            # load my default colors once
-            if (pkg == "colorout" && any(search() == "package:colorout")) {
-                mysetOutputColors()
-            }
             message("   ", sprintf(paste0("%", nchar_no, "i"), cnt), "/", npkg, "  ", pkg, "  ", 
                     paste0(rep(" ", t=max(nchar_pkg) - nchar(pkg)), collapse=""), appendLF=F)
-            # check if package load was successfull
-            if (any(search() == paste0("package:", pkg))) {
-				checktext <- "ok"
-			} else {
-				checktext <- "failed"
-				failed <- c(failed, paste0(pkg, ": ", tc$message))
-			}
-            # apply colorout/crayon colors
+           
+            # try to load package from all available .libPaths()
+            for (libpathi in seq_along(.libPaths())) {
+
+                # library() yields better error handling than require()
+                tc <- tryCatch(suppressMessages(suppressWarnings(
+                                  library(pkg, lib=.libPaths()[libpathi], character.only=T))),
+                               error=function(e) e, warning=function(w) w)
+                
+                # check if package load was successfull
+                if (any(search() == paste0("package:", pkg))) {
+                    checktext <- "ok"
+                    break # for libpathi loop
+                } else {
+                    checktext <- "failed"
+                    failed <- c(failed, 
+                                paste0(pkg, ": ", tc$message),
+                                paste0(pkg, ": libpath = ", .libPaths()[libpathi])) 
+                }
+            } # for libpathi
+            
+            # apply color to checktext if possible
+            if (pkg == "colorout") {
+                if (any(search() == "package:colorout")) { # 1st try: colorout successfully loaded
+                    mysetOutputColors() # set my default colors; needs ~/scripts/r/functions/mysetOutputColors.r
+                } else { # 2nd try: colorout not loaded
+                    if (!any(packages == "crayon")) { # try to load crayon 
+                        #devtools::install_github("jalvesaq/colorout")
+                        pkg <- "crayon" # overwrite colorout with crayon
+                        packages[which(packages == "colorout")] <- pkg
+                        nchar_pkg <- nchar(packages)
+                        for (libpathi in seq_along(.libPaths())) {
+                            tc <- tryCatch(suppressMessages(suppressWarnings(
+                                              library(pkg, lib=.libPaths()[libpathi], character.only=T))),
+                                           error=function(e) e, warning=function(w) w)
+                            if (any(search() == "package:crayon")) break
+                        } # for libpathi
+                    } # if crayon not already loaded
+                } # if colorout could not be loaded
+            } # if current pkg is colorout
+
+            # apply colors to checktext if one of colorout or crayon was successfully loaded
             if (any(search() == "package:colorout")) {
                 if (checktext == "ok") {
                     mysetOutputColors(stderror=40) # green
@@ -242,22 +261,24 @@ if (T) { # set F for blank .Rprofile
                 }
             } else if (any(search() == "package:crayon")) {
 				if (checktext == "ok") {
-					fancy <- combine_styles(make_style("ivory"),
-											make_style("green", bg=T))
+					fancy <- crayon::combine_styles(crayon::make_style("ivory"),
+											        crayon::make_style("green", bg=T))
 				} else if (checktext == "failed") {
-					fancy <- combine_styles(make_style("ivory"),
-											make_style("red", bg=T))
+					fancy <- crayon::combine_styles(crayon::make_style("ivory"),
+											        crayon::make_style("red", bg=T))
 				}
 				checktext <- fancy(checktext)
-			} # if package:crayon is loaded
-			# show ok/failed
-			message(checktext, appendLF=F)
-			# remove green/red colorout/crayon format
+			} # if colorout or crayon package is loaded
+
+			message(checktext, appendLF=F) # show ok/failed of loading current pkg
+			
+            # switch off colors again
             if (any(search() == "package:colorout")) {
-                mysetOutputColors() # needs ~/scripts/r/functions/mysetOutputColors.r
+                mysetOutputColors()
             } else if (any(search() == "package:crayon")) {
 				checktext <- crayon::strip_style(checktext)
 			}
+            
             # show if cran or git package
             repo <- suppressMessages(suppressWarnings(utils::packageDescription(pkg)))
             if (any(names(repo) == "RemoteType")) {
@@ -284,7 +305,7 @@ if (T) { # set F for blank .Rprofile
             # linebreak
 			message("")
 		} # for pkg packages
-		rm(cnt, npkg, packages, tc, pkg, nchar_no, nchar_pkg, checktext, repo)
+		rm(cnt, libpathi, npkg, packages, tc, pkg, nchar_no, nchar_pkg, checktext, repo)
 		if (exists("fancy")) rm(fancy)
 
         # set some global options after packages loaded since some functions may need package functions
@@ -352,7 +373,7 @@ if (T) { # set F for blank .Rprofile
         # show error message if package load failed
         if (!is.null(failed)) {
             message("Messages of failed packages:")
-            for (i in 1:length(failed)) message("   ", failed[i])
+            for (i in seq_along(failed)) message("   ", failed[i])
             rm(i)
         } # if any packages failed
         rm(failed)

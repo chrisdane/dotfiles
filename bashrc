@@ -572,12 +572,14 @@
     
     # link dotfiles-repo functions to bin
     fs=(
-        mydiff.r
+        diff_filelists.r diff_namelists.r
         psme cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
-        checkall finduser.r 
+        checkall 
+        myfinger.r finduser.r 
         get_timestep.r get_energy.r 
-        get_esm_version_exp get_esm_version_home get_mvstreams_from_atmout.r
+        slurm_wait
+        esm_check_err.r esm_get_esm_version_exp esm_get_esm_version_home echam_get_mvstreams_from_atmout.r
         mycdoseasmean.r mycdoseassum.r mycdotrend.r mycdoeof.r
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r plotmyeof.r

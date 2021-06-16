@@ -50,9 +50,6 @@
 #
 if (T) { # set F for blank .Rprofile
 
-    # hostname, e.g. mlogin101, stan1.awi.de, K
-    host <- Sys.info()[4]
-
     if (interactive()) { 
         message(c(rep("*", t=(getOption("width")/2 - 6)),
                   " ~/.Rprofile ", 
@@ -67,12 +64,11 @@ if (T) { # set F for blank .Rprofile
     if (interactive()) {
         message("R wrapper: ", Rwrapper)
         message("R executable: ", Rexe)
-        message("numeric tolerance `sqrt(.Machine$double.eps)` = ", 
-                sqrt(.Machine$double.eps))
     }
-
+    
     # C compiler used to build this R 
     if (T) { # building a package needs same C compiler that was used for building r itself
+        host <- Sys.info()[4]
         if (grepl("stan", host)) {
             Ccompiler_version <- "4.4.7"
         } else if (grepl("paleosrv", host)) {
@@ -118,14 +114,17 @@ if (T) { # set F for blank .Rprofile
                 message("--> C compiler version: ", Ccompiler_version)
             }
         } # find C compiler used to build this R
+        rm(host)
     } # which C compiler
-    rm(Rwrapper, Rexe, host) 
+    rm(Rwrapper, Rexe) 
 
     # where should new packages be installed?
     # default: `Sys.getenv("R_LIBS_USER")` = e.g. "~/R/x86_64-pc-linux-gnu-library/3.6"
-    # --> within minor version changes, recompilation is not necessary, e.g. from 3.6.1 to 3.6.2  
+    # --> within minor version changes, package re-compilation usually is not necessary, e.g. from 3.6.1 to 3.6.2
+    # --> from e.g. 3.6.x to 3.7.x, package re-compilation usually is necessary
     rversion_x.y <- paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. 3.6
-    newLibPaths <- list.files("~/scripts/r/packages/bin", pattern=paste0("r_", version$major), full.names=T)
+    # get already existing package dirs with same version as current running R version 
+    newLibPaths <- list.files("~/scripts/r/packages/bin", pattern=paste0("r_", version$major), full.names=T) 
     if (length(newLibPaths) == 0) {
         newLibPaths <- paste0("~/scripts/r/packages/bin/r_", rversion_x.y)
     }
@@ -133,10 +132,10 @@ if (T) { # set F for blank .Rprofile
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths)
     if (interactive()) message(paste0("   ", .libPaths(), collapse="\n"))
-    
-    #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
     rm(newLibPaths, rversion_x.y)
-       
+    #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
+    
+    # do rest only if interactive session
 	if (interactive()) {
 
         # change R message language to english if not alread done by OS

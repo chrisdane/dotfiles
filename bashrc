@@ -303,7 +303,7 @@
     alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls'
     alias grep="grep --color=auto"
     alias R='R --quiet'
-    alias R0='R --no-init-file'
+    alias R0='unalias R 2>/dev/null; R --no-init-file'
     alias vi='vim'
     if check_existance vimx; then
         alias vi='vimx' # for +clipboard

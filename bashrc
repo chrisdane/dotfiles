@@ -556,7 +556,6 @@
     if check_existance module; then
         printf "type module: "
         echo $(type module)
-        echo "loaded startup modules:"; module list
         modulegrep(){ # e.g. "^r/", "cdo"
             if [ $# -eq 0 ]; then
                 echo "Usage: 'modulegrep cdo' or 'modulegrep ^r/' will run 'module avail -t 2>&1 | grep -i \$1'"
@@ -566,6 +565,7 @@
             fi
         }
         echo "defined modulegrep()"
+        echo "loaded startup modules:"; module list
     else
         echo "module command is not set"
     fi

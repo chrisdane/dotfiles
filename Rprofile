@@ -72,31 +72,30 @@ if (T) { # set F for blank .Rprofile
     }
 
     # C compiler used to build this R 
-    if (F) { # building a package needs same C compiler that was used for building r itself
+    if (T) { # building a package needs same C compiler that was used for building r itself
         if (grepl("stan", host)) {
             Ccompiler_version <- "4.4.7"
         } else if (grepl("paleosrv", host)) {
             Ccompiler_version <- "5.4.0"
         } else {
-            if (interactive()) message("C compiler used to build this R:")
             cmd <- "R CMD config CC"
-            if (interactive()) message("   `", cmd, "`:")
+            if (interactive()) message("`", cmd, "`: ", appendLF=F)
             Ccompiler <- system(cmd, intern=T)
             # e.g.: "gcc"
             #       "gcc -std=gnu99"
             #       "x86_64-conda_cos6-linux-gnu-cc"
             #       "gcc -m64 -std=gnu99"
             Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
-            if (interactive()) message("      ", Ccompiler)
+            if (interactive()) message("\"", Ccompiler, "\"")
             
             # C compiler version used to build this R
             #cmd <- paste0("objdump -s --section .comment ", Rexe)
             #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
             cmd <- paste0("strings -a ", Rexe, " | grep CC:")
-            if (interactive()) message("   `", cmd, "`:")
+            if (interactive()) message("`", cmd, "`:")
             Ccompiler_version <- system(cmd, intern=T)
             if (interactive()) {
-                for (i in 1:length(Ccompiler_version)) message("      ", Ccompiler_version[i])
+                for (i in seq_along(Ccompiler_version)) message("   \"", Ccompiler_version[i], "\"")
             }
             Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
             Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
@@ -116,8 +115,7 @@ if (T) { # set F for blank .Rprofile
             }
             
             if (interactive()) {
-                message("   automatically derived C compiler version number:\n",
-                        "      ", Ccompiler_version)
+                message("--> C compiler version: ", Ccompiler_version)
             }
         } # find C compiler used to build this R
     } # which C compiler

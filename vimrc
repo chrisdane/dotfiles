@@ -142,7 +142,10 @@ set encoding=utf8
 set ffs=unix,dos,mac
 " convert: `:set fileencoding=utf-8`
 " convet to linux (solves carriage return \r \M issue): `:set ff=unix`
-"
+
+" enable r-syntax in .Rprofile
+au BufReadPost *.Rprofile set syntax=r
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

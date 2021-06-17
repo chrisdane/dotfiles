@@ -34,7 +34,7 @@ while sleep 1; do
     status=$(echo $status | cut -d' ' -f1) # "JobState=PENDING"
     status=$(echo $status | cut -d'=' -f2) # "PENDING" or "RUNNING"
     if [ "$status" != "RUNNING" ]; then
-        echo "$hostname job $1 not running yet ($status)"
+        echo "$(date): $hostname job $1 not running yet ($status)"
     else  # running
         msg="$hostname job $1 started"
         if command -v zenity &> /dev/null; then # inform via small zenity GUI alert

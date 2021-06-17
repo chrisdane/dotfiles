@@ -87,29 +87,33 @@ if (T) { # set F for blank .Rprofile
             #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
             cmd <- paste0("strings -a ", Rexe, " | grep CC:")
             if (interactive()) message("`", cmd, "`:")
-            Ccompiler_version <- system(cmd, intern=T)
-            if (interactive()) {
-                for (i in seq_along(Ccompiler_version)) message("   \"", Ccompiler_version[i], "\"")
-            }
-            Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
-            Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
-            # e.g. "4.8.5-16)"
-
-            # replace special symbols by dots
-            Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
-            
-            # only use version numbers up to 2 dots
-            Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
-            if (all(Ccompiler_version_dotinds == -1)) { # no dots there
-                stop("case \"", Ccompiler_version, "\" not defined here")
-            } else {
-                if (length(Ccompiler_version_dotinds) > 2) {
-                    Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+            Ccompiler_version <- system(cmd, intern=F) # check for error
+            if (Ccompiler_version == 1) { # cmd not successfull
+                if (interactive()) message("   no success")
+            } else if (Ccompiler_version == 0) { # cmd successfull
+                Ccompiler_version <- system(cmd, intern=T) # get return value
+                if (interactive()) {
+                    for (i in seq_along(Ccompiler_version)) message("   \"", Ccompiler_version[i], "\"")
                 }
-            }
-            
-            if (interactive()) {
-                message("--> C compiler: \"", Ccompiler, " ", Ccompiler_version, "\"")
+                Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
+                Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
+                # e.g. "4.8.5-16)"
+
+                # replace special symbols by dots
+                Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
+                
+                # only use version numbers up to 2 dots
+                Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
+                if (all(Ccompiler_version_dotinds == -1)) { # no dots there
+                    stop("case \"", Ccompiler_version, "\" not defined here")
+                } else {
+                    if (length(Ccompiler_version_dotinds) > 2) {
+                        Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+                    }
+                }
+                if (interactive()) {
+                    message("--> C compiler: \"", Ccompiler, " ", Ccompiler_version, "\"")
+                }
             }
         } # find C compiler used to build this R
     } # which C compiler
@@ -135,7 +139,7 @@ if (T) { # set F for blank .Rprofile
     newLibPaths <- unique(newLibPaths)
     if (interactive()) message("Set .libPaths() ...")
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
-    .libPaths(newLibPaths)
+    .libPaths(newLibPaths) # add my libpaths before system defaults
     if (interactive()) message(paste0("   ", .libPaths(), collapse="\n"))
     #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
     

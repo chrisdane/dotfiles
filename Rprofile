@@ -273,30 +273,30 @@ if (T) { # set F for blank .Rprofile
                     checktext <- crayon::strip_style(checktext)
                 }
                 
-                # show if cran or git package
-                repo <- suppressMessages(suppressWarnings(utils::packageDescription(pkg)))
-                if (any(names(repo) == "RemoteType")) {
-                    message("  ", repo$RemoteType, appendLF=F) # = "github"
-                } else if (any(names(repo) == "Repository")) {
-                    message("  ", repo$Repository, appendLF=F) # = "CRAN"
-                    message("  ", appendLF=F) # add 2 more spaces
-                }
-                # show library path
+                # add info if package load was successfull
                 if (checktext == "ok") {
+                    # cran or git repo
+                    repo <- suppressMessages(suppressWarnings(utils::packageDescription(pkg)))
+                    if (any(names(repo) == "RemoteType")) {
+                        message("  ", repo$RemoteType, appendLF=F) # = "github"
+                    } else if (any(names(repo) == "Repository")) {
+                        message("  ", repo$Repository, appendLF=F) # = "CRAN"
+                        message("  ", appendLF=F) # add 2 more spaces
+                    }
+                    # library path
                     tmp <- base::find.package(pkg)
                     if (substr(tmp, 1, nchar(normalizePath("~"))) == normalizePath("~")) {
                         tmp <- paste0("~", substr(tmp, nchar(normalizePath("~")) + 1, nchar(tmp)))
                     }
                     message("  ", tmp, appendLF=F)
-                }
-                # show additional text
-                if (F && checktext == "ok" && pkg == "oce") {
-                    checktext <- paste0("data('coastlineWorld', package='", i, "')")
-                    message("   ", checktext, appendLF=F)
-                    eval(parse(text=checktext))
-                }
-                # linebreak
-                message("")
+                    # additional text
+                    if (F && pkg == "oce") {
+                        checktext <- paste0("data('coastlineWorld', package='", i, "')")
+                        message("   ", checktext, appendLF=F)
+                        eval(parse(text=checktext))
+                    }
+                } # if package load was successfull
+                message("") # linebreak
             } # for pkg packages
         } # if load default packages
 

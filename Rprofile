@@ -87,7 +87,7 @@ if (T) { # set F for blank .Rprofile
             #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
             cmd <- paste0("strings -a ", Rexe, " | grep CC:")
             if (interactive()) message("`", cmd, "`:")
-            Ccompiler_version <- system(cmd, intern=F) # check for error
+            Ccompiler_version <- system(cmd, intern=F, ignore.stdout=T) # check for error
             if (Ccompiler_version == 1) { # cmd not successfull
                 if (interactive()) message("   no success")
             } else if (Ccompiler_version == 0) { # cmd successfull

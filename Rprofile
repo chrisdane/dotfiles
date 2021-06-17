@@ -81,6 +81,7 @@ if (T) { # set F for blank .Rprofile
         #cmd <- paste0("objdump -s --section .comment ", Rexe)
         #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
         cmd <- paste0("strings -a ", Rexe, " | grep CC:")
+        #cmd <- paste0(elfinfo -l ", Rexe") 
         if (interactive()) message("`", cmd, "`:")
         Ccompiler_version <- system(cmd, intern=F, ignore.stdout=T) # check for error
         if (Ccompiler_version == 1) { # cmd not successfull
@@ -128,7 +129,8 @@ if (T) { # set F for blank .Rprofile
                      # current r version path will be first entry of `.libPaths()` 
                      newLibPaths, 
                      # all other potentially available dirs with same major version, e.g. "3.5", "3.7", ...
-                     list.files(newLibPaths_main, pattern=paste0("r_", version$major), full.names=T) # todo: increasing 3.5, 3.7 (default) or decreasing 3.7, 3.5?
+                     # todo: increasing 3.5, 3.7 (default) or decreasing 3.7, 3.5?
+                     list.files(newLibPaths_main, pattern=paste0("r_", version$major), full.names=T) 
                      )
     newLibPaths <- unique(newLibPaths)
     if (interactive()) message("Set .libPaths() ...")

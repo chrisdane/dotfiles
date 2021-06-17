@@ -112,9 +112,7 @@ if (T) { # set F for blank .Rprofile
                 message("--> C compiler: \"", Ccompiler, " ", Ccompiler_version, "\"")
             }
         } # find C compiler used to build this R
-        rm(host)
     } # which C compiler
-    rm(Rexe) 
 
     # where should new packages be installed?
     # - default: `Sys.getenv("R_LIBS_USER")` = e.g. "~/R/x86_64-pc-linux-gnu-library/3.6"
@@ -139,10 +137,6 @@ if (T) { # set F for blank .Rprofile
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths)
     if (interactive()) message(paste0("   ", .libPaths(), collapse="\n"))
-    rm(newLibPaths, newLibPaths_main, rversion_x.y)
-    if (exists("Ccompiler")) {
-        rm(Ccompiler, Ccompiler_version, Ccompiler_version_dotinds)
-    }
     #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
     
     # do rest only if interactive session
@@ -156,7 +150,6 @@ if (T) { # set F for blank .Rprofile
 			newlocale <- Sys.getlocale("LC_MESSAGES")
 			message("   Set message language from \"", oldlocale, "\" to \"", newlocale, "\" ...")
 			message("      Sys.setlocale(\"LC_MESSAGES\", \"C\")")
-            rm(oldlocale, newlocale)
         }
 
         # add my functions to an environment so that they do not get removed on rm()
@@ -181,9 +174,7 @@ if (T) { # set F for blank .Rprofile
             }
             if (exists("myEnv")) {
                 attach(myEnv, warn.conflicts=F) # if masked functions exist
-                rm(cmd,myEnv)
             }
-            rm(scripts, i)
         }
 
         # load default packages
@@ -299,7 +290,6 @@ if (T) { # set F for blank .Rprofile
                         tmp <- paste0("~", substr(tmp, nchar(normalizePath("~")) + 1, nchar(tmp)))
                     }
                     message("  ", tmp, appendLF=F)
-                    rm(tmp)
                 }
                 # show additional text
                 if (F && checktext == "ok" && pkg == "oce") {
@@ -310,8 +300,6 @@ if (T) { # set F for blank .Rprofile
                 # linebreak
                 message("")
             } # for pkg packages
-            rm(failed, cnt, libpathi, npkg, packages, tc, pkg, nchar_no, nchar_pkg, checktext, repo)
-            if (exists("fancy")) rm(fancy)
         } # if load default packages
 
         # set some global options after packages loaded since some functions may need package functions
@@ -321,7 +309,6 @@ if (T) { # set F for blank .Rprofile
             r["CRAN"] <- "https://cloud.r-project.org" # https and always-near-me mirror 
             message("   options(repos=c(CRAN=\"", r, "\"))")
             options(repos=r)
-            rm(r)
             message("   options(continue=\"   \")")
             options(continue="   ")
             message("   options(show.error.locations=T)")
@@ -365,11 +352,9 @@ if (T) { # set F for blank .Rprofile
                 cmd <- paste0("   pdf.options(family=", family, ")")
                 message(cmd, " # and grDevcices::embedFonts() or extrafont::embed_fonts()")
                 grDevices::pdf.options(family=family)
-                rm(cmd)
             } else {
                 message("   family '", family, "' is not installed: extrafont::font_install(\"fontcm\")")
             }
-            rm(family)
         }
     
         if (length(which(search() == "myEnv")) > 0) {
@@ -379,13 +364,11 @@ if (T) { # set F for blank .Rprofile
         } # if environment myEnv was loaded
 
         # show error message if package load failed
-        if (F) {
+        if (T) {
             if (!is.null(failed)) {
                 message("Messages of failed packages:")
                 for (i in seq_along(failed)) message("   ", failed[i])
-                rm(i)
             } # if any packages failed
-            rm(failed)
         } # if load default packages
 
         message(c(rep("*", t=(getOption("width")/2 - 6)),
@@ -424,6 +407,9 @@ if (T) { # set F for blank .Rprofile
                       } # hook function
                 ) # setHook
     } # F
+
+    # clean work space
+    rm(list=ls())
 
 } # if T
 

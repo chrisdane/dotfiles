@@ -202,6 +202,7 @@ if (T) { # set F for blank .Rprofile
             cnt <- 0
             nchar_pkg <- nchar(packages)
             failed <- NULL
+            libpaths <- .libPaths()
             for (pkg in packages) {
                 
                 cnt <- cnt + 1
@@ -209,11 +210,11 @@ if (T) { # set F for blank .Rprofile
                         paste0(rep(" ", t=max(nchar_pkg) - nchar(pkg)), collapse=""), appendLF=F)
                
                 # try to load package from all available .libPaths()
-                for (libpathi in seq_along(.libPaths())) {
+                for (libpathi in seq_along(libpaths)) {
 
                     # library() yields better error handling than require()
                     tc <- tryCatch(suppressMessages(suppressWarnings(
-                                      library(pkg, lib=.libPaths()[libpathi], character.only=T))),
+                                      library(pkg, lib=libpaths[libpathi], character.only=T))),
                                    error=function(e) e, warning=function(w) w)
                     
                     # check if package load was successfull
@@ -223,8 +224,8 @@ if (T) { # set F for blank .Rprofile
                     } else {
                         checktext <- "failed"
                         failed <- c(failed, 
-                                    paste0(pkg, ": ", tc$message),
-                                    paste0(pkg, ": libpath = ", .libPaths()[libpathi])) 
+                                    paste0(pkg, " ", libpathi, ": ", tc$message),
+                                    paste0(pkg, " ", libpathi, ": libpath = ", libpaths[libpathi])) 
                     }
                 } # for libpathi
                 
@@ -238,9 +239,9 @@ if (T) { # set F for blank .Rprofile
                             pkg <- "crayon" # overwrite colorout with crayon
                             packages[which(packages == "colorout")] <- pkg
                             nchar_pkg <- nchar(packages)
-                            for (libpathi in seq_along(.libPaths())) {
+                            for (libpathi in seq_along(libpaths)) {
                                 tc <- tryCatch(suppressMessages(suppressWarnings(
-                                                  library(pkg, lib=.libPaths()[libpathi], character.only=T))),
+                                                  library(pkg, lib=libpaths[libpathi], character.only=T))),
                                                error=function(e) e, warning=function(w) w)
                                 if (any(search() == "package:crayon")) break
                             } # for libpathi

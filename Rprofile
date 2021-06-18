@@ -81,36 +81,39 @@ if (T) { # set F for blank .Rprofile
         #cmd <- paste0("objdump -s --section .comment ", Rexe)
         #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
         cmd <- paste0("strings -a ", Rexe, " | grep CC:")
-        #cmd <- paste0(elfinfo -l ", Rexe") 
-        if (interactive()) message("`", cmd, "`:")
-        Ccompiler_version <- system(cmd, intern=F, ignore.stdout=T) # check for error
-        if (Ccompiler_version == 1) { # cmd not successfull
-            if (interactive()) message("   no success")
-        } else if (Ccompiler_version == 0) { # cmd successfull
-            Ccompiler_version <- system(cmd, intern=T) # get return value
-            if (interactive()) {
-                for (i in seq_along(Ccompiler_version)) message("   \"", Ccompiler_version[i], "\"")
-            }
-            Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
-            Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
-            # e.g. "4.8.5-16)"
-
-            # replace special symbols by dots
-            Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
-            
-            # only use version numbers up to 2 dots
-            Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
-            if (all(Ccompiler_version_dotinds == -1)) { # no dots there
-                stop("case \"", Ccompiler_version, "\" not defined here")
-            } else {
-                if (length(Ccompiler_version_dotinds) > 2) {
-                    Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+        #cmd <- paste0(elfinfo -l ", Rexe")
+        #cmd <- paste0("ldd ", Rexe)
+        if (F) { # --> all methods not reliable
+            if (interactive()) message("`", cmd, "`:")
+            Ccompiler_version <- system(cmd, intern=F, ignore.stdout=T) # check for error
+            if (Ccompiler_version == 1) { # cmd not successfull
+                if (interactive()) message("   no success")
+            } else if (Ccompiler_version == 0) { # cmd successfull
+                Ccompiler_version <- system(cmd, intern=T) # get return value
+                if (interactive()) {
+                    for (i in seq_along(Ccompiler_version)) message("   \"", Ccompiler_version[i], "\"")
                 }
-            }
-            if (interactive()) {
-                message("--> C compiler: \"", Ccompiler, " ", Ccompiler_version, "\"")
-            }
-        } # cmd successfull or not
+                Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
+                Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
+                # e.g. "4.8.5-16)"
+
+                # replace special symbols by dots
+                Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
+                
+                # only use version numbers up to 2 dots
+                Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
+                if (all(Ccompiler_version_dotinds == -1)) { # no dots there
+                    stop("case \"", Ccompiler_version, "\" not defined here")
+                } else {
+                    if (length(Ccompiler_version_dotinds) > 2) {
+                        Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+                    }
+                }
+                if (interactive()) {
+                    message("--> C compiler: \"", Ccompiler, " ", Ccompiler_version, "\"")
+                }
+            } # cmd successfull or not
+        } # if F
     } # which C compiler
 
     # where should new packages be installed?

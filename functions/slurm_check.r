@@ -44,14 +44,15 @@ if (!any(status == "R")) {
 } else {
     inds <- which(status == "R")
     squeue <- squeue[inds,]
-    message("\nthere are ", length(inds), "running jobs:")
+    message("\nthere are ", length(inds), " running jobs:")
     print(squeue)
 
     # get logfiles of running jobs
     jobids <- squeue$JOBID
+    if (T) jobids <- rev(jobids) # show newest job last
     for (jobi in seq_along(jobids)) {
 
-        message("******************************************")
+        message("\n******************************************")
         cmd <- paste0("scontrol show jobid -dd ", jobids[jobi])
         message("run `", cmd, "` ...")
         scontrol <- system(cmd, intern=T)

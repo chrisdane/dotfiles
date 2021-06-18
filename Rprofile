@@ -278,12 +278,12 @@ if (T) { # set F for blank .Rprofile
                 
                 # add info if package load was successfull
                 if (checktext == "ok") {
+                    pkginfo <- suppressMessages(suppressWarnings(utils::packageDescription(pkg)))
                     # cran or git repo
-                    repo <- suppressMessages(suppressWarnings(utils::packageDescription(pkg)))
-                    if (any(names(repo) == "RemoteType")) {
-                        message("  ", repo$RemoteType, appendLF=F) # = "github"
-                    } else if (any(names(repo) == "Repository")) {
-                        message("  ", repo$Repository, appendLF=F) # = "CRAN"
+                    if (any(names(pkginfo) == "RemoteType")) {
+                        message("  ", pkginfo$RemoteType, appendLF=F) # = "github"
+                    } else if (any(names(pkginfo) == "Repository")) {
+                        message("  ", pkginfo$Repository, appendLF=F) # = "CRAN"
                         message("  ", appendLF=F) # add 2 more spaces
                     }
                     # library path
@@ -292,6 +292,8 @@ if (T) { # set F for blank .Rprofile
                         tmp <- paste0("~", substr(tmp, nchar(normalizePath("~")) + 1, nchar(tmp)))
                     }
                     message("  ", tmp, appendLF=F)
+                    # version
+                    message("  ", pkginfo$Version, appendLF=F)
                     # additional text
                     if (F && pkg == "oce") {
                         checktext <- paste0("data('coastlineWorld', package='", i, "')")

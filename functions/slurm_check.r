@@ -52,7 +52,7 @@ if (!any(status == "R")) {
     if (T) jobids <- rev(jobids) # show newest job last
     for (jobi in seq_along(jobids)) {
 
-        message("\n******************************************")
+        message("\n****************** job ", jobi, "/", length(jobids), " ***********************")
         cmd <- paste0("scontrol show jobid -dd ", jobids[jobi])
         message("run `", cmd, "` ...")
         scontrol <- system(cmd, intern=T)

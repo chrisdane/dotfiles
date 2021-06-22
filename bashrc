@@ -69,10 +69,10 @@
     
     # my bins (doing this recursively is not recommended; security)
     if [ -d ~/bin ]; then
-        export PATH=~/bin/:$PATH
+        export PATH=~/bin:$PATH
     fi
     if [ -d ~/.local/bin ]; then
-        export PATH=~/.local/bin/:$PATH
+        export PATH=~/.local/bin:$PATH
     fi
 
     # default prompt
@@ -213,6 +213,9 @@
     githelp(){
         echo "rm -f .git/objects/*/tmp_*"
         echo "git diff 6843db8 -- '*.functions'"
+        echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
+        echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
+        echo "git checkout 8498e84ff700913092b0ad869014e6006c764477 # result from git log (full hash)"
     }
     llg(){
         repofiles=$(git ls-tree --full-tree --name-only -r HEAD) # string l=1

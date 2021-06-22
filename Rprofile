@@ -63,6 +63,13 @@ if (T) { # set F for blank .Rprofile
     if (interactive()) {
         message("`R.home()`/bin/exec/R: ", Rexe)
     }
+
+    # check LD_LIBRARY_PATH
+    if (interactive()) {
+        #Sys.setenv(LD_LIBRARY_PATH=paste0(Sys.getenv("LD_LIBRARY_PATH"), ":/sw/spack-rhel6/udunits-2.2.28-h6kiqa/lib"))
+        message("LD_LIBRARY_PATH =")
+        message(paste(paste0("   ", strsplit(Sys.getenv("LD_LIBRARY_PATH"), ":")[[1]]), collapse="\n"))
+    }
     
     # C compiler used to build this R 
     if (T) { 
@@ -140,7 +147,7 @@ if (T) { # set F for blank .Rprofile
     sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
     .libPaths(newLibPaths) # add my libpaths before system defaults
     if (interactive()) message(paste0("   ", .libPaths(), collapse="\n"))
-    #Sys.setenv(R_LIBS_USER=paste0(.libPaths(), collapse=":")) # this may be needed for package build
+    #Sys.setenv(R_LIBS_USER=paste(.libPaths(), collapse=":")) # this may be needed for package build
     
     # do rest only if interactive session
 	if (T && interactive()) {

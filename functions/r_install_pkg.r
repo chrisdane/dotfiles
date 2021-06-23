@@ -189,7 +189,7 @@ for (pkgi in seq_along(pkgs)) {
     message(paste(paste0("   ", strsplit(Sys.getenv("LD_LIBRARY_PATH"), ":")[[1]]), collapse="\n"))
     
     # check if package can be loaded with same LD_LIBRARY_PATH that was used for installation
-    message("\ntry to load package \"", pkg, "\" with LD_LIBRARY_PATH (see potential warnings at the end)")
+    message("\ntry to load package \"", pkg, "\" with LD_LIBRARY_PATH ...")
     tc <- tryCatch(suppressMessages(suppressWarnings(
                       library(pkg, lib=lib, character.only=T))),
                    error=function(e) e, warning=function(w) w)
@@ -201,7 +201,7 @@ for (pkgi in seq_along(pkgs)) {
     }
 
     # check if package can be loaded with blank LD_LIBRARY_PATH
-    message("\ntry to load package \"", pkg, "\" without LD_LIBRARY_PATH (see potential warnings at the end)")
+    message("\ntry to load package \"", pkg, "\" without LD_LIBRARY_PATH ...")
     Sys.setenv(LD_LIBRARY_PATH="")
     tc <- tryCatch(suppressMessages(suppressWarnings(
                       library(pkg, lib=lib, character.only=T))),

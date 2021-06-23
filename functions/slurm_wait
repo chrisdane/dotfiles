@@ -35,7 +35,7 @@ while sleep 1; do
     status=$(echo $status | cut -d'=' -f2) # "PENDING" or "RUNNING"
     echo "$(date): status of $hostname job $1: $status"
     if [ "$status" == "RUNNING" ]; then
-        msg="$hostname job $1 started"
+        msg="slurm job $1 started on $hostname"
         if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
             echo "run zenity ..."
             zenity --info --text="$msg"

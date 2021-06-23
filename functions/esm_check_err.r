@@ -28,7 +28,7 @@ for (logi in seq_along(logs)) {
     message("***********************************************\n",
             "log ", logi, "/", length(logs), ": ", log, appendLF=F)
     if (file.exists(log)) {
-        cmd <- paste0("grep -Ein \"warn|err|severe|\\!\" ", logs[logi])
+        cmd <- paste0("grep -Ein \"warn|err|severe|\\!|No such file or directory\" ", logs[logi])
         message(" --> run `", cmd, "` ...")
         system(cmd)
     } else {

@@ -120,12 +120,12 @@
         fi
     }
     tl(){
-        file=$(ls -t | head -n1)
+        file=$(ls -t *.log | head -n1)
         echo `ls --color=auto -lFh $(pwd)/$file`
         tail -f $file
     }
     ml(){
-        file=$(ls -t | head -n1)
+        file=$(ls -t *.log | head -n1)
         echo `ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
@@ -213,6 +213,7 @@
     githelp(){
         echo "rm -f .git/objects/*/tmp_*"
         echo "git diff 6843db8 -- '*.functions'"
+        echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
         echo "git checkout 8498e84ff700913092b0ad869014e6006c764477 # result from git log (full hash)"
@@ -598,6 +599,54 @@
             fi
         fi
     done
+   
+    # slurm specific stuff
+    if check_existance squeue; then
+        sme() { squeue -u $(whoami) ; }
+        smi() { squeue -u $(whoami) -i 1 ; }
+    fi
+    if check_existance scontrol; then
+        smee() {
+            if [ -z "$1" ]; then
+                echo "> smee <jobid>"
+            else 
+                scontrol show jobid -dd $1
+            fi
+        }
+    fi
+
+    # esm_master specific stuff
+    if check_existance esm_master; then
+        recomp_recom() {
+            if [ -d ~/esm/awicm-1.0-recom ]; then 
+                if command -v host &> /dev/null; then
+                    hostname=$(host $(hostname)) # ollie1.awi.de has address 172.18.20.82
+                    hostname=$(echo $hostname | cut -d' ' -f1)
+                else
+                    hostname=$(hostname)
+                fi
+                msg="$(date): recom+fesom recompile finished on $hostname"
+                # must be in parent path of awicm-1.0
+                owd=$(pwd)
+                echo; echo "cd ~/esm"
+                cd ~/esm
+                echo "esm_master recomp-awicm-1.0-recom/recom"
+                esm_master recomp-awicm-1.0-recom/recom
+                echo "esm_master recomp-awicm-1.0-recom/fesom"
+                echo; esm_master recomp-awicm-1.0-recom/fesom
+                if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
+                    zenity --info --text="$msg"
+                else # inform just in terminal
+                    echo "program zenity not found"
+                    echo $msg
+                fi
+                echo "cd $owd"
+                cd $owd
+            else
+                echo "directory ~/esm/awicm-1.0-recom not found"
+            fi
+        } # recomp_recom()
+    fi # if esm_master exists
 
     # load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then

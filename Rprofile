@@ -59,9 +59,11 @@ if (T) { # set F for blank .Rprofile
     }
     
     # R executable
+    Rwrapper <- Sys.which("R")
     Rexe <- file.path(R.home(), "bin", "exec", "R")
     if (interactive()) {
-        message("`R.home()`/bin/exec/R: ", Rexe)
+        message("r wrapper = `which(\"R\")` = ", Rwrapper, "\n",
+                "r binary  = `R.home()`/bin/exec/R: ", Rexe)
     }
 
     # check LD_LIBRARY_PATH

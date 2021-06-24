@@ -11,8 +11,6 @@ echo
 echo "############## part 1/2: $(readlink -f $0) ################"
 echo
 
-#################### start user input ####################
-
 # which packages to install
 #pkgs=(rgeos proj4 sf)
 #pkgs=sf
@@ -22,7 +20,6 @@ pkgs=units
 #pkgs=oce
 
 # choose r-and-compiler-combination:
-# add paths to Rscript call at the bottom
 
 if true; then # case 1: mistral r-3.6.1 gcc-9.1.0
 #if false; then
@@ -60,11 +57,22 @@ if false; then
     udunits_path=/sw/rhel6-x64/util/udunits-2.2.17-gcc48
 fi
 
-#################### user input end ########################
+#if true; then # case 3: ollie r-4.1.0 gcc-6.1.0
+if false; then
+    echo "module purge"
+    module purge
+    echo "module load r/3.5.3 gcc/4.8.2"
+    module load r/3.5.3 gcc/4.8.2
+    
+    lib=~/scripts/r/packages/bin/r_3.5
+
+fi
+
+# add paths to Rscript call at the bottom
 
 module list
 
-unset LD_LIBRARY_PATH # clean
+unset LD_LIBRARY_PATH # should be clean
 
 export PKG_CONFIG_PATH=${proj_path}/lib/pkgconfig:${gdal_path}/lib/pkgconfig
 

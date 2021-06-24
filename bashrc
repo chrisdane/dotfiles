@@ -630,9 +630,9 @@
                 owd=$(pwd)
                 echo; echo "cd ~/esm"
                 cd ~/esm
-                echo "esm_master recomp-awicm-1.0-recom/recom"
+                echo "esm_master recomp-awicm-1.0-recom/recom"; echo
                 esm_master recomp-awicm-1.0-recom/recom
-                echo "esm_master recomp-awicm-1.0-recom/fesom"
+                echo "esm_master recomp-awicm-1.0-recom/fesom"; echo
                 echo; esm_master recomp-awicm-1.0-recom/fesom
                 if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
                     zenity --info --text="$msg"

@@ -112,6 +112,9 @@
     # check if program exists also if its masked by alias
     # if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
     # https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
+    getmod () {
+        stat --format '%a' $1
+    }
     check_existance(){
         if command -v $1 > /dev/null 2>&1; then
             return 0
@@ -183,12 +186,24 @@
         fi
     }
     archhelp(){
-        echo "update mirror: reflector --verbose --latest 5 --sort rate --save /etc/pacman.d/mirrorlist"
+        echo "journalctl --follow # or -f"
+        echo "journalctl --since=today"
+        echo "journalctl -b -1 # since last boot"
+        echo "journalctl --since=today | grep -B 15 '(EE) Backtrace:'"
+        echo "loginctl session-status # get session details"
+        echo "dmesg -T"
+        echo "tail -f /var/log/Xorg.0.log"
+        echo "mate-session-properties # get mate session details"
+        echo "lspci -k | grep -iEA5 'vga|3d|display # get hardware info"
+        echo "xrandr; hwinfo --monitor; glxinfo"
+        echo "grep '/usr/s\?bin' /etc/systemd/system/display-manager.service # which login manager"
+        echo "ntpq -p # update wrong time after reboot"
+        echo "ip addr / ip link / ip r / ip tuntap show / ifconfig -a"
         echo "yarn cache clean"
         echo "sudo paccache -r"
-        echo "yay -Yc \# clean unneeded dependencies"
-        echo "yay -Scc \# clean cache"
-        echo "ip addr / ip link / ip r / ip tuntap show / ifconfig -a"
+        echo "yay -Yc # clean unneeded dependencies"
+        echo "yay -Scc # clean cache"
+        echo "pacman -U /var/cache/pacman/pkg/fname.pkg.tar.xz # downgrade"
     }
     bashhelp(){
         echo "./script > script.log 2>&1 &"
@@ -217,6 +232,7 @@
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
         echo "git checkout 8498e84ff700913092b0ad869014e6006c764477 # result from git log (full hash)"
+        echo "git stash list; stash show -p [stash@{1}]; stash drop stash@{2}"
     }
     llg(){
         repofiles=$(git ls-tree --full-tree --name-only -r HEAD) # string l=1
@@ -349,10 +365,33 @@
     # which OS/distro
     if [ -f /proc/version ]; then
         echo "cat /proc/version:"
-        cat /proc/version
+        cat /proc/version # gives distro name; `uname` does not; `lsb_release -a` not always available
     else
         echo "/proc/version does not exist. what crazy OS/distro is this!?"
     fi
+    
+    # which desktop environment (de) is used
+    echo "pgrep -l \"gnome|kde|mate|cinnamon|lxde|xfce|jwm\":"
+    pgrep -l "gnome|kde|mate|cinnamon|lxde|xfce|jwm" | cut -d " " -f 2 | tr '\n' ';'; echo
+    if [ ! $DESKTOP_SESSION == "" ]; then
+        echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
+    fi
+    if [ ! $XDG_CURRENT_DESKTOP == "" ]; then
+        echo "\$XDG_CURRENT_DESKTOP = $XDG_CURRENT_DESKTOP"
+    fi
+    if [ ! $GDMSESSION == "" ]; then
+        echo "\$GDMSESSION = $GDMSESSION"
+    fi
+    # which display manager (dm) is used
+    tmp=$(ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$") # dm for display manager
+    if [ ! $tmp == "" ]; then
+        printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "
+        printf "%s" $tmp; echo
+        unset tmp
+    fi
+    # which window manager (wm) is used
+    #id=$(xprop -root -notype | awk '$1=="_NET_SUPPORTING_WM_CHECK:"{print $5}') # too slow on hpc
+    #xprop -id "${id}" -notype -f _NET_WM_NAME 8t | grep "_NET_WM_NAME = " | cut --delimiter=' ' --fields=3 | cut --delimiter='"' --fields=2
 
     # which package manager 
     declare -A osInfo;
@@ -601,6 +640,13 @@
     done
    
     # slurm specific stuff
+    if [ -f ~/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
+        source ~/dotfiles/functions/slurm_jobid_autocomplete.sh
+        echo "activate slurm jobid autocomplete for scontrol"
+        complete -F _cluster_jobs scontrol
+        echo "activate slurm jobid autocomplete for scancel"
+        complete -F _cluster_jobs scancel
+    fi
     if check_existance squeue; then
         sme() { squeue -u $(whoami) ; }
         smi() { squeue -u $(whoami) -i 1 ; }
@@ -632,8 +678,8 @@
                 cd ~/esm
                 echo "esm_master recomp-awicm-1.0-recom/recom"; echo
                 esm_master recomp-awicm-1.0-recom/recom
-                echo "esm_master recomp-awicm-1.0-recom/fesom"; echo
-                echo; esm_master recomp-awicm-1.0-recom/fesom
+                echo; echo "esm_master recomp-awicm-1.0-recom/fesom"; echo
+                esm_master recomp-awicm-1.0-recom/fesom
                 if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
                     zenity --info --text="$msg"
                 else # inform just in terminal

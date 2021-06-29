@@ -297,6 +297,8 @@ if (T) { # set F for blank .Rprofile
                     } else if (any(names(pkginfo) == "Repository")) {
                         message("  ", pkginfo$Repository, appendLF=F) # = "CRAN"
                         message("  ", appendLF=F) # add 2 more spaces
+                    } else { # built from source
+                        message("  source", appendLF=F) # does this cover all other cases?
                     }
                     # library path
                     tmp <- base::find.package(pkg)

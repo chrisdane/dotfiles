@@ -227,6 +227,7 @@
     }
     githelp(){
         echo "rm -f .git/objects/*/tmp_*"
+        echo "git diff --name-only"
         echo "git diff 6843db8 -- '*.functions'"
         echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
@@ -642,10 +643,14 @@
     # slurm specific stuff
     if [ -f ~/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
         source ~/dotfiles/functions/slurm_jobid_autocomplete.sh
-        echo "activate slurm jobid autocomplete for scontrol"
-        complete -F _cluster_jobs scontrol
-        echo "activate slurm jobid autocomplete for scancel"
-        complete -F _cluster_jobs scancel
+        if check_existance scontrol; then
+            echo "activate slurm jobid autocomplete for scontrol"
+            complete -F _cluster_jobs scontrol
+        fi
+        if check_existance scancel; then
+            echo "activate slurm jobid autocomplete for scancel"
+            complete -F _cluster_jobs scancel
+        fi
     fi
     if check_existance squeue; then
         sme() { squeue -u $(whoami) ; }

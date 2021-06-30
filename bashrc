@@ -647,10 +647,10 @@
             echo "activate slurm jobid autocomplete for scontrol and scancel"
             complete -F _cluster_jobs scontrol
             complete -F _cluster_jobs scancel
-        fi
-        if check_existance slurm_wait; then
-            echo "activate slurm jobid autocomplete for slurm_wait"
-            complete -F _cluster_jobs slurm_wait
+            if check_existance slurm_wait; then
+                echo "activate slurm jobid autocomplete for slurm_wait"
+                complete -F _cluster_jobs slurm_wait
+            fi
         fi
     fi
     if check_existance squeue; then

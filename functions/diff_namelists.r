@@ -16,6 +16,8 @@ if (!interactive()) {
     rm(list=ls())
     args <- c("/work/ba1103/a270094/AWIESM/test/work/namelist.recom", # old
               "/work/ba1103/a270073/out/awicm-1.0-recom/test/run_19500101-19500131/work/namelist.recom") # new
+    args <- c("/work/ollie/cdanek/out/awicm-1.0-recom/from_oezguer/namelist.recom", # old
+              "/work/ollie/cdanek/out/awicm-1.0-recom/test4/run_19500101-19500131/work/namelist.recom") # new
     args <- c("/home/ollie/cdanek/esm/esm_tools/namelists/echam/6.3.04p1/PI-CTRL/first/namelist.echam",
               "/home/ollie/cdanek/esm/esm_tools/namelists/echam/6.3.04p1/PI-CTRL/last/namelist.echam")
 }
@@ -25,10 +27,27 @@ if (!file.exists(args[1])) stop("file ", args[1], " does not exist")
 if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
 
 options(width=3000) # increase length per print line from default 80
-        
-library(nml) # https://github.com/jsta/nml
-nml1 <- suppressWarnings(nml::read_nml(args[1])) # suppress non-".nml" file ending warning
-nml2 <- suppressWarnings(nml::read_nml(args[2])) # nml::read_nml() takes care of multi-line entries and white spaces etc.
+
+if (T) {
+    library(nml) # https://github.com/jsta/nml
+} else {
+    source("~/scripts/git/nml/R/utils.R")
+    source("~/scripts/git/nml/R/read.R")
+}
+cat("read nml1 ", args[1], " ...\n", sep="")
+nml1 <- suppressWarnings(read_nml(args[1])) # suppress non-".nml" file ending warning
+cat("read nml2 ", args[2], " ...\n", sep="")
+nml2 <- suppressWarnings(read_nml(args[2])) # nml::read_nml() takes care of multi-line entries and white spaces etc.
+
+# lower all capitals for better comparison
+names(nml1) <- tolower(names(nml1))
+names(nml2) <- tolower(names(nml2))
+for (i in seq_along(nml1)) {
+    names(nml1[[i]]) <- tolower(names(nml1[[i]]))
+}
+for (i in seq_along(nml2)) {
+    names(nml2[[i]]) <- tolower(names(nml2[[i]]))
+}
 
 # compare chapter-wise
 chapters1 <- names(nml1)
@@ -63,8 +82,10 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
     # both nml have current chapter
     } else if (length(inds1) > 0 && length(inds2) > 0) { 
         
-        cat("chapter \"", chapter, "\" occurs ", length(inds1), " times in nml1 and ",
-            length(inds2), " times in nml2\n", sep="")
+        if (length(inds1) != length(inds2)) {
+            cat("chapter \"", chapter, "\" occurs ", length(inds1), " times in nml1 and ",
+                length(inds2), " times in nml2\n", sep="")
+        }
 
         # try to find chapter2 that matches current chapter1
         for (ch1i in seq_along(inds1)) {
@@ -447,10 +468,10 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                                      "and so every key must occur not or once only.")
                             }
                             if (length(keyinds1) == 0) { # key occurs in nml2 only
-                                cat("   key \"", key, "\" occurs only in nml2: \"", cha2_df$val[keyinds2], "\"\n", sep="")
+                                cat("   nml2 key \"", key, "\" = \"", cha2_df$val[keyinds2], "\" does not occur in nml1\n", sep="")
                             }
                             if (length(keyinds2) == 0) { # key occurs in nml1 only
-                                cat("   key \"", key, "\" occurs only in nml1: \"", cha1_df$val[keyinds1], "\"\n", sep="")
+                                cat("   nml1 key \"", key, "\" = \"", cha1_df$val[keyinds1], "\" does not occur in nml2\n", sep="")
                             }
                             if (length(keyinds1) == 1 && length(keyinds2) == 1) { # default case: one entry per chapter per nml
                                 if (cha1_df$val[keyinds1] != cha2_df$val[keyinds2]) {
@@ -478,4 +499,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
 } # for i in chapters_unique
 
 # do stuff with nml1_and_nml2 nml1_but_not_nml2 nml2_but_not_nml1
+# ...
+
+options(width=80) # restore default
 

@@ -644,12 +644,13 @@
     if [ -f ~/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
         source ~/dotfiles/functions/slurm_jobid_autocomplete.sh
         if check_existance scontrol; then
-            echo "activate slurm jobid autocomplete for scontrol"
+            echo "activate slurm jobid autocomplete for scontrol and scancel"
             complete -F _cluster_jobs scontrol
-        fi
-        if check_existance scancel; then
-            echo "activate slurm jobid autocomplete for scancel"
             complete -F _cluster_jobs scancel
+        fi
+        if check_existance slurm_wait; then
+            echo "activate slurm jobid autocomplete for slurm_wait"
+            complete -F _cluster_jobs slurm_wait
         fi
     fi
     if check_existance squeue; then

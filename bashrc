@@ -225,15 +225,40 @@
         echo "tar -xvf archive.tar --wildcards \"*.nc\""
         echo "tar -xvf archive.tar --wildcards *{pat1,pat2}*nc"
     }
+    markdownhelp(){
+        echo "<details>"
+        echo "<summary>Click to expand</summary>"
+        echo "# blank line"
+        echo "..."
+        echo "</details>"
+    }
     githelp(){
-        echo "rm -f .git/objects/*/tmp_*"
+        echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
+        echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
+        echo diff
+        echo "git diff [from] to"
         echo "git diff --name-only"
         echo "git diff 6843db8 -- '*.functions'"
         echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
-        echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
-        echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
-        echo "git checkout 8498e84ff700913092b0ad869014e6006c764477 # result from git log (full hash)"
+        echo stash
         echo "git stash list; stash show -p [stash@{1}]; stash drop stash@{2}"
+        echo cherry-pick
+        echo "git checkout commitx"
+        echo "git cherry-pick commity [commitz1 commitz2]"
+        echo "git cherry-pick --strategy=recursive -X theirs 7501f4d"
+        echo squash
+        echo "git checkout branchname"
+        echo "git rebase -i HEAD~n # combine latest n commits"
+        echo "@editor: first line let \"pick\"; all other lines from \"pick\" --> \"squash\""
+        echo "git push -u origin +branchname # \"+\" similar as --force but different"
+        echo "@other pc: git reset --hard origin/branchname # caution: overwrites potential local changes irreversible"
+        echo "rebase branch"
+        echo "git checkout commit_from_where_my_branch_should_start"
+        echo "git branch -b new_branch"
+        echo "git cherry-pick commit_i_want_to_include"
+        echo "git branch -d old_branch # delete old branch locally"
+        echo "git push origin --delete old_branch # delete old branch remote"
+        echo "@other pc: git remote prune origin # to delete the old branch in the 'git branch -av' list"
     }
     llg(){
         repofiles=$(git ls-tree --full-tree --name-only -r HEAD) # string l=1
@@ -699,6 +724,15 @@
             fi
         } # recomp_recom()
     fi # if esm_master exists
+
+    # recom stuff
+    recom_normalize_nml() {
+        fout=$(basename $1)
+        cp $1 $fout
+        sed -i 's/d0/0/' $fout # d0 --> 0
+        sed -i 's/1\.d-/1e-/' $fout # 1.d- --> 1e-
+        sed -i '/^[[:space:]]*$/d' $fout # rm white spaces
+    }
 
     # load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then

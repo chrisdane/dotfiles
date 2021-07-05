@@ -29,6 +29,8 @@ if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
 options(width=3000) # increase length per print line from default 80
 
 if (T) {
+    #install.packages("devtools")
+    #devtools::install_github("jsta/nml")
     library(nml) # https://github.com/jsta/nml
 } else {
     source("~/scripts/git/nml/R/utils.R")
@@ -59,7 +61,7 @@ nml1_and_nml2 <- nml1_but_not_nml2 <- nml2_but_not_nml1 <- list()
 for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
 #for (i in 5) { 
 
-    chapter <- chapters_unique[i]
+    chapter <- chapters_unique[i] # name of current chapter
     inds1 <- which(chapters1 == chapter)
     inds2 <- which(chapters2 == chapter)
     
@@ -80,7 +82,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
         }
     
     # both nml have current chapter
-    } else if (length(inds1) > 0 && length(inds2) > 0) { 
+    } else if (length(inds1) > 0 && length(inds2) > 0) {
         
         if (length(inds1) != length(inds2)) {
             cat("chapter \"", chapter, "\" occurs ", length(inds1), " times in nml1 and ",
@@ -133,7 +135,8 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     # echam docu p 201: interval:
                     # "time averaging interval"
                     # default: interval=`putdata`            if `default_output`=false
-                    #          interval=1,’months’,’first’,0 if `default_output`=true
+                    #          interval=1,’months’,’first’,0 if `default_output`=true (= every month)
+                    # e.g. `1,’steps’,’first’,0` (every step) or `6,’hours’,’first’,0` (6-hourly)
                     # echam docu p 37: putdata:
                     # "time interval at which output data are written to output files
                     # default: 12,’hours’,’first’,0

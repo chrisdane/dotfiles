@@ -20,6 +20,8 @@ if (!interactive()) {
               "/work/ollie/cdanek/out/awicm-1.0-recom/test4/run_19500101-19500131/work/namelist.recom") # new
     args <- c("/home/ollie/cdanek/esm/esm_tools/namelists/echam/6.3.04p1/PI-CTRL/first/namelist.echam",
               "/home/ollie/cdanek/esm/esm_tools/namelists/echam/6.3.04p1/PI-CTRL/last/namelist.echam")
+    args <- c("/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr/esm-piControl_oezguer_nml/namelist.echam",
+              "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr/esm-piControl/run_19500101-19500131/work/namelist.echam")
 }
 
 # check
@@ -28,13 +30,13 @@ if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
 
 options(width=3000) # increase length per print line from default 80
 
-if (T) {
+if (F) {
     #install.packages("devtools")
     #devtools::install_github("jsta/nml")
     library(nml) # https://github.com/jsta/nml
 } else {
-    source("~/scripts/git/nml/R/utils.R")
-    source("~/scripts/git/nml/R/read.R")
+    source("~/scripts/r/packages/src/nml/R/utils.R")
+    source("~/scripts/r/packages/src/nml/R/read.R")
 }
 cat("read nml1 ", args[1], " ...\n", sep="")
 nml1 <- suppressWarnings(read_nml(args[1])) # suppress non-".nml" file ending warning
@@ -68,7 +70,9 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
     # nml1 doesnt have current chapter; must come from nml2
     if (length(inds1) == 0) { 
         for (ch2i in seq_along(inds2)) {
-            cat("nml2 chapter \"", chapters2[inds2[ch2i]], "\" not in nml1\n", sep="") 
+            cat("************************** detected unique chapter **************************\n",
+                "nml2 chapter \"", chapters2[inds2[ch2i]], "\" not in nml1:\n", sep="")
+            cat(capture.output(str(nml2[inds2[ch2i]])), sep="\n")
             nml2_but_not_nml1[length(nml2_but_not_nml1)+1] <- nml2[inds2[ch2i]]
             names(nml2_but_not_nml1)[length(nml2_but_not_nml1)] <- chapter
         }
@@ -76,7 +80,9 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
     # nml2 doesnt have current chapter; must come from nml1
     } else if (length(inds2) == 0) { 
         for (ch1i in seq_along(inds1)) {
-            cat("nml1 chapter \"", chapters1[inds1[ch1i]], "\" not in nml2\n", sep="") 
+            cat("************************** detected unique chapter **************************\n",
+                "nml1 chapter \"", chapters1[inds1[ch1i]], "\" not in nml2:\n", sep="") 
+            cat(capture.output(str(nml1[inds1[ch1i]])), sep="\n")
             nml1_but_not_nml2[length(nml1_but_not_nml2)+1] <- nml1[inds1[ch1i]]
             names(nml1_but_not_nml2)[length(nml1_but_not_nml2)] <- chapter
         }
@@ -422,6 +428,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                 } else { 
                     
                     # for better comparison, make df out of list
+                    # --> NA becomes "NA" 
                     cha1_df <- cha2_df <- data.frame()
                     for (j in seq_along(cha1)) { # for every entry in current chapter1
                         name <- names(cha1)[j]
@@ -445,7 +452,8 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     cha2_df <- cbind(no=seq_len(dim(cha2_df)[1]), cha2_df)
 
                     # check if both chapters are identical
-                    if (identical(cha1_df, cha2_df)) {
+                    if (identical(cha1_df$name, cha2_df$name) &&
+                        identical(cha1_df$val, cha2_df$val)) {
                         nml1_and_nml2[length(nml1_and_nml2)+1] <- list(list(nml1=cha1, nml2=cha2,
                                                                             nml1_df=cha1_df, nml2_df=cha2_df))
                         names(nml1_and_nml2)[length(nml1_and_nml2)] <- chapter
@@ -501,7 +509,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
 
 } # for i in chapters_unique
 
-# do stuff with nml1_and_nml2 nml1_but_not_nml2 nml2_but_not_nml1
+# do stuff with `nml1_and_nml2` `nml1_but_not_nml2` `nml2_but_not_nml1`
 # ...
 
 options(width=80) # restore default

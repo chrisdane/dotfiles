@@ -241,7 +241,7 @@
         echo "git diff 6843db8 -- '*.functions'"
         echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
         echo stash
-        echo "git stash list; stash show -p [stash@{1}]; stash drop stash@{2}"
+        echo "git stash list; stash show -p [stash@{1}]; stash apply stash@{n}; stash drop stash@{2}"
         echo cherry-pick
         echo "git checkout commitx"
         echo "git cherry-pick commity [commitz1 commitz2]"
@@ -254,7 +254,7 @@
         echo "@other pc: git reset --hard origin/branchname # caution: overwrites potential local changes irreversible"
         echo "rebase branch"
         echo "git checkout commit_from_where_my_branch_should_start"
-        echo "git branch -b new_branch"
+        echo "git branch new_branch # create"
         echo "git cherry-pick commit_i_want_to_include"
         echo "git branch -d old_branch # delete old branch locally"
         echo "git push origin --delete old_branch # delete old branch remote"

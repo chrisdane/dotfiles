@@ -24,37 +24,67 @@ if (interactive()) {
     #outname <- "hist2_output.ods"
     #esmpath <- "/work/ab0246/a270073/awicm-test/CMIP6/CMIP_PMIP/dynveg_true/PI-CTRL5"
     #outname <- "PI-CTRL5_output.ods"
-    esmpath <- "/work/ollie/cdanek/out/awicm-1.0-recom/test4"
-    outname <- "output_awicm-recom.ods"
+    #esmpath <- "/work/ollie/cdanek/out/awicm-1.0-recom/test4"
+    #outname <- "output_awicm-recom.ods"
+    #esmpath <- "/work/ollie/cdanek/out/echam-6.3.04p1/pictrl-grb"
+    #outname <- "pictrl-grb.ods"
+    #outname <- "pictrl-grb.txt"
+    esmpath <- "/work/ollie/cdanek/out/echam-6.3.04p1/pictrl-spinup-grb"
+    #outname <- "pictrl-spinup-grb.ods"
+    outname <- "pictrl-spinup-grb.txt"
+    
+    models <- c("echam", "jsbach", "fesom", "recom")
+    #models <- "echam"
+    #models <- "fesom"
+    #models <- "jsbach"
+    #models <- "recom"
+    #models <- c("echam", "jsbach")
+    #models <- c("fesom", "recom")
+    
     libpaths <- .libPaths()
 
 # not interactive
 } else {
+    
     #./get_esm_output_vars.r /work/ba0989/a270077/CMIP6_PMIP4/a270073/CMIP6/CMIP_PMIP/dynveg_true/hist ~/cmip6/hist_output.ods > log 2>&1 &
-    me <- sub(pattern=".*=", replacement="", commandArgs()[4]) 
-    show_usage <- function() {
-        message("\nUsage: ", me, " arg1 arg2 [arg3] or\n",
-                "       ", me, " arg1 arg2 [arg3] > log 2>&1 &\n",
-                "\n",
-                "   arg1: /path/to/esm-experiment (must contain the directories scripts/ and output/)\n",
-                "   arg2: filename/of/output_table.ods (must be of type .ods, .xlsx or .txt)\n",
-                "   optional arg3: /path/where/R/packages/are/installed,/separated/by/comma/if/more/than/one\n")
-    }
+    
+    me <- sub(pattern=".*=", replacement="", commandArgs()[4])
+    usage <- paste0("\nUsage: ", me, " arg1 arg2 [--models=] [--libpaths=] or\n",
+                    "       ", me, " arg1 arg2 [--models=] [--libpaths=] > output.log 2>&1 &\n",
+                    "\n",
+                    "   unnamed arg1: /path/to/esm-experiment (must contain the directories \"scripts/\" and \"outdata/\")\n",
+                    "   unnamed arg2: filename/of/output_table.ods (must have ending \".ods\", \".xlsx\" or \".txt\")\n",
+                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam,jsbach,fesom,recom)\n",
+                    "   optional named arg --libpaths=/path/where/R/packages/are/installed,/separated/by/comma/if/more/than/one\n")
     args <- commandArgs(trailingOnly=T)
-    if (length(args) != 2 && length(args) != 3) {
-        message("\n", me, ": At least 2 arguments are requiered.")
-        show_usage()
+    if (length(args) < 2) {
+        message(usage)
         quit()
     }
     esmpath <- args[1]
     outname <- args[2]
     
-    # check provided libpaths 
-    if (length(args) == 3) {
-        libpaths <- strsplit(args[3], ",")[[1]]
+    # check models if provided
+    models <- c("echam", "jsbach", "fesom", "recom") # known models so far
+    if (any(grepl("--models", args))) {
+        models <- sub("--models=", "", args[grep("--models=", args)])
+        models <- strsplit(models, ",")[[1]]
+    } else {
+        models <- models
+    }
+    if (any(is.na(match(models, models)))) {
+        inds <- which(is.na(match(models, models)))
+        stop("models ", paste(models[inds], collapse=", "), " unknown")
+    }
+
+    # check libpaths if provided 
+    libpaths <- .libPaths()
+    if (any(grepl("--libpaths", args))) {
+        libpaths <- sub("--libpaths=", "", args[grep("--libpaths=", args)])
+        libpaths <- strsplit(libpaths, ",")[[1]]
         for (i in seq_along(libpaths)) {
             if (!dir.exists(libpaths[i])) {
-                msg <- paste0("provided libpath (arg3) \"", libpaths[i], "\" does not exist. skip")
+                msg <- paste0("provided libpath \"", libpaths[i], "\" does not exist. skip")
                 warning(msg, .immediate=T)
                 warning(msg, .immediate=F)
                 libpaths[i] <- NA
@@ -63,11 +93,16 @@ if (interactive()) {
         if (!all(is.na(libpaths))) {
             libpaths <- c(libpaths, .libPaths())
         }
-    } else {
-        libpaths <- .libPaths()
     }
 
 } # if interactive or not
+
+# dependency: ~/scripts/r/myfunctions.r:cdo_get_filetype()
+if (!file.exists("~/scripts/r/functions/myfunctions.r")) {
+    stop("dependency ~/scripts/r/functions/myfunctions.r not found")
+} else {
+    source("~/scripts/r/functions/myfunctions.r")
+}
 
 # defaults
 cdo_silent <- F
@@ -76,30 +111,15 @@ namelists <- list("namelist.echam"=paste0(esmpath, "/config/echam/namelist.echam
 op_patterns <- list(detect=c( "mean", "inst", "min", "max", "asis", "none", "sqrmean"),
                     meaning=c("mean", "inst", "min", "max", "asis", "none", "sqrmean"))
 not_mentioned_nml_entry <- "not mentioned"
-width_print <- options()$width
-options("width"=1000)
-
-# known file exts
-known_datafiletypes <- c("nc", "grb")
-#known_datafiletypes <- "grb"
-
-# known models
-known_models <- "echam"
-#known_models <- "fesom"
-#known_models <- "jsbach"
-#known_models <- "recom"
-#known_models <- c("echam", "jsbach")
-#known_models <- c("echam", "jsbach", "fesom")
-#known_models <- c("fesom", "recom")
 
 # known variables to throw out
-known_rm_vars <- vector("list", l=length(known_models))
+known_rm_vars <- vector("list", l=length(models))
 known_rm_vars[["echam"]] <- c("hyai", "hyam", "hybi", "hybm")
 known_rm_vars[["jsbach"]] <- known_rm_vars[["echam"]]
 
 # known dimensions
-known_dims <- vector("list", l=length(known_models))
-names(known_dims) <- known_models
+known_dims <- vector("list", l=length(models))
+names(known_dims) <- models
 known_dims[["echam"]] <- c("stream", "operator", "nml_entry", "code", "table", "time", "lon", "lat", "lev", "plev", "nsp", "nc2", "soil_layer")
 known_dims[["jsbach"]] <- c("stream", "operator", "nml_entry", "code", "table", "time", "lon", "lat", "depth", "lev", "tiles", "soil_layer", "belowsurface")
 known_dims[["fesom"]] <- c("time", "nodes", "nodes_2d", "nodes_3d", "depth")
@@ -185,8 +205,7 @@ known_intervals <- known_intervals[sort(known_intervals$order, index.return=T, d
 tic <- Sys.time()
 message("##### ", me, " started #####")
 message("Now its ", tic)
-message("known_models = ", paste0(known_models, collapse=", "))
-message("known_datafiletypes = ", paste0(known_datafiletypes, collapse=", "))
+message("models = ", paste0(models, collapse=", "))
 esmpath <- normalizePath(esmpath)
 message("esmpath = ", esmpath)
 expname <- basename(esmpath)
@@ -207,11 +226,11 @@ if (file.access(outpath, mode=2) == -1) { # not writable
 }
 
 # check if already existing output table should be replaced
-outputfile_names <- rep(NA, t=length(known_models))
-for (i in seq_along(known_models)) {
+outputfile_names <- rep(NA, t=length(models))
+for (i in seq_along(models)) {
     outputfile_names[i] <- paste0(outpath, "/", 
                                   tools::file_path_sans_ext(outname), "_", 
-                                  known_models[i], ".", 
+                                  models[i], ".", 
                                   tools::file_ext(outname))
     if (file.exists(outputfile_names[i])) {
         message("outputfile = \"", outputfile_names[i], "\" already exists.")
@@ -259,27 +278,31 @@ if (ret == F) {
     message("ok")
 }
 
-table_list <- vector("list", l=length(known_models))
-names(table_list) <- known_models
+table_list <- vector("list", l=length(models))
+names(table_list) <- models
 message("*****************")
 
-for (i in seq_along(known_models)) {
+for (i in seq_along(models)) {
 
-    message("model ", i, "/", length(known_models), ": ", known_models[i], " ...")
+    options("width"=80) # default
 
-    ## find model output of last_output_year
-    cmd <- paste0("ls ", esmpath, "/outdata/", known_models[i], "/*", last_output_year, "*.", 
-                  ifelse(length(known_datafiletypes) > 1, "{", ""),
-                  paste0(known_datafiletypes, collapse=","), 
-                  ifelse(length(known_datafiletypes) > 1, "}", ""))
-    message(cmd, " ...")
-    outfiles <- system(cmd, intern=T)
+    message("find files model ", i, "/", length(models), ": ", models[i], " ...")
+
+    # find model output of last_output_year
+    outfiles <- list.files(path=paste0(esmpath, "/outdata/", models[i], "/"),
+                           pattern=paste0(last_output_year), full.names=T)
+    
+    # remove *.codes
+    outfiles <- outfiles[!base::endsWith(outfiles, ".codes")]
+    
     if (length(outfiles) == 0) {
         message("no files found, skip to next model ...")
         next # model
-    } else {
-        message("found ", length(outfiles), " files")
     }
+    message("found ", length(outfiles), " files")
+    print(head(outfiles))
+    print("...")
+    print(tail(outfiles))
 
     # filenames:
     # echam: hist_echam6_tdiagmon_185001.nc, hist_echam6_tdiagmon_185002.nc -> monthly
@@ -319,18 +342,21 @@ for (i in seq_along(known_models)) {
     # checks finished
     dirnames <- dirname(outfiles)
     outfiles <- basename(outfiles)
-    message("outfiles")
+    message("proceed with ", length(outfiles), " files")
     print(outfiles)
 
+    options("width"=1000) # increase width per line for print
     for (j in seq_along(outfiles)) {
 
         path <- dirnames[j]
         file <- outfiles[j]
-        message("\n", known_models[i], " file ", j, "/", length(outfiles), ": ", file, " ...")
+        message("\n", models[i], " file ", j, "/", length(outfiles), ": ", file, " ...")
 
         # first convert from grb to nc if necessary
         convert_to_nc_tag <- F # default
-        if (tools::file_ext(file) == "grb") {
+        #if (tools::file_ext(file) == "grb") { # does not cover cases of file names without ending
+        ftype <- cdo_get_filetype(fin=paste0(path, "/", file))
+        if (ftype$file_type == "non-nc") {
 
             # check if cdo module is loaded
             cdo_check <- system("cdo -V", ignore.stderr=T) == 0
@@ -341,21 +367,21 @@ for (i in seq_along(known_models)) {
             }
 
             # grb to nc
-            nc_file <- paste0(outpath, "/", file, ".nc")
             cmd <- "cdo "
             if (cdo_silent) {
                 cmd <- paste0(cmd, "-s ")
             }
-            if (known_models[i] == "echam") {
+            if (models[i] == "echam") {
                 cmd <- paste0(cmd, "-t echam6 ")
             }
-            cmd <- paste0(cmd, "-f nc ", path, "/", file, " ", nc_file)
+            cmd <- paste0(cmd, "-f nc copy ", path, "/", file, " ", 
+                          outpath, "/", file, ".nc")
             message("convert to nc:")
             message(cmd, " ...")
             system(cmd)
             
             # new file and path names for current file
-            file <- nc_file
+            file <- paste0(file, ".nc")
             path <- outpath
             convert_to_nc_tag <- T
         
@@ -388,9 +414,9 @@ for (i in seq_along(known_models)) {
         print(vars)
         
         # throw out some variables
-        if (any(!is.na(match(vars[,"name"], known_rm_vars[[known_models[i]]])))) {
+        if (any(!is.na(match(vars[,"name"], known_rm_vars[[models[i]]])))) {
             message("\nthrow out some variables ...")
-            for (vari_to_rm in known_rm_vars[[known_models[i]]]) {
+            for (vari_to_rm in known_rm_vars[[models[i]]]) {
                 if (any(vars[,"name"] == vari_to_rm)) {
                     inds <- which(vars[,"name"] == vari_to_rm)
                     message("   \"", vari_to_rm, "\"")
@@ -401,8 +427,8 @@ for (i in seq_along(known_models)) {
         } # if variale was found to remove
 
         # array to save all meta data per variable of file file
-        tmp <- data.frame(array(NA, c(nvars, length(known_dims[[known_models[i]]]) + 1)), stringsAsFactors=F)
-        colnames(tmp) <- c("name", known_dims[[known_models[i]]])
+        tmp <- data.frame(array(NA, c(nvars, length(known_dims[[models[i]]]) + 1)), stringsAsFactors=F)
+        colnames(tmp) <- c("name", known_dims[[models[i]]])
        
         # found variables
         tmp[,"name"] <- vars[,"name"]
@@ -439,19 +465,19 @@ for (i in seq_along(known_models)) {
             # code
             code_ind <- which(atts[,"name"] == "code")
             if (length(code_ind) != 0) {
-                tmp[k,"code"] <- atts[code_ind,"value"]
+                tmp[k,"code"] <- as.integer(atts[code_ind,"value"])
             }
             # table
             table_ind <- which(atts[,"name"] == "table")
             if (length(table_ind) != 0) {
-                tmp[k,"table"] <- atts[table_ind,"value"]
+                tmp[k,"table"] <- as.integer(atts[table_ind,"value"])
             }
         }
         
         # try to determine stream if echam or jsbach
-        if (any(known_models[i] == c("echam", "jsbach"))) {
+        if (any(models[i] == c("echam", "jsbach"))) {
 
-            message("\ncurrent model is ", known_models[], " --> try do determine stream ...")
+            message("\ncurrent model is ", models[], " --> try do determine stream ...")
             # e.g. hist_echam6_accw_201401.grb test4_195001.01_aclcim.nc
             # --> everything that is not expnbame and date and ending
             stream <- tools::file_path_sans_ext(file)
@@ -487,7 +513,7 @@ for (i in seq_along(known_models)) {
             # possibly existing code table
             # e.g.: hist_echam6_accw_185001.codes
             #       PI-CTRL_296901.01_accw.codes
-            cmd <- paste0("ls ", dirname(outfiles[j]), "/*", last_output_year, "*.codes") # use original file name here
+            cmd <- paste0("ls ", dirnames[j], "/*", last_output_year, "*.codes") # use original file name here
             message(cmd, " ...")
             codes_files <- system(cmd, intern=T)
             if (length(codes_files) == 0) {
@@ -501,7 +527,7 @@ for (i in seq_along(known_models)) {
                 } else {
                     codes_file <- codes_files[stream_inds[1]]
                     message(".codes file\n",
-                            onecodes_file)
+                            codes_file)
                     message("found. Try to resolve \"varX\" varnames ...")
                     vars_tmp <- readLines(codes_file)
                     vars_tmp <- gsub("\\s+", " ", vars_tmp) # replace many " " by one " "
@@ -517,27 +543,27 @@ for (i in seq_along(known_models)) {
                             if (any(colnames(tmp) == "name")) {
                                 tmp[codenumber_ind_nc,"name"] <- infos[4]
                             } else {
-                                stop("error: \"name\" is not a column name of tmp")
+                                stop("\"name\" is not a column name of tmp")
                             }
                             if (any(colnames(tmp) == "code")) {
                                 tmp[codenumber_ind_nc,"code"] <- infos[2]
                             } else {
-                                stop("error: \"code\" is not a column name of tmp")
-                            }
+                                stop("\"code\" is not a column name of tmp")
+                                                            }
                             if (any(colnames(tmp) == "lev")) {
                                 tmp[codenumber_ind_nc,"lev"] <- infos[3]
                             } else {
-                                stop("error: \"lev\" is not a column name of tmp")
+                                stop("\"lev\" is not a column name of tmp")
                             }
                             if (any(colnames(tmp) == "longname")) {
                                 tmp[codenumber_ind_nc,"longname"] <- paste0(infos[7:(length(infos) - 1)], collapse=" ")
                             } else {
-                                stop("error: \"longname\" is not a column name of tmp")
+                                stop("\"longname\" is not a column name of tmp")
                             }
                             if (any(colnames(tmp) == "unit")) {
                                 tmp[codenumber_ind_nc,"unit"] <- infos[length(infos)]
                             } else {
-                                stop("error: \"unit\" is not a column name of tmp.")
+                                stop("\"unit\" is not a column name of tmp.")
                             }
                         # else if codenumber of .codes file was not found in .nc file (strange case)
                         } else {
@@ -567,7 +593,7 @@ for (i in seq_along(known_models)) {
                 dim_per_var <- dims[which(dims[,"id"] == dim_id_per_var),"name"]
                 if (!is.na(dim_per_var)) {
                     if (!any(colnames(tmp) == dim_per_var)) {
-                        msg <- paste0(known_models[i], " model dimname \"", 
+                        msg <- paste0(models[i], " model dimname \"", 
                                       dim_per_var, "\" is not known yet. skip.")
                         warning(msg, .immediate=T)
                         warning(msg, .immediate=F)
@@ -607,17 +633,17 @@ for (i in seq_along(known_models)) {
                 }
             # output interval is not known yet
             } else {
-                stop("error: ", file_interval, " output interval '", tmp[k,"time"], "' is unknown. skip.")
+                stop(file_interval, " output interval '", tmp[k,"time"], "' is unknown. skip.")
             }
         }
         message("determined output intervals of ", file_interval, " file:")
         print(tmp[,c("time", "interval")])
 
         # try to determine operator (mean, inst, min, max, etc.) of echam or jsbach variable based on the namelist
-        if (any(known_models[i] == c("echam", "jsbach"))) {
+        if (any(models[i] == c("echam", "jsbach"))) {
             if (check_nml) { # TODO
                 message("\ncheck_nml is true ...")
-                if (any(known_models[i] == c("echam", "jsbach"))) {
+                if (any(models[i] == c("echam", "jsbach"))) {
                     nml_to_check <- "namelist.echam"
                 } else {
                     stop("not yet")
@@ -1095,7 +1121,7 @@ for (i in seq_along(known_models)) {
             } # if nml_check
         } # if echam or jsbach
         
-        ## append new entry to table
+        # append new entry to table
         if (j == 1) {
             table <- tmp
         } else {
@@ -1104,12 +1130,12 @@ for (i in seq_along(known_models)) {
 
         # remove temporary nc file from grb convert 
         if (convert_to_nc_tag) {
-            cmd <- paste0("rm ", nc_file)
+            cmd <- paste0("rm ", outpath, "/", file)
             message("\n", cmd, " ...")
             system(cmd)
         }
 
-        ##if (j == 1) stop("asd")
+        #if (j == 1) stop("asd")
 
     } # for f in outfiles
     #stop("asd")
@@ -1118,7 +1144,7 @@ for (i in seq_along(known_models)) {
     inds <- apply(table, 2, function(x) all(is.na(x)))
     if (any(inds)) {
         message("All ", paste0(names(which(inds)), collapse=", "), 
-                " are NA for ", known_models[i], " model. Remove columns ...")
+                " are NA for ", models[i], " model. Remove columns ...")
         table <- table[,-which(inds)]
     }
 
@@ -1157,37 +1183,44 @@ message("Now its ", toc)
 elapsed <- toc - tic
 message("Elapsed: ", elapsed, " ", attributes(elapsed)$units)
 
-## Save table
-if (all(sapply(table_list, length)) == 0) {
-    stop("found zero files")
+# check if any model survived
+if (all(sapply(table_list, length) == 0)) {
+    stop("found zero files for models ", paste(models, collapse=", "))
 }
 
-for (i in seq_along(known_models)) {
+# save table
+for (i in seq_along(models)) {
     
-    message("\nSave ", outputfile_names[i], " ...")
-    
-    # .ods
-    if (regexpr(".ods", outname) != -1) {
-        Sys.setenv("R_ZIPCMD"=system("which zip", intern=T)) # necessary for utils::zip(..., zip=Sys.getenv("R_ZIPCMD", "zip"))
-        readODS::write_ods(table_list[[i]], path=outputfile_names[i])
-    
-    # .xlsx
-    } else if (regexpr(".xlsx", outname) != -1) {
-        xlsx::write.xlsx(table_list[[i]], outputfile_names[i], row.names=F, sheetName=known_models[i])
-    
-    # .txt    
-    } else {
-        if (dim(table_list[[i]])[1] == 1) {
-            max_nchars <- apply(table_list[[i]], 2, nchar)
+    if (!is.null(table_list[[i]])) {
+
+        message("\nSave ", outputfile_names[i], " ...")
+        
+        # .ods
+        if (regexpr(".ods", outname) != -1) {
+            Sys.setenv("R_ZIPCMD"=system("which zip", intern=T)) # necessary for utils::zip(..., zip=Sys.getenv("R_ZIPCMD", "zip"))
+            readODS::write_ods(table_list[[i]], path=outputfile_names[i])
+        
+        # .xlsx
+        } else if (regexpr(".xlsx", outname) != -1) {
+            xlsx::write.xlsx(table_list[[i]], outputfile_names[i], row.names=F, sheetName=models[i])
+        
+        # .txt    
         } else {
-            max_nchars <- apply(apply(table_list[[i]], 2, nchar), 2, max, na.rm=T)
+            if (dim(table_list[[i]])[1] == 1) {
+                max_nchars <- apply(table_list[[i]], 2, nchar)
+            } else {
+                max_nchars <- apply(apply(table_list[[i]], 2, nchar), 2, max, na.rm=T)
+            }
+            gdata::write.fwf(table_list[[i]], file=outputfile_names[i], width=max_nchars, colnames=T, sep=";")
         }
-        gdata::write.fwf(table_list[[i]], file=outputfile_names[i], width=max_nchars, colnames=T, sep=";")
+
+    } else { # if current model is not NULL
+        warning("found no output for model ", models[i]) 
     }
 
-}
+} # for i
 
-options("width"=width_print) # default
+options("width"=80) # default
 toc <- Sys.time()
 message("\nNow its ", toc)
 elapsed <- toc - tic

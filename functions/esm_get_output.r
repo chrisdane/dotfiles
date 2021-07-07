@@ -48,7 +48,7 @@ if (interactive()) {
     
     #./get_esm_output_vars.r /work/ba0989/a270077/CMIP6_PMIP4/a270073/CMIP6/CMIP_PMIP/dynveg_true/hist ~/cmip6/hist_output.ods > log 2>&1 &
     
-    me <- sub(pattern=".*=", replacement="", commandArgs()[4])
+    me <- basename(sub(pattern=".*=", replacement="", commandArgs()[4]))
     usage <- paste0("\nUsage: ", me, " arg1 arg2 [--models=] [--libpaths=] or\n",
                     "       ", me, " arg1 arg2 [--models=] [--libpaths=] > output.log 2>&1 &\n",
                     "\n",

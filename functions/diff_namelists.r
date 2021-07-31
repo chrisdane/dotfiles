@@ -22,6 +22,8 @@ if (!interactive()) {
               "/home/ollie/cdanek/esm/esm_tools/namelists/echam/6.3.04p1/PI-CTRL/last/namelist.echam")
     args <- c("/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr/esm-piControl_oezguer_nml/namelist.echam",
               "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr/esm-piControl/run_19500101-19500131/work/namelist.echam")
+    args <- c("/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_oezguer_nml/namelist.echam",
+              "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl/run_19500101-19501231/work/namelist.echam")
 }
 
 # check
@@ -127,16 +129,6 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                         source2 <- cha2$source
                     }
                     
-                    # check "variables" or "meannam" and/or "sqrmeannam"
-                    if (all(is.na(match(c("variables", "meannam", "sqrmeannam"), keys1))) ||
-                        all(is.na(match(c("variables", "meannam", "sqrmeannam"), keys2)))) {
-                        stop("this never happened")
-                    }
-                    if (any(keys1 == "variables") && any(keys1 == "meannam")) stop("this never happened")
-                    if (any(keys1 == "variables") && any(keys1 == "sqrmeannam")) stop("this never happened")
-                    if (any(keys2 == "variables") && any(keys2 == "meannam")) stop("this never happened")
-                    if (any(keys2 == "variables") && any(keys2 == "sqrmeannam")) stop("this never happened")
-                    
                     # interval
                     # echam docu p 201: interval:
                     # "time averaging interval"
@@ -148,17 +140,11 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     # default: 12,’hours’,’first’,0
                     if (any(keys1 == "interval")) { 
                         interval1 <- cha1$interval # e.g. "1,months,first,0"
-                        freq1 <- strsplit(interval1, ",")[[1]]
-                        if (length(freq1) != 4) stop("this never happened")
-                        freq1 <- freq1[2]
                     } else {
                         stop("never happened")
                     }
                     if (any(keys2 == "interval")) {
                         interval2 <- cha2$interval # e.g. "1,months,first,0"
-                        freq2 <- strsplit(interval2, ",")[[1]]
-                        if (length(freq2) != 4) stop("this never happened")
-                        freq2 <- freq2[2]
                     } else {
                         stop("never happened")
                     }
@@ -173,96 +159,186 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     if (any(keys1 == "filetag")) filetag1 <- cha1$filetag
                     if (any(keys2 == "filetag")) filetag2 <- cha2$filetag
                     
-                    # get "variables" or "meannam" and/or "sqrmeannam"
+                    # variables
+                    if (any(keys1 == "variables")) { 
+                        variables1 <- strsplit(cha1$variables, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
+                    } else {
+                        variables1 <- NA
+                    }
+                    if (any(keys2 == "variables")) { 
+                        variables2 <- strsplit(cha2$variables, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
+                    } else {
+                        variables2 <- NA
+                    }
+                    
+                    # meannam
+                    if (any(keys1 == "meannam")) { 
+                        meannam1 <- strsplit(cha1$meannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
+                    } else {
+                        meannam1 <- NA
+                    }
+                    if (any(keys2 == "meannam")) { 
+                        meannam2 <- strsplit(cha2$meannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
+                    } else {
+                        meannam2 <- NA
+                    }
+                    
+                    # sqrmeannam
+                    if (any(keys1 == "sqrmeannam")) { 
+                        sqrmeannam1 <- strsplit(cha1$sqrmeannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
+                    } else {
+                        sqrmeannam1 <- NA
+                    }
+                    if (any(keys2 == "sqrmeannam")) { 
+                        sqrmeannam2 <- strsplit(cha2$sqrmeannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
+                    } else {
+                        sqrmeannam2 <- NA
+                    }
+                    
+                    # get well structured data frames from input chapter
                     mvstream1_df <- mvstream2_df <- data.frame()
                     
-                    # cha1 case1: mvstreamctl chapter has "variables" as key
-                    if (any(keys1 == "variables")) { 
-                        mvstream1 <- strsplit(cha1$variables, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
-                        for (vi in seq_along(mvstream1)) {
-                            name_type <- strsplit(mvstream1[vi], ":")[[1]]
-                            if (length(name_type) > 1) { # case e.g. "st:mean" or "irsucs:inst>irsucs_pt=6"
-                                if (any(grepl(">", name_type))) { # case e.g. "irsucs:inst>irsucs_pt=6"
+                    # add cha1 "variables"
+                    for (vi in seq_along(variables1)) {
+                        if (all(is.na(variables1))) {
+                            name_type <- c(NA, NA)
+                        } else {
+                            name_type <- strsplit(variables1[vi], ":")[[1]]
+                            if (length(name_type) > 1) { # case 1/3 "st:mean" or "irsucs:inst>irsucs_pt=6"
+                                if (any(grepl(">", name_type))) { # case 2/3 "irsucs:inst>irsucs_pt=6"
                                     name_type <- c(name_type[1], strsplit(name_type[2], ">")[[1]][1])
                                 }
                             } else {
-                                name_type <- c(name_type, "mean") # case e.g. "tslm1" --> mean
-                            }
-                            row <- data.frame(var=name_type[1], type=name_type[2], freq=freq1, 
-                                              source=source1, target=target1, filetag=filetag1, 
-                                              interval=interval1, orig=mvstream1[vi], 
-                                              stringsAsFactors=F)
-                            mvstream1_df <- rbind(mvstream1_df, row)
-                        } # for vi in mvstream1
-                    # cha1 case2: mvstreamctl chapter has "meannam" and/or "sqrmeannam" as keys
-                    } else if (any(!is.na(match(c("meannam", "sqrmeannam"), keys1)))) { 
-                        if (any(keys1 == "meannam")) {
-                            mvstream1 <- strsplit(cha1$meannam, ",")[[1]] # e.g. "tslm1"
-                            for (vi in seq_along(mvstream1)) {
-                                row <- data.frame(var=mvstream1[vi], type="mean", freq=freq1, 
-                                                  source=source1, target=target1, filetag=filetag1,
-                                                  interval=interval1, orig=mvstream1[vi], 
-                                                  stringsAsFactors=F)
-                                mvstream1_df <- rbind(mvstream1_df, row)
+                                name_type <- c(name_type, "mean") # case 3/3 "tslm1" --> mean
                             }
                         }
-                        if (any(keys1 == "sqrmeannam")) {
-                            mvstream1 <- strsplit(cha1$meannam, ",")[[1]] # e.g. "tslm1"
-                            for (vi in seq_along(mvstream1)) {
-                                row <- data.frame(var=mvstream1[vi], type="sqrmean", freq=freq1,
-                                                  source=source1, target=target1, filetag=filetag1,
-                                                  interval=interval1, orig=mvstream1[vi], 
-                                                  stringsAsFactors=F)
-                                mvstream1_df <- rbind(mvstream1_df, row)
-                            }
-                        }
-                    } # cha1 case1 or 2: mvstreamctl chapter has "variables" or "meannam" and/or "sqrmeannam" as keys
+                        row <- data.frame(variables=name_type[1], type=name_type[2], 
+                                          meannam=NA, sqrmeannam=NA, 
+                                          source=source1, target=target1, filetag=filetag1, 
+                                          interval=interval1, orig=variables1[vi], 
+                                          stringsAsFactors=F)
+                        mvstream1_df <- rbind(mvstream1_df, row)
+                    } # for vi in variables1
 
-                    # cha2 case1: mvstreamctl chapter has "variables" as key
-                    if (any(keys2 == "variables")) { 
-                        mvstream2 <- strsplit(cha2$variables, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
-                        for (vi in seq_along(mvstream2)) {
-                            name_type <- strsplit(mvstream2[vi], ":")[[1]]
-                            if (length(name_type) > 1) { # case e.g. "st:mean" or "irsucs:inst>irsucs_pt=6"
-                                if (any(grepl(">", name_type))) { # case e.g. "irsucs:inst>irsucs_pt=6"
+                    # add cha1 "meannam"
+                    for (vi in seq_along(meannam1)) {
+                        if (all(is.na(meannam1))) {
+                            meannam <- NA
+                        } else {
+                            meannam <- strsplit(meannam1[vi], "[[:punct:]]")[[1]] # any special characters
+                            if (length(meannam) > 1) {
+                                stop("never happened")
+                            }
+                        }
+                        row <- data.frame(variables=NA, type=NA,
+                                          meannam=meannam, 
+                                          sqrmeannam=NA, 
+                                          source=source1, target=target1, filetag=filetag1, 
+                                          interval=interval1, orig=meannam1[vi], 
+                                          stringsAsFactors=F)
+                        mvstream1_df <- rbind(mvstream1_df, row)
+                    } # for vi in meannam1
+                        
+                    # add cha1 "sqrmeannam"
+                    for (vi in seq_along(sqrmeannam1)) {
+                        if (all(is.na(sqrmeannam1))) {
+                            sqrmeannam <- NA
+                        } else {
+                            sqrmeannam <- strsplit(sqrmeannam1[vi], "[[:punct:]]")[[1]] # any special characters
+                            if (length(sqrmeannam) > 1) {
+                                stop("never happened")
+                            }
+                        }
+                        row <- data.frame(variables=NA, type=NA,
+                                          meannam=NA, 
+                                          sqrmeannam=sqrmeannam, 
+                                          source=source1, target=target1, filetag=filetag1, 
+                                          interval=interval1, orig=sqrmeannam1[vi], 
+                                          stringsAsFactors=F)
+                        mvstream1_df <- rbind(mvstream1_df, row)
+                    } # for vi in sqrmeannam1                     
+                  
+                    # add cha2 "variables"
+                    for (vi in seq_along(variables2)) {
+                        if (all(is.na(variables2))) {
+                            name_type <- c(NA, NA)
+                        } else {
+                            name_type <- strsplit(variables2[vi], ":")[[1]]
+                            if (length(name_type) > 1) { # case 1/3 "st:mean" or "irsucs:inst>irsucs_pt=6"
+                                if (any(grepl(">", name_type))) { # case 2/3 "irsucs:inst>irsucs_pt=6"
                                     name_type <- c(name_type[1], strsplit(name_type[2], ">")[[1]][1])
                                 }
                             } else {
-                                name_type <- c(name_type, "mean") # case e.g. "tslm1" --> mean
-                            }
-                            row <- data.frame(var=name_type[1], type=name_type[2], freq=freq2, 
-                                              source=source2, target=target2, filetag=filetag2,
-                                              interval=interval2, orig=mvstream2[vi], 
-                                              stringsAsFactors=F)
-                            mvstream2_df <- rbind(mvstream2_df, row)
-                        } # for vi in mvstream2
-                    # cha2 case2: mvstreamctl chapter has "meannam" and/or "sqrmeannam" as keys
-                    } else if (any(!is.na(match(c("meannam", "sqrmeannam"), keys2)))) { 
-                        if (any(keys2 == "meannam")) {
-                            mvstream2 <- strsplit(cha2$meannam, ",")[[1]] # e.g. "tslm1"
-                            for (vi in seq_along(mvstream2)) {
-                                row <- data.frame(var=mvstream2[vi], type="mean", freq=freq2, 
-                                                  source=source2, target=target2, filetag=filetag2,
-                                                  interval=interval2, orig=mvstream2[vi], 
-                                                  stringsAsFactors=F)
-                                mvstream2_df <- rbind(mvstream2_df, row)
+                                name_type <- c(name_type, "mean") # case 3/3 "tslm1" --> mean
                             }
                         }
-                        if (any(keys2 == "sqrmeannam")) {
-                            mvstream2 <- strsplit(cha2$meannam, ",")[[1]] # e.g. "tslm1"
-                            for (vi in seq_along(mvstream2)) {
-                                row <- data.frame(var=mvstream2[vi], type="sqrmean", freq=freq2, 
-                                                  source=source2, target=target2, filetag=filetag2,
-                                                  interval=interval2, orig=mvstream2[vi], 
-                                                  stringsAsFactors=F)
-                                mvstream2_df <- rbind(mvstream2_df, row)
+                        row <- data.frame(variables=name_type[1], type=name_type[2], 
+                                          meannam=NA, sqrmeannam=NA, 
+                                          source=source2, target=target2, filetag=filetag2, 
+                                          interval=interval2, orig=variables2[vi], 
+                                          stringsAsFactors=F)
+                        mvstream2_df <- rbind(mvstream2_df, row)
+                    } # for vi in variables2
+
+                    # add cha2 "meannam"
+                    for (vi in seq_along(meannam2)) {
+                        if (all(is.na(meannam2))) {
+                            meannam <- NA
+                        } else {
+                            meannam <- strsplit(meannam2[vi], "[[:punct:]]")[[1]] # any special characters
+                            if (length(meannam) > 1) {
+                                stop("never happened")
                             }
                         }
-                    } # cha2 case1 or 2: mvstreamctl chapter has "variables" or "meannam" and/or "sqrmeannam" as keys
+                        row <- data.frame(variables=NA, type=NA,
+                                          meannam=meannam, 
+                                          sqrmeannam=NA, 
+                                          source=source2, target=target2, filetag=filetag2, 
+                                          interval=interval2, orig=meannam2[vi], 
+                                          stringsAsFactors=F)
+                        mvstream2_df <- rbind(mvstream2_df, row)
+                    } # for vi in meannam2
+                        
+                    # add cha2 "sqrmeannam"
+                    for (vi in seq_along(sqrmeannam2)) {
+                        if (all(is.na(sqrmeannam2))) {
+                            sqrmeannam <- NA
+                        } else {
+                            sqrmeannam <- strsplit(sqrmeannam2[vi], "[[:punct:]]")[[1]] # any special characters
+                            if (length(sqrmeannam) > 1) {
+                                stop("never happened")
+                            }
+                        }
+                        row <- data.frame(variables=NA, type=NA,
+                                          meannam=NA, 
+                                          sqrmeannam=sqrmeannam, 
+                                          source=source2, target=target2, filetag=filetag2, 
+                                          interval=interval2, orig=sqrmeannam2[vi], 
+                                          stringsAsFactors=F)
+                        mvstream2_df <- rbind(mvstream2_df, row)
+                    } # for vi in sqrmeannam2         
                    
                     # sort alphabetically
-                    mvstream1_df <- mvstream1_df[sort(mvstream1_df$var, index.return=T)$ix,]
-                    mvstream2_df <- mvstream2_df[sort(mvstream2_df$var, index.return=T)$ix,]
+                    if (!all(is.na(mvstream1_df$variables))) {
+                        mvstream1_df <- mvstream1_df[sort(mvstream1_df$variables, index.return=T)$ix,]
+                    } else if (!all(is.na(mvstream1_df$meannam))) {
+                        mvstream1_df <- mvstream1_df[sort(mvstream1_df$meannam, index.return=T)$ix,]
+                    } else if (!all(is.na(mvstream1_df$sqrmeannam))) {
+                        mvstream1_df <- mvstream1_df[sort(mvstream1_df$sqrmeannam, index.return=T)$ix,]
+                    } else {
+                        # none of "variables", "meannam", "sqrmeannam" given in current mvstreamctl chapter
+                    }
+                    if (!all(is.na(mvstream2_df$variables))) {
+                        mvstream2_df <- mvstream2_df[sort(mvstream2_df$variables, index.return=T)$ix,]
+                    } else if (!all(is.na(mvstream2_df$meannam))) {
+                        mvstream2_df <- mvstream2_df[sort(mvstream2_df$meannam, index.return=T)$ix,]
+                    } else if (!all(is.na(mvstream2_df$sqrmeannam))) {
+                        mvstream2_df <- mvstream2_df[sort(mvstream2_df$sqrmeannam, index.return=T)$ix,]
+                    } else {
+                        # none of "variables", "meannam", "sqrmeannam" given in current mvstreamctl chapter
+                    }
+                    
+                    # add number column 
                     mvstream1_df <- cbind(no=seq_len(dim(mvstream1_df)[1]), mvstream1_df)
                     mvstream2_df <- cbind(no=seq_len(dim(mvstream2_df)[1]), mvstream2_df)
                     
@@ -277,7 +353,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                         # check different levels of similarity of mvstreamctl blocks
                         # approach here: do they have the same source or variables? if yes, print them
                         if (identical(mvstream1_df$source, mvstream2_df$source)) { # same source
-                            if (identical(mvstream1_df$var, mvstream2_df$var)) { # same vars
+                            if (identical(mvstream1_df$variables, mvstream2_df$variables)) { # same vars
                                 cat("************************** detected diffs in similar mvstreamctl chapters **************************\n",
                                     "nml1 \"", chapter, "\" chapter ", ch1i, "/", 
                                     length(inds1), " and nml2 \"", chapter, "\" chapter ", 

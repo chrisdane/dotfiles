@@ -29,16 +29,21 @@ if (interactive()) {
     #esmpath <- "/work/ollie/cdanek/out/echam-6.3.04p1/pictrl-grb"
     #outname <- "pictrl-grb.ods"
     #outname <- "pictrl-grb.txt"
-    esmpath <- "/work/ollie/cdanek/out/echam-6.3.04p1/pictrl-spinup-grb"
+    #esmpath <- "/work/ollie/cdanek/out/echam-6.3.04p1/pictrl-spinup-grb"
     #outname <- "pictrl-spinup-grb.ods"
-    outname <- "pictrl-spinup-grb.txt"
-    
-    models <- c("echam", "jsbach", "fesom", "recom")
-    #models <- "echam"
+    #outname <- "pictrl-spinup-grb.txt"
+    #esmpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/hist_an"
+    #outname <- "~/awicm1-recom_output_hist.ods"
+    esmpath <- "/work/ba1103/a270094/AWIESM/test"
+    outname <- "~/awicm1-recom_piControl_og_output.ods"
+        
+    #models <- c("echam6", "jsbach", "fesom", "recom") # recom and fesom double
+    #models <- c("echam6", "jsbach", "fesom")
+    #models <- "echam6"
     #models <- "fesom"
-    #models <- "jsbach"
+    models <- "jsbach"
     #models <- "recom"
-    #models <- c("echam", "jsbach")
+    #models <- c("echam6", "jsbach")
     #models <- c("fesom", "recom")
     
     libpaths <- .libPaths()
@@ -54,7 +59,7 @@ if (interactive()) {
                     "\n",
                     "   unnamed arg1: /path/to/esm-experiment (must contain the directories \"scripts/\" and \"outdata/\")\n",
                     "   unnamed arg2: filename/of/output_table.ods (must have ending \".ods\", \".xlsx\" or \".txt\")\n",
-                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam,jsbach,fesom,recom)\n",
+                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam6,jsbach,fesom,recom)\n",
                     "   optional named arg --libpaths=/path/where/R/packages/are/installed,/separated/by/comma/if/more/than/one\n")
     args <- commandArgs(trailingOnly=T)
     if (length(args) < 2) {
@@ -65,7 +70,7 @@ if (interactive()) {
     outname <- args[2]
     
     # check models if provided
-    models <- c("echam", "jsbach", "fesom", "recom") # known models so far
+    models <- c("echam6", "jsbach", "fesom", "recom") # known models so far
     if (any(grepl("--models", args))) {
         models <- sub("--models=", "", args[grep("--models=", args)])
         models <- strsplit(models, ",")[[1]]
@@ -114,13 +119,13 @@ not_mentioned_nml_entry <- "not mentioned"
 
 # known variables to throw out
 known_rm_vars <- vector("list", l=length(models))
-known_rm_vars[["echam"]] <- c("hyai", "hyam", "hybi", "hybm")
-known_rm_vars[["jsbach"]] <- known_rm_vars[["echam"]]
+known_rm_vars[["echam6"]] <- c("hyai", "hyam", "hybi", "hybm")
+known_rm_vars[["jsbach"]] <- known_rm_vars[["echam6"]]
 
 # known dimensions
 known_dims <- vector("list", l=length(models))
 names(known_dims) <- models
-known_dims[["echam"]] <- c("stream", "operator", "nml_entry", "code", "table", "time", "lon", "lat", "lev", "plev", "nsp", "nc2", "soil_layer")
+known_dims[["echam6"]] <- c("stream", "operator", "nml_entry", "code", "table", "time", "lon", "lat", "lev", "plev", "nsp", "nc2", "soil_layer")
 known_dims[["jsbach"]] <- c("stream", "operator", "nml_entry", "code", "table", "time", "lon", "lat", "depth", "lev", "tiles", "soil_layer", "belowsurface")
 known_dims[["fesom"]] <- c("time", "nodes", "nodes_2d", "nodes_3d", "depth")
 known_dims[["recom"]] <- known_dims[["fesom"]]
@@ -167,33 +172,33 @@ known_intervals <- data.frame("interval"=unique(c(known_monthly_intervals$interv
                                                   known_annual_intervals$interval)),
                               stringsAsFactors=F)
 known_intervals$order <- rep(NA, t=length(known_intervals$interval))
-known_intervals$echam_time <- rep(NA, t=length(known_intervals$interval))
-known_intervals$echam_interval <- rep(NA, t=length(known_intervals$interval))
+known_intervals$echam6_time <- rep(NA, t=length(known_intervals$interval))
+known_intervals$echam6_interval <- rep(NA, t=length(known_intervals$interval))
 for (i in seq_along(known_intervals$interval)) {
     if (known_intervals$interval[i] == "hr") {
         known_intervals$order[i] <- 1
-        known_intervals$echam_time[i] <- "1"
-        known_intervals$echam_interval[i] <- "hours"
+        known_intervals$echam6_time[i] <- "1"
+        known_intervals$echam6_interval[i] <- "hours"
     } else if (known_intervals$interval[i] == "3hr") {
         known_intervals$order[i] <- 2
-        known_intervals$echam_time[i] <- "3"
-        known_intervals$echam_interval[i] <- "hours"
+        known_intervals$echam6_time[i] <- "3"
+        known_intervals$echam6_interval[i] <- "hours"
     } else if (known_intervals$interval[i] == "6hr") {
         known_intervals$order[i] <- 3
-        known_intervals$echam_time[i] <- "6"
-        known_intervals$echam_interval[i] <- "hours"
+        known_intervals$echam6_time[i] <- "6"
+        known_intervals$echam6_interval[i] <- "hours"
     } else if (known_intervals$interval[i] == "day") {
         known_intervals$order[i] <- 4
-        known_intervals$echam_time[i] <- "1"
-        known_intervals$echam_interval[i] <- "days"
+        known_intervals$echam6_time[i] <- "1"
+        known_intervals$echam6_interval[i] <- "days"
     } else if (known_intervals$interval[i] == "mon") { 
         known_intervals$order[i] <- 5
-        known_intervals$echam_time[i] <- "1"
-        known_intervals$echam_interval[i] <- "months"
+        known_intervals$echam6_time[i] <- "1"
+        known_intervals$echam6_interval[i] <- "months"
     } else if (known_intervals$interval[i] == "yr") { 
         known_intervals$order[i] <- 6
-        known_intervals$echam_time[i] <- "1"
-        known_intervals$echam_interval[i] <- "years"
+        known_intervals$echam6_time[i] <- "1"
+        known_intervals$echam6_interval[i] <- "years"
     } else {
         stop("output interval \"", known_intervals$interval[i], "\" not defined")
     }
@@ -210,13 +215,18 @@ esmpath <- normalizePath(esmpath)
 message("esmpath = ", esmpath)
 expname <- basename(esmpath)
 message("--> expname = ", expname)
-test <- list.files(paste0(esmpath, "/scripts"), pattern="*date*", full.names=T)
+test <- list.files(paste0(esmpath, "/scripts"), pattern="*date", full.names=T)
 if (length(test) != 1) {
-    stop("could not found ", esmpath, "/scripts/*date")
+    stop("date file \"", esmpath, "/scripts/*date\" not found")
 }
 last_output_year <- scan(test, what="char", quiet=T)
 last_output_year <- as.numeric(substr(last_output_year[1], 1, 4))
 message("--> last_output_year = ", last_output_year)
+# maybe experiment ended on 1852-01-01_00:00:00 without any output of 1852
+# -> check for model output of year 1851 in this case
+last_output_year_minus1 <- last_output_year - 1 
+message("--> last_output_year_minus1 = ", last_output_year_minus1)
+
 outpath <- normalizePath(dirname(outname))
 message("outpath = ", outpath)
 outname <- basename(outname)
@@ -247,10 +257,10 @@ message("load package ncdf.tools ... ", appendLF=F)
 ret <- suppressMessages(suppressWarnings(require(ncdf.tools, lib=libpaths)))
 if (ret == F) {
     message()
-    stop("package \"", pkg, "\" not installed in\n",
+    stop("package \"ncdf.tools\" not installed in\n",
          paste(paste0("   ", libpaths), collapse="\n"), "\n",
-         "rerun the script with arg3=/absolute/path/where/R/package/", pkg, "/is/installed\n",
-         "or type `install.packages(\"", pkg, "\")` within an open R session and then rerun this script")
+         "rerun the script with arg3=/absolute/path/where/R/package/ncdf.tools/is/installed\n",
+         "or type `install.packages(\"ncdf.tools\")` within an open R session and then rerun this script")
 } else {
     message("ok")
 }
@@ -285,21 +295,47 @@ message("*****************")
 for (i in seq_along(models)) {
 
     options("width"=80) # default
-
-    message("find files model ", i, "/", length(models), ": ", models[i], " ...")
-
+    
+    # model output path
+    path <- paste0(esmpath, "/outdata/", models[i])
+    if (models[i] == "echam6") {
+        path <- paste0(esmpath, "/outdata/echam")
+    }
+    message("\n*****************************************************\n",
+            "model ", i, "/", length(models), ": ", models[i], "\n",
+            "*****************************************************")
+    
     # find model output of last_output_year
-    outfiles <- list.files(path=paste0(esmpath, "/outdata/", models[i], "/"),
+    message("\nfind files via `", path, "/*", last_output_year, "*` ...")
+    outfiles <- list.files(path=path, 
                            pattern=paste0(last_output_year), full.names=T)
-    
-    # remove *.codes
-    outfiles <- outfiles[!base::endsWith(outfiles, ".codes")]
-    
     if (length(outfiles) == 0) {
-        message("no files found, skip to next model ...")
+        message("--> no files found\n",
+                "find files via year last_output_year_minus1 = ", last_output_year_minus1, " instead ...")
+        outfiles <- list.files(path=path, 
+                               pattern=paste0(last_output_year_minus1), full.names=T)
+        if (length(outfiles) == 0) {
+            message("--> no files found, skip to next model ...")
+            next # model
+        } else { # success with last_output_year_minus1; update last_output_year
+            last_output_year <- last_output_year_minus1
+        }
+    }
+    
+    # keep only files with ".nc", ".grb" or "" extensions
+    exts <- tools::file_ext(outfiles)
+    keepinds <- which(exts == "nc" | exts == "grb" | exts == "")
+    if (length(keepinds) == 0) {
+        message("\nno files files having either \"nc\", \"grb\" or \"\" file ending found, skip to next model ...")
         next # model
     }
-    message("found ", length(outfiles), " files")
+    rminds <- seq_along(outfiles)[-keepinds]
+    if (length(rminds) > 0) {
+        message("\nremove ", length(rminds), " files having neither \"nc\", \"grb\" or \"\" file ending ...")
+        outfiles <- outfiles[-rminds]
+    }
+
+    message("\n--> found ", length(outfiles), " files")
     print(head(outfiles))
     print("...")
     print(tail(outfiles))
@@ -310,10 +346,9 @@ for (i in seq_along(models)) {
     # fesom: hist_fesom_wo_18500101.nc -> annual
     
     # first check if monthly files
+    message("\ncheck if model files are monthly or annual ...")
     message("check if there are files with pattern \"", last_output_year, "01\" \"",
             last_output_year, "02\" ...")
-    #inds_01 <- which(regexpr("01", basename(outfilesp)) != -1)
-    #inds_02 <- which(regexpr("02", basename(outfilesp)) != -1)
     inds_01 <- which(grepl(paste0(last_output_year, "01"), outfiles))
     inds_02 <- which(grepl(paste0(last_output_year, "02"), outfiles))
 
@@ -321,28 +356,27 @@ for (i in seq_along(models)) {
     if (length(inds_01) > 0 &&
         length(inds_01) == length(inds_02)) {
         outfiles <- outfiles[inds_01]
-        message("found same number of files -> assume monthly files")
+        message("found same number of files")
         file_interval <- "monthly"
-    
-    # else assume annual files
-    } else {
-        message("found different number of files -> assume annual files")
+    } else { # else assume annual files
+        message("found different number of files")
         file_interval <- "annual"
     }
+    message("--> assume ", file_interval, " files --> is this correc!?")
     #stop("asd")
 
     # if fesom, check if doubled links exist
     # older esm versions:       'varname_fesom_date.nc'
     # newer esm versions: 'expid_varname_fesom_date.nc'
     if (length(unique(outfiles)) != length(outfiles)) {
-        message("Found filenames more than once, remove double entries ...")
+        message("found filenames more than once, remove double entries ...")
         outfiles <- unique(outfiles)
     } # if fesom
     
     # checks finished
     dirnames <- dirname(outfiles)
     outfiles <- basename(outfiles)
-    message("proceed with ", length(outfiles), " files")
+    message("\nproceed with ", length(outfiles), " files")
     print(outfiles)
 
     options("width"=1000) # increase width per line for print
@@ -350,14 +384,62 @@ for (i in seq_along(models)) {
 
         path <- dirnames[j]
         file <- outfiles[j]
-        message("\n", models[i], " file ", j, "/", length(outfiles), ": ", file, " ...")
+        message("\n############################################################\n",
+                models[i], " file ", j, "/", length(outfiles), ": ", file, "\n",
+                "n############################################################")
+        
+        # try to determine stream if echam6 or jsbach
+        stream <- NULL
+        if (any(models[i] == c("echam6", "jsbach"))) {
 
-        # first convert from grb to nc if necessary
+            message("\ncurrent model is echam6 or jsbach --> try to determine stream ...")
+            # e.g. hist_echam6_accw_201401.grb 
+            #      test4_195001.01_aclcim.nc 
+            #      test_jsbach_jsbach_268501.grb
+            message("file = \"", file, "\"")
+            stream <- tools::file_path_sans_ext(file) # remove ".<extension>" (no effect if no extension)
+            stream <- sub(paste0(expname, "_"), "", stream) # remove "<expname>_" (only once!)
+            if (grepl(paste0(models[i], "_"), stream)) {
+                stream <- sub(paste0(models[i], "_"), "", stream) # remove "echam6_" or "jsbach_" (only once!)
+                # accw_201401
+                # 195001.01_aclcim
+                # jsbach_268501
+            }
+            # try different patterns, longest first:
+            pattern_to_remove <- paste0(last_output_year, "01.01_") # case: test4_195001.01_aclcim.nc 
+            if (grepl(pattern_to_remove, file)) { 
+                stream <- sub(pattern_to_remove, "", stream)
+                # aclcim
+            }
+            pattern_to_remove <- paste0("_", last_output_year, "01") # case: hist_echam6_accw_201401.grb
+            if (grepl(pattern_to_remove, file)) { 
+                stream <- sub(pattern_to_remove, "", stream)
+                # accw
+                # jsbach
+            }
+            message("--> stream = \"", stream, "\" ", appendLF=F)
+            if (nchar(stream) == 0 || length(stream) == 0) {
+                message()
+                warning("could not determine stream of file \"", file, "\" (stream = \"", stream, "\"). skip.", immediate.=T)
+                warning("could not determine stream of file \"", file, "\" (stream = \"", stream, "\"). skip.", immediate.=F)
+            } else {
+                # if special post processing streams
+                if (grepl("_mm", stream)) { # case: hist_echam6_ATM_mm_201401.nc --> echam6_ATM_mm
+                    #stop("continue")
+                }
+                message("--> is this correct!?")
+            }
+        } # if echam jsbach
+
+        # determine file type 
+        message("\nget filetype ...")
         convert_to_nc_tag <- F # default
         #if (tools::file_ext(file) == "grb") { # does not cover cases of file names without ending
         ftype <- cdo_get_filetype(fin=paste0(path, "/", file))
+        
+        # convert from grb to nc if necessary
         if (ftype$file_type == "non-nc") {
-
+            
             # check if cdo module is loaded
             cdo_check <- system("cdo -V", ignore.stderr=T) == 0
             if (!cdo_check) {
@@ -366,18 +448,49 @@ for (i in seq_along(models)) {
                 system(cmd)
             }
 
-            # grb to nc
+            # construct cdo grb->nc conversion command 
             cmd <- "cdo "
-            if (cdo_silent) {
-                cmd <- paste0(cmd, "-s ")
+            if (cdo_silent) cmd <- paste0(cmd, "-s ")
+            
+            # find and apply code table if present
+            code_pattern <- paste0(file, ".codes") # try 1/2: new esm tools: codes file same pattern as data file
+            message("\ncheck for .codes file with pattern \"", code_pattern, "\" ...")
+            codesfile <- list.files(path, pattern=code_pattern, full.names=T)
+            if (length(codesfile) != 1) { # not 1 codes file found
+                message("found ", length(codesfile), " .codes files")
+                if (length(codesfile) == 0) {
+                    if (!is.null(stream)) { # try 2/2: old esm tools (echam/jsbach only)
+                        code_pattern <- paste0("*", last_output_year, "01.01_", stream, ".codes")
+                        message("check for .codes file with pattern \"", code_pattern, "\" ...")
+                        codesfile <- list.files(path, pattern=code_pattern, full.names=T)
+                    }
+                }
             }
-            if (models[i] == "echam") {
-                cmd <- paste0(cmd, "-t echam6 ")
+            message("found ", length(codesfile), " .codes files")
+            if (length(codesfile) == 1) { # 1 codes file found
+                message("--> use codefile \"", codesfile, "\" for grb->nc conversion ...")
+                cmd <- paste0(cmd, "-t ", codesfile, " ")
+            } else if (length(codesfile) > 1) {
+                stop(paste(codefile, collapse="\n"), "\nthis never happened")
+            } else if (length(codesfile) == 0) {
+                if (models[i] == "echam6") {
+                    message("current model is echam6 -> use default code table `echam6`")
+                    cmd <- paste0(cmd, "-t echam6 ")
+                }
             }
+            
+            # apply conversion
             cmd <- paste0(cmd, "-f nc copy ", path, "/", file, " ", 
                           outpath, "/", file, ".nc")
-            message("convert to nc:")
-            message(cmd, " ...")
+            
+            # run final cdo conversion command
+            message("\nconvert ", 
+                    utils:::format.object_size(file.info(paste0(path, "/", file))$size, "Mb"), 
+                    " file to nc ...")
+            message("run `", cmd, "` ...")
+            if (grepl("mlogin", Sys.info()["nodename"])) {
+                stop("cannot run conversion command on mlogin. switch to mistralpp and rerun the script")
+            }
             system(cmd)
             
             # new file and path names for current file
@@ -408,9 +521,9 @@ for (i in seq_along(models)) {
             message("skip ...")
             next # file
         }
-        message("Found ", ndims, " dims:")
+        message("\nFound ", ndims, " dims:")
         print(dims)
-        message("Found ", nvars, " vars:")
+        message("\nFound ", nvars, " vars:")
         print(vars)
         
         # throw out some variables
@@ -425,16 +538,17 @@ for (i in seq_along(models)) {
             }
             nvars <- dim(vars)[1]
         } # if variale was found to remove
-
+        
         # array to save all meta data per variable of file file
         tmp <- data.frame(array(NA, c(nvars, length(known_dims[[models[i]]]) + 1)), stringsAsFactors=F)
         colnames(tmp) <- c("name", known_dims[[models[i]]])
-       
+
         # found variables
         tmp[,"name"] <- vars[,"name"]
         tmp[,"unit"] <- vars[,"unit"]
         tmp[,"file"] <- outfiles[j] # original, not possibly grb->nc converted
         varids <- vars[,"id"]
+        if (!is.null(stream)) tmp[,"stream"] <- stream # only echam/jsbach
 
         # try to determine long name and code of every variable
         message("\nTry do determine variable long name and code if possible ...")
@@ -459,7 +573,7 @@ for (i in seq_along(models)) {
                     #message("found \"description\" attribute: ", tmp[k,"longname"])
                 } else {
                     message("no attribute named either \"long_name\" or \"description\" found for variable ", 
-                            vars[k,"name"], " of outfiles[", j, "] = ", file, ". skip ...")
+                            vars[k,"name"], " of outfiles[", j, "] = ", file, ". skip ...\n")
                 }
             }
             # code
@@ -474,109 +588,6 @@ for (i in seq_along(models)) {
             }
         }
         
-        # try to determine stream if echam or jsbach
-        if (any(models[i] == c("echam", "jsbach"))) {
-
-            message("\ncurrent model is ", models[], " --> try do determine stream ...")
-            # e.g. hist_echam6_accw_201401.grb test4_195001.01_aclcim.nc
-            # --> everything that is not expnbame and date and ending
-            stream <- tools::file_path_sans_ext(file)
-            stream <- sub(paste0(expname, "_"), "", stream)
-            if (file_interval == "monthly") {
-                pattern <- paste0(last_output_year, "01") # case: hist_echam6_accw_201401.grb
-                if (grepl(paste0(pattern, ".01"), file)) { # case: test4_195001.01_aclcim.nc
-                    pattern <- paste0(pattern, ".01")
-                }
-            } else if (file_interval == "annual") {
-                stop("not yet")
-            }
-            stream <- sub(paste0(pattern, "_"), "", stream)
-            if (nchar(stream) == 0) {
-                warning("could not determine stream of file ", file, ". skip.", immediate.=T)
-                warning("could not determine stream of file ", file, ". skip.", immediate.=F)
-            } else {
-                # if special post processing streams
-                if (grepl("_mm", stream)) { # case hist_echam6_ATM_mm_201401.nc
-                    stop("continue")
-                }
-                message("stream: \"", stream, "\" (is this correct?)")
-                tmp[,"stream"] <- stream
-            }
-        } # if echam jsbach
-
-        # if there are any variable names containing the pattern "varX", with X being any number
-        if (any(regexpr(pattern="var[[:digit:]]", vars[,"name"]) != -1)) {
-            message("\n", 
-                    "Some of these variables contain \"varX\", with X being a number.",
-                    " Try to find fitting code table ...")
-
-            # possibly existing code table
-            # e.g.: hist_echam6_accw_185001.codes
-            #       PI-CTRL_296901.01_accw.codes
-            cmd <- paste0("ls ", dirnames[j], "/*", last_output_year, "*.codes") # use original file name here
-            message(cmd, " ...")
-            codes_files <- system(cmd, intern=T)
-            if (length(codes_files) == 0) {
-                    message("Could not find a .codes file containing the pattern \"", 
-                            last_output_year, "\". Cannot resolve \"varX\" varnames.")
-            } else {
-                stream_inds <- which(regexpr(stream, basename(codes_files)) != -1)
-                if (length(stream_inds) == 0) {
-                    message("Could not find a .codes file containing the patterns \"",
-                            last_output_year, " and \"", stream, "\". Cannot resolve \"varX\" varnames.")
-                } else {
-                    codes_file <- codes_files[stream_inds[1]]
-                    message(".codes file\n",
-                            codes_file)
-                    message("found. Try to resolve \"varX\" varnames ...")
-                    vars_tmp <- readLines(codes_file)
-                    vars_tmp <- gsub("\\s+", " ", vars_tmp) # replace many " " by one " "
-                    for (k in seq_along(vars_tmp)) {
-                        infos <- strsplit(vars_tmp[k], "\\s+")[[1]] # seperate by spaces
-                        codenumber_codes <- infos[2] # e.g. 160
-                        codenumber_ind_nc <- which(sub("var", "", vars[,"name"]) == codenumber_codes)
-                        # if codenumber of .codes file was found in .nc file (the default case)
-                        if (length(codenumber_ind_nc) != 0) {
-                            message("Found code number ", codenumber_codes, 
-                                    " from the .nc file in the .codes file:")
-                            print(vars_tmp[k])
-                            if (any(colnames(tmp) == "name")) {
-                                tmp[codenumber_ind_nc,"name"] <- infos[4]
-                            } else {
-                                stop("\"name\" is not a column name of tmp")
-                            }
-                            if (any(colnames(tmp) == "code")) {
-                                tmp[codenumber_ind_nc,"code"] <- infos[2]
-                            } else {
-                                stop("\"code\" is not a column name of tmp")
-                                                            }
-                            if (any(colnames(tmp) == "lev")) {
-                                tmp[codenumber_ind_nc,"lev"] <- infos[3]
-                            } else {
-                                stop("\"lev\" is not a column name of tmp")
-                            }
-                            if (any(colnames(tmp) == "longname")) {
-                                tmp[codenumber_ind_nc,"longname"] <- paste0(infos[7:(length(infos) - 1)], collapse=" ")
-                            } else {
-                                stop("\"longname\" is not a column name of tmp")
-                            }
-                            if (any(colnames(tmp) == "unit")) {
-                                tmp[codenumber_ind_nc,"unit"] <- infos[length(infos)]
-                            } else {
-                                stop("\"unit\" is not a column name of tmp.")
-                            }
-                        # else if codenumber of .codes file was not found in .nc file (strange case)
-                        } else {
-                            message("code number ", codenumber_codes, " from the .codes file\n",
-                                    codes_file, "\n",
-                                    "was not given in .nc file\n", 
-                                    file, ". skip this code number.")
-                        } # if code number from .codes table was also found in .nc file
-                    } # for all k entries in .codes table
-                } # if .codes file with pattern last_output_year and stream exists
-            } # if .codes file with pattern last_output_year exists
-        } # if any variable contains pattern "varX", with X being any number
-       
         if (F) {
             ff = "/work/ba0989/a270077/CMIP6_PMIP4/a270073/CMIP6/CMIP_PMIP/dynveg_true/hist/outdata/fesom/hist_fesom_wo_18500101.nc"
             fdims <- ncdf.tools::infoNcdfDims(ff)
@@ -639,11 +650,11 @@ for (i in seq_along(models)) {
         message("determined output intervals of ", file_interval, " file:")
         print(tmp[,c("time", "interval")])
 
-        # try to determine operator (mean, inst, min, max, etc.) of echam or jsbach variable based on the namelist
-        if (any(models[i] == c("echam", "jsbach"))) {
+        # try to determine operator (mean, inst, min, max, etc.) of echam6 or jsbach variable based on the namelist
+        if (any(models[i] == c("echam6", "jsbach"))) {
             if (check_nml) { # TODO
                 message("\ncheck_nml is true ...")
-                if (any(models[i] == c("echam", "jsbach"))) {
+                if (any(models[i] == c("echam6", "jsbach"))) {
                     nml_to_check <- "namelist.echam"
                 } else {
                     stop("not yet")
@@ -725,7 +736,7 @@ for (i in seq_along(models)) {
                                 # try special case: the nml entries "'temp2', 'temp2:inst'" yield the 2 variables "temp2" and "temp2_2"
                                 if (substr(var2check, nchar(var2check) - 1, nchar(var2check)) == "_2") {
                                     message("Found special case: the last 2 characters of var2check are \"_2\".\n",
-                                            "This was done automatically by echam if, e.g., the nml entry \"'temp2', 'temp2:inst'\"",
+                                            "This was done automatically by echam6 if, e.g., the nml entry \"'temp2', 'temp2:inst'\"",
                                             " was present in the nml.\n",
                                             "Adopt the var_patterns ...")
                                     var2check <- substr(var2check, 1, nchar(var2check)-2)
@@ -781,9 +792,9 @@ for (i in seq_along(models)) {
                                     var_pattern <- names(found_varpatterns)[patterni]
                                     #if (tmp[vari,"name"] == "lsp_2" && tmp[vari,"interval"] == "6hr") stop("asd")
                                     time_echam <- known_intervals[which(known_intervals[,"interval"] == 
-                                                                        tmp[vari,"interval"]),"echam_time"]
+                                                                        tmp[vari,"interval"]),"echam6_time"]
                                     interval_echam <- known_intervals[which(known_intervals[,"interval"] == 
-                                                                            tmp[vari,"interval"]),"echam_interval"]
+                                                                            tmp[vari,"interval"]),"echam6_interval"]
                                     interval_pattern <- paste0(time_echam, ",'", interval_echam, "',") # 6, 'hours',
                                     stream_pattern <- paste0("'", stream, "'")
 
@@ -1119,7 +1130,7 @@ for (i in seq_along(models)) {
                     } # not _mm stream
                 } # nml was found
             } # if nml_check
-        } # if echam or jsbach
+        } # if echam6 or jsbach
         
         # append new entry to table
         if (j == 1) {

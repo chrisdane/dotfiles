@@ -3,7 +3,7 @@
 # get args
 args <- commandArgs(trailingOnly=F)
 me <- basename(sub("--file=", "", args[grep("--file=", args)]))
-default_logs <- c("atmout", "echam.stderr", "echam.stdout", 
+default_logs <- c("echam6.log", "atmout", "echam.stderr", "echam.stdout", 
                   "debug.root.01", "debug.root.02",
                   "debug_notroot.01", "debug_notroot.02",
                   "debug.01.000000", "debug.02.000000",
@@ -28,7 +28,7 @@ for (logi in seq_along(logs)) {
     message("***********************************************\n",
             "log ", logi, "/", length(logs), ": ", log, appendLF=F)
     if (file.exists(log)) {
-        cmd <- paste0("grep -Ein \"warn|err|severe|\\!|No such file or directory\" ", logs[logi])
+        cmd <- paste0("grep -Ein \"warn|err|severe|abort|\\!|No such file or directory\" ", logs[logi])
         message(" --> run `", cmd, "` ...")
         system(cmd)
     } else {

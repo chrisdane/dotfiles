@@ -25,19 +25,23 @@
 # https://www.gnu.org/software/bash/manual/bash.html#Bash-Startup-Files
 
 # If not running interactively, don't do anything
-[[ $- != *i* ]] && return
-#if [[ $- != *i* ]]; then
-    #echo "*** .bashrc non-interactive session ***" 
-    #echo "\$- = $-"
-    #if shopt -q login_shell; then
-    #    echo "\$0 = -$(basename $SHELL) or \`shopt login_shell\` = on -> login shell"
-    #else
-    #    echo "\$0 = $(basename $SHELL) or \`shopt login_shell\` = off -> not login shell"
-    #    fi
-    #echo "***************************************" 
+#[[ $- != *i* ]] && return
+if [[ $- != *i* ]]; then
     
+    if false; then 
+        echo "*** .bashrc non-interactive session ***" 
+        printf "\$- = \"$-\""
+        printf " --> no \"i\" for interactive shell"
+        if shopt -q login_shell; then
+            echo "\$0 = -$(basename $SHELL) or \`shopt login_shell\` = on -> login shell"
+        else
+            echo "\$0 = $(basename $SHELL) or \`shopt login_shell\` = off -> not login shell"
+            fi
+        echo "***************************************" 
+    fi # if true/false
+
 ## From here, everyhing happens only if running interactively
-#else
+else
 
     nch=30 # columns to print
     ncol=$(($(tput cols)/2))
@@ -214,7 +218,10 @@
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
         echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
         echo "wget -r -no-parent -e robots=off url"
-        echo "while read -r f; do mv "$f" "${f//:/_}"; done <files.txt"
+        echo "while read -r f; do mv '\$f' '\${f//:/_}'; done <files.txt"
+        echo "arr=(\$(ls -F historical2_185012* | grep -v codes))"
+        echo "printf '%s\\n' '\${arr[@]}'"
+        echo "for f in \${arr[@]}; do echo \$f; cdo ntime \$f; done"
     }
     vimhelp(){
         echo "find missing bracket: 1) cursor on open or close bracket 2) %"
@@ -445,12 +452,8 @@
     done
 
     # print free disk space on ~/ 
-    if check_existance tr; then
-        if check_existance cut; then
-            printf "~/ "
-            df -h ~/
-        fi
-    fi
+    printf "~/ "
+    df -h ~/
 
     # which tty
     printf "\$(tty): "; tty
@@ -658,8 +661,8 @@
         rnohup mnohup nclnohup 
         checkall 
         myfinger.r finduser.r 
-        get_timestep.r get_energy.r 
-        slurm_wait slurm_check.r
+        get_timestep.r 
+        slurm_wait slurm_check.r slurm_stats.r 
         esm_check_err.r esm_get_output.r echam_get_mvstreams_from_atmout.r
         esm_get_esm_version_exp esm_get_esm_version_home 
         mycdoseasmean.r mycdoseassum.r mycdotrend.r mycdoeof.r
@@ -762,5 +765,5 @@
     printf '%*s' "$ncol" | tr ' ' "*"
     echo ""
 
-#fi # interactive or not
+fi # interactive or not
 

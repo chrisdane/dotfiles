@@ -9,7 +9,7 @@ if (interactive()) {
     if (length(args) != 2) stop("Must provide 2 args: atmout and streamsout")
     atmout <- args[1]
     streamsout <- args[2]
-    if (file.access(streamsout, mode=2) == -1) {
+    if (file.access(dirname(streamsout), mode=2) == -1) {
         stop("Your given streamsout=\"", streamsout, "\" is not writable")
     }
 }

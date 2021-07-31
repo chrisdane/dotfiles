@@ -203,6 +203,7 @@
         echo "sudo paccache -r"
         echo "yay -Yc # clean unneeded dependencies"
         echo "yay -Scc # clean cache"
+        echo "yay -Syu --aur --sudoloop"
         echo "pacman -U /var/cache/pacman/pkg/fname.pkg.tar.xz # downgrade"
     }
     bashhelp(){
@@ -240,12 +241,21 @@
         echo "git diff --name-only"
         echo "git diff 6843db8 -- '*.functions'"
         echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
+        echo branch
+        echo "git push origin feature # push local branch to server"
+        echo "git push origin --delete remoteBranchName"
+        echo commit
+        echo "git reset --hard HEAD^ # remove last commit; also deletes unstaged changes!"
+        echo "git reset --hard HEAD~2 # remove last 2 commits; also deletes unstaged changes!"
+        echo merge
+        echo "git merge -s ours # --strategy"
         echo stash
         echo "git stash list; stash show -p [stash@{1}]; stash apply stash@{n}; stash drop stash@{2}"
         echo cherry-pick
         echo "git checkout commitx"
         echo "git cherry-pick commity [commitz1 commitz2]"
         echo "git cherry-pick --strategy=recursive -X theirs 7501f4d"
+        echo "git cherry-pick -n commit # dont make a commit"
         echo squash
         echo "git checkout branchname"
         echo "git rebase -i HEAD~n # combine latest n commits"
@@ -306,6 +316,7 @@
     }
     ncohelp(){
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
+        echo "ncpdq -a time,depth in out"
     }
     condahelp(){
         echo "conda create -y -p /path <env>"
@@ -356,7 +367,7 @@
         alias vim='vimx'
     fi
     alias less="less -i"
-    alias more="less"
+    alias more="less -i"
 
     # own variables
     export VISUAL=vim
@@ -367,7 +378,8 @@
     export cat1='gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'
     export cat2='pdftk in.pdf cat 1-12 14-end output out.pdf'
     export cat3='pdftk in1.pdf in2.pdf output out.pdf'
-    export crop='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
+    export crop1='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
+    export crop2='convert -trim in.png out.png'
     # watch -n 0.1 ls
 
     # hostname

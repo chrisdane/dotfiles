@@ -28,30 +28,62 @@ if (length(args) == 0) { # default: own user
 
 options(width=3000) # increase length per print line from default 80
 
-# get jobs of user
-cmd <- paste0("squeue -u ", user)
+# step 1/2: check if there are jobs in the queue
+cmd <- paste0("squeue -u ", user, " --start")
 message("run `", cmd, "` ...")
 squeue <- base::pipe(cmd)
-squeue <- read.table(squeue, header=T, stringsAsFactors=F)
-print(squeue)
-
-# check if user has running jobs
-status <- squeue$ST
-if (!any(status == "R")) {
-    message("no running jobs. quit slurm_check.r")
-    #quit()
-
-} else {
-    inds <- which(status == "R")
+squeue <- read.table(squeue, header=T, stringsAsFactors=F) # does not work for the 3rd line in
+#             JOBID    PARTITION     NAME     USER ST          START_TIME  NODES SCHEDNODES           NODELIST(REASON)
+#          31927891    shared co2_flx_  a270073 PD                 N/A      1 (null)               (None)                               
+#          31927015   compute esm-piCo  a270073 PD 2021-08-30T21:00:00     72 m[10322-10323,10504- (ReqNodeNotAvail, Reserved for maintenance)
+#Error in scan(file = file, what = what, sep = sep, quote = quote, dec = dec,  : 
+#  line 2 did not have 9 elements
+#squeue <- read.table(squeue, header=F, stringsAsFactors=F, sep="\t")
+#squeue <- readLines(squeue)
+#print(squeue)
+if (any(squeue$ST != "R")) { # not running
+    inds <- which(squeue$ST != "R")
     squeue <- squeue[inds,]
-    message("\nthere are ", length(inds), " running jobs:")
+    message("--> there are ", length(inds), " non-running jobs (in alphabetical order of respective workdirs):\n")
+    #print(squeue)
+    jobids <- squeue$JOBID
+    workdirs <- rep(NA, t=length(jobids))
+    for (jobi in seq_along(jobids)) { # get workpath of job
+        cmd <- paste0("scontrol show jobid -dd ", jobids[jobi])
+        scontrol <- system(cmd, intern=T)
+        workdir <- scontrol[which(grepl("WorkDir=", scontrol))]
+        workdir <- substr(workdir, 
+                          start=regexpr("WorkDir=", workdir) + 8,
+                          stop=nchar(workdir))
+        workdirs[jobi] <- workdir
+    }
+    inds <- sort(workdirs, index.return=T)$ix
+    squeue <- squeue[inds,]
+    workdirs <- workdirs[inds]
+    for (jobi in seq_along(jobids)) { # show job and workpath of job
+        print(squeue[jobi,], row.names=jobi)
+        message("workdir = ", workdirs[jobi], "\n")
+    } # for jobi
+} else {
+    message("--> there are no non-running jobs")
+}
+
+# step 2/2: check if user has running jobs
+cmd <- paste0("squeue -u ", user)
+message("\nrun `", cmd, "` ...")
+squeue <- base::pipe(cmd)
+squeue <- read.table(squeue, header=T, stringsAsFactors=F)
+#print(squeue)
+if (any(squeue$ST == "R")) { # running
+    inds <- which(squeue$ST == "R")
+    squeue <- squeue[inds,]
+    message("--> there are ", length(inds), " running jobs:")
     print(squeue)
 
     # get logfiles of running jobs
     jobids <- squeue$JOBID
     if (T) jobids <- rev(jobids) # show newest job last
     for (jobi in seq_along(jobids)) {
-
         message("\n****************** job ", jobi, "/", length(jobids), " ***********************")
         cmd <- paste0("scontrol show jobid -dd ", jobids[jobi])
         message("run `", cmd, "` ...")
@@ -72,8 +104,9 @@ if (!any(status == "R")) {
             }
         }
     } # for jobi
-
-} # if any running job or not
+} else { # if any running job or not
+    message("--> there are no running jobs")
+} 
 
 
 

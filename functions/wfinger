@@ -1,0 +1,8 @@
+#!/bin/bash
+
+string=$(w | sed 1,2d | cut -c1-7) # remove first two rows; first 7 characters of each line
+arr=($string)
+for id in ${arr[@]}; do 
+    echo "$(finger $id | head -1)"
+done
+

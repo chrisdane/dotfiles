@@ -94,18 +94,13 @@ else
     fi
 
     # use liquidprompt if available https://github.com/nojhan/liquidprompt
-    if [ -x "$(command -v liquidprompt)" ]; then
-        # add cpu temp to liquidprompt
-        # this is not perfect way yet
-        # check ~/.liquidpromptrc
-        #PROMPT_COMMAND=show_temp
-        if [ -n "$(LC_ALL=C type -t show_temp)" ] && [ "$(LC_ALL=C type -t show_temp)" = function ]; then
-               LP_PS1_PREFIX="$(show_temp)°C "
+    if [ -x "$(command -v liquidprompt)" ]; then 
+        if [ -n "$(LC_ALL=C type -t show_temp)" ] && [ "$(LC_ALL=C type -t show_temp)" = function ]; then 
+            LP_PS1_PREFIX="$(show_temp)°C " # add my cpu temp to liquidprompt
         fi
-        source liquidprompt # need to source here because its not bash?!
-
+        source liquidprompt # check ~/.liquidpromptrc
     else 
-        echo could not load liquidprompt
+        echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt'"
     fi
 
     # enable make autocomplete:
@@ -717,7 +712,8 @@ else
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r plotmyeof.r
         myncrcat.r
-        inertial.r
+        convert_lon_360_to_180.r inertial.r
+        jsbach_pft_wrt_box.r
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do

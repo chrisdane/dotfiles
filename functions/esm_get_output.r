@@ -305,40 +305,51 @@ for (i in seq_along(models)) {
             "model ", i, "/", length(models), ": ", models[i], "\n",
             "*****************************************************")
     
-    # find model output of last_output_year
-    message("\nfind files via `", path, "/*", last_output_year, "*` ...")
-    outfiles <- list.files(path=path, 
-                           pattern=paste0(last_output_year), full.names=T)
-    if (length(outfiles) == 0) {
-        message("--> no files found\n",
-                "find files via year last_output_year_minus1 = ", last_output_year_minus1, " instead ...")
+    # find model output of last_output_year or last_output_year_minus1
+    outfiles <- NULL # initialize
+    for (yeari in 1:2) {
+        if (yeari == 1) year_pattern <- last_output_year
+        if (yeari == 2) year_pattern <- last_output_year_minus1
+        
+        message("\nfind files via `", path, "/*", year_pattern, "*` ...")
         outfiles <- list.files(path=path, 
-                               pattern=paste0(last_output_year_minus1), full.names=T)
-        if (length(outfiles) == 0) {
-            message("--> no files found, skip to next model ...")
-            next # model
-        } else { # success with last_output_year_minus1; update last_output_year
-            last_output_year <- last_output_year_minus1
-        }
-    }
-    
-    # keep only files with ".nc", ".grb" or "" extensions
-    exts <- tools::file_ext(outfiles)
-    keepinds <- which(exts == "nc" | exts == "grb" | exts == "")
-    if (length(keepinds) == 0) {
-        message("\nno files files having either \"nc\", \"grb\" or \"\" file ending found, skip to next model ...")
-        next # model
-    }
-    rminds <- seq_along(outfiles)[-keepinds]
-    if (length(rminds) > 0) {
-        message("\nremove ", length(rminds), " files having neither \"nc\", \"grb\" or \"\" file ending ...")
-        outfiles <- outfiles[-rminds]
-    }
+                               pattern=paste0(year_pattern), full.names=T)
+        
+        if (length(outfiles) > 0) { # found files
+            # keep only files with ".nc", ".grb" or "" extensions
+            exts <- tools::file_ext(outfiles)
+            message("check ", length(outfiles), " found files for \"nc\", \"grb\" or \"\" extensions ...") 
+            keepinds <- which(exts == "nc" | exts == "grb" | exts == "")
+            
+            if (length(keepinds) > 0) { # found valid files
+                message("--> ", length(keepinds), " files have valid extensions")
+                rminds <- seq_along(outfiles)[-keepinds]
+                if (length(rminds) > 0) {
+                    message("remove ", length(rminds), " files having neither \"nc\", \"grb\" or \"\" file extensions ...")
+                    outfiles <- outfiles[-rminds]
+                }
+                # update last_output_year
+                last_output_year <- year_pattern
+            
+            } else if (length(keepinds) == 0) { # no valid files found
+                message("--> found zero files with valid extensions") 
+                if (yeari == 1) message("--> try with another year")
+                if (yeari == 2) message("--> skip to next model")
+            }
+
+        } else if (length(outfiles) == 0) { # no files found
+            message("--> no files found")
+            if (yeari == 1) message("--> try with another year")
+            if (yeari == 2) message("--> skip to next model")   
+        }    
+    } # for yeari
+            
+    if (is.null(outfiles)) next # model i
 
     message("\n--> found ", length(outfiles), " files")
-    print(head(outfiles))
+    print(head(outfiles, n=30))
     print("...")
-    print(tail(outfiles))
+    print(tail(outfiles, n=30))
 
     # filenames:
     # echam: hist_echam6_tdiagmon_185001.nc, hist_echam6_tdiagmon_185002.nc -> monthly

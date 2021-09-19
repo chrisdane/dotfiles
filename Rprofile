@@ -47,7 +47,7 @@
 #me <- paste0(normalizePath(getSrcDirectory(read_gnip)), "/", getSrcFilename(read_gnip))
 #remotes::install_github("nickmckay/LiPD-Utilities", subdir="R")
 #pid=system("sleep 100 & echo $!", intern=T) leads to `sh <defunct>` zombie
-#
+#source(textConnection(file.lines.collapsed), ...)
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 

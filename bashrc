@@ -157,6 +157,45 @@ else
     }
     when(){ 
         # info: /usr/share/zoneinfo and timedatectl list-timezones
+        # https://support.cyberdata.net/index.php?/Knowledgebase/Article/View/438/10/posix-timezone-strings
+        # Time Zone Name  Time Zone  Major Location  Posix Timezone String
+        # AoE  UTC -12  US Baker Island  AOE12
+        # NUT  UTC  -11  America Samoa  NUT11
+        # HST/HDT  UTC -10  Hawaii  HST11HDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # MART  UTC -9:30  French Polynesia  MART9:30,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # AKST/AKDT  UTC -9  Alaska  ASKT9AKDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # PDT  UTC -8  Los Angeles  PST8PDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # MST  UTC -7  Denver, Colorado  MST7MDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # MST  UTC -7  Phoenix, Arizona  MST7
+        # CST/CDT  UTC -6  Chicago, Illinois  CST6CDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # EST/EDT  UTC -5  New York  EST5EDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # ART  UTC -3  Argentina  ART3
+        # NDT/NST  UTC -2:30  Newfoundland  NDT3:30NST,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # WGST/WGT  UTC -2  Greenland  WGST3WGT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # CVT  UTC -1  Cabo Verde  CVT1
+        # GMT  UTC  0  Iceland  GMT
+        # BST/GMT  UTC +1  UK  BST0GMT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # CEST/CET  UTC +2  Germany  CEST-1CET,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # MSK  UTC +3  Greece  MSK-3
+        # GST  UTC +4  Azerbaijan  GST-4
+        # IRDT/IRST  UTC +4:30  Iran  IRDT-3:30IRST,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # UZT  UTC +5  Pakistan  UZT-5
+        # IST  UTC +5:30  India  IST-5:30
+        # NPT  UTC +5:45  Nepal  NPT-5:45
+        # BST  UTC +6  Bangladesh  BST-6
+        # MMT  UTC +6:30  Myanmar  MMT-6:30
+        # WIB  UTC +7  Indonesia  WIB-7
+        # CST  UTC +8  China  CST-8
+        # ACWST  UTC +8:45  Western Australia  ACWST-8:45
+        # JST  UTC +9  Japan  JST-9
+        # ACST/ACDT  UTC +9:30  Central Australia  ACST-8:30ACDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # AEST/AEDT  UTC +10  Eastern Australia  AEST-9AEDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # LHST/LHDT  UTC +10:30  Lord Howe Island  LHST-9:30LHDT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # SBT  UTC +11  Solomon Islands  SBT-11
+        # ANAT  UTC +12  New Zealand  ANAT-12
+        # CHAST/CHADT  UTC +12:45  Chatham Islands  CHAST-11:45CHADT,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # TOT/TOST  UTC +13  Tonga  TOT-12TOST,M3.2.0/2:00:00,M11.1.0/2:00:00
+        # LINT  UTC +14  Christmas Island  LINT-14
         remote_date_user="$@"
         if [ "z$remote_date_user" != "z" ] && date -d "$remote_date_user" > /dev/null; then
             #echo "date \"$remote_date_user\" valid"
@@ -211,6 +250,7 @@ else
         echo "pacman -U /var/cache/pacman/pkg/fname.pkg.tar.xz # downgrade"
     }
     bashhelp(){
+        echo "find . -name "*.bak" -type f -delete"
         echo "./script > script.log 2>&1 &"
         echo "ln -sfn path/to/file-name link-name"
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
@@ -232,6 +272,7 @@ else
         echo "tar -xvf archive.tar # e[x]tract archive named <[f]ile>"
         echo "tar -xvf archive.tar --wildcards \"*.nc\""
         echo "tar -xvf archive.tar --wildcards *{pat1,pat2}*nc"
+        echo "tar -tf archive.tar # list files" 
     }
     markdownhelp(){
         echo "<details>"
@@ -314,10 +355,11 @@ else
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "cdo -r copy in out"
-        echo "cdo -seltimestep,$(cat steps | tr ' ' ',') in out"
+        echo "cdo -seltimestep,\$(cat steps | tr ' ' ',') in out"
+        echo "cdo expr,'hvel=sqrt(u*u + v*v)' fin fout"
         echo "cdo trend in intercepts slopes"
         echo "export CDO_WEIGHT_MODE=off; export MAX_JACOBI_ITER=100"
-        echo "cdo sub fin -timmean fin anom_fin"
+        echo "cdo sub fin -timmean fin anom_fin # calc anomaly"
         echo "cdo eof,40 anom_fin eigen_val eigen_vec" 
         echo "cdo eofcoeff eigen_vec anom_fin obase"
     }
@@ -447,7 +489,13 @@ else
     osInfo[/etc/debian_version]=apt-get
     for f in ${!osInfo[@]}; do
         if [[ -f $f ]]; then
-            echo "\"$f\" exists -> package manager is ${osInfo[$f]}"
+            printf "%s" "\"$f\" exists --> package manager is ${osInfo[$f]}"
+            # arch linux specific
+            if [[ ${osInfo[$f]} == "pacman" ]]; then
+                printf "%s" " --> /var/cache/pacman/pkg/ needs "
+                printf "%s " $(du -hc /var/cache/pacman/pkg/ | tail -1)
+            fi
+            echo
         fi
     done
 

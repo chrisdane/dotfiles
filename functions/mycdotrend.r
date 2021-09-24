@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+# runs `cdo trend` and takes care for temporal intervals (e.g. monthly, annual) and renaming of output
+
 args <- commandArgs(trailingOnly=F)
 me <- basename(sub("--file=", "", args[grep("--file=", args)]))
 args <- commandArgs(trailingOnly=T)

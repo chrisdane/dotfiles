@@ -44,7 +44,7 @@ squeue <- read.table(squeue, header=T, stringsAsFactors=F) # does not work for t
 if (any(squeue$ST != "R")) { # not running
     inds <- which(squeue$ST != "R")
     squeue <- squeue[inds,]
-    message("--> there are ", length(inds), " non-running jobs (in alphabetical order of respective workdirs):\n")
+    message("--> there are ", length(inds), " non-running jobs (in alphabetical order of workdirs via `scontrol show jobid -dd <jobid>`):\n")
     #print(squeue)
     jobids <- squeue$JOBID
     workdirs <- rep(NA, t=length(jobids))

@@ -2,16 +2,13 @@
 
 # get jsbach PFT fraction or area with respect to grid area and not vegetated area (=`cover_fract`) via
 # ```
-# if `outunit` = fraction
-#   if glacier
+# if `outunit` = "fraction"
+#   if glacier (`cover_type`=1)
 #       pft_fract_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time)
 #   else 
 #       pft_fract_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time) * veg_ratio_max(lon,lat,time)
-# if `outunit` = area
-#   if glacier
-#       pft_area_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time) * area_m2(lon,lat)
-#   else
-#       pft_area_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time) * veg_ratio_max(lon,lat,time) * area_m2(lon,lat)
+# if `outunit` = "area"
+#   same as in `outunit` = "fraction" case but RHS multiplied with `area_m2(lon,lat)`
 # ```
 # - run `jsbach_pft_wrt_box.r` in terminal to display help
 # - simple cdo commands are not possible since mapping from `cover_type` to `cover_fract` is needed as indicated by the different `tilelev` and `pftlev` dimensions above (see reference at the end of script)
@@ -26,10 +23,12 @@ options(warn=2) # stop on warnings
 if (interactive()) { # test
     fjsbach <- "/mnt/lustre02/work/ba1103/a270094/AWIESM/test/input/jsbach/jsbach.nc"
     fcover_fract <- "/work/ba1103/a270073/post/jsbach/select/cover_fract/awi-esm-1-1-lr_kh800_piControl_og_jsbach_select_cover_fract_global_Jan-Dec_1950-1951.nc"
+    cover_fract_varname <- "cover_fract"
     fveg_ratio_max <- "/work/ba1103/a270073/post/jsbach/select/veg_ratio_max/awi-esm-1-1-lr_kh800_piControl_og_jsbach_select_veg_ratio_max_global_Jan-Dec_1950-1951.nc"
+    veg_ratio_max_varname <- "veg_ratio_max"
     fout <- "/work/ba1103/a270073/post/jsbach/select/pft_fract_box/awi-esm-1-1-lr_kh800_piControl_og_jsbach_select_pft_fract_box_global_Jan-Dec_1950-1951.nc"
     outunit <- "fraction"
-    remove_mask_files <- F
+    remove_tmp_files <- F
     #cmd <- paste0("jsbach_pft_wrt_box.r --jsbach=", fjsbach, " --cover_fract=", fcover_fract, " --veg_ratio_max=", fveg_ratio_max, " --fout=", fout)
 
 } else {
@@ -41,10 +40,12 @@ if (interactive()) { # test
                    " $ ", me, " ",
                    "--jsbach=/path/to/input/jsbach.nc ",
                    "--cover_fract=/path/to/cover_fract.nc ",
+                   "--cover_fract_varname=cover_fract ",
                    "--veg_ratio_max=/path/to/veg_ratio_max.nc ",
+                   "--veg_ratio_max_varname=veg_ratio_max ",
                    "--fout=/path/to/outputfile ",
                    "--outunit=fraction ",
-                   "--remove_mask_files=T",
+                   "--remove_tmp_files=T",
                    "\n")
 
     # check args 
@@ -65,10 +66,20 @@ if (interactive()) { # test
     } else {
         stop("provide `--cover_fract=/path/to/cover_fract.nc`")
     }
+    if (any(grepl("--cover_fract_varname", args))) {
+        cover_fract_varname <- sub("--cover_fract_varname=", "", args[grep("--cover_fract_varname=", args)])
+    } else {
+        cover_fract_varname <- "cover_fract" # default
+    }
     if (any(grepl("--veg_ratio_max", args))) {
         fveg_ratio_max <- sub("--veg_ratio_max=", "", args[grep("--veg_ratio_max=", args)])
     } else {
         stop("provide `--veg_ratio_max=/path/to/veg_ratio_max.nc`")
+    }
+    if (any(grepl("--veg_ratio_max_varname", args))) {
+        veg_ratio_max_varname <- sub("--veg_ratio_max_varname=", "", args[grep("--veg_ratio_max_varname=", args)])
+    } else {
+        veg_ratio_max_varname <- "veg_ratio_max" # default
     }
     if (any(grepl("--fout", args))) {
         fout <- sub("--fout=", "", args[grep("--fout=", args)])
@@ -80,10 +91,10 @@ if (interactive()) { # test
     } else {
         outunit <- "fraction" # default; "fraction" or "area"
     }
-    if (any(grepl("--remove_mask_files", args))) {
-        remove_mask_files <- sub("--remove_mask_files=", "", args[grep("--remove_mask_files=", args)])
+    if (any(grepl("--remove_tmp_files", args))) {
+        remove_tmp_files <- sub("--remove_tmp_files=", "", args[grep("--remove_tmp_files=", args)])
     } else {
-        remove_mask_files <- T # default
+        remove_tmp_files <- T # default
     }
 
 } # if interactive or not
@@ -140,18 +151,55 @@ message(ncatted)
 message("load ncdf4 package ...")
 library(ncdf4)
 
-## start
+## checks
 
-# get cover_type -> PFT mapping
+# check varnames of cover_fract file 
+message("\ncheck varnames of cover_fract file ... ")
+cmd <- paste0(cdo, " showname ", fcover_fract)
+message("run `", cmd, "` ...")
+cover_fract_varnames <- strsplit(trimws(system(cmd, intern=T)), " ")[[1]]
+if (!any(cover_fract_varnames == cover_fract_varname)) {
+    stop("not any of \"", paste(cover_fract_varnames, collapse="\", \""), 
+         "\" equals `cover_fract_varname` = \"", cover_fract_varname, "\"\n",
+         "rerun script with `--cover_fract_varname=<correct_varname>`")
+} else {
+    message("--> found cover_fract varname = \"", cover_fract_varname)
+}
+
+# check varnames of veg_ratio_max file 
+message("\ncheck varnames of veg_ratio_max file ... ")
+cmd <- paste0(cdo, " showname ", fveg_ratio_max)
+message("run `", cmd, "` ...")
+veg_ratio_max_varnames <- strsplit(trimws(system(cmd, intern=T)), " ")[[1]]
+if (!any(veg_ratio_max_varnames == veg_ratio_max_varname)) {
+    stop("not any of \"", paste(veg_ratio_max_varnames, collapse="\", \""), 
+         "\" equals `veg_ratio_max_varname` = \"", veg_ratio_max_varname, "\"\n",
+         "rerun script with `--veg_ratio_max_varname=<correct_varname>`")
+} else {
+    message("--> found veg_ratio_max varname = \"", veg_ratio_max_varname)
+}
+
+# open jsbach forcing file
 message("\nopen forcing file ", fjsbach, " ...")
 jsbach_nc <- ncdf4::nc_open(fjsbach)
 
-# get number of land points from binary land sea mask `slm`
-slmind <- which(!is.na(match(names(jsbach_nc$var), c("slm", "SLM"))))
-if (length(slmind) != 1) {
-    stop("this forcing file does ", length(slmind), " vars named `slm` or `SLM`. must have 1")
+# check jsbach forcing file variables
+jsbach_nc_vars <- names(jsbach_nc$var)
+if (!any(!is.na(match(c("slm", "SLM"), jsbach_nc_vars)))) {
+    stop("jsbach forcing file does not have \"slm\" or \"SLM\" variable")
 }
-slm <- ncdf4::ncvar_get(jsbach_nc, names(jsbach_nc$var)[slmind])
+if (!any(!is.na(match(c("cover_type"), jsbach_nc_vars)))) {
+    stop("jsbach forcing file does not have \"cover_type\" variable")
+}
+
+## start
+
+# get number of land points from binary land sea mask `slm`
+slm_ind <- which(!is.na(match(names(jsbach_nc$var), c("slm", "SLM"))))
+if (length(slm_ind) != 1) {
+    stop("this forcing file has ", length(slm_ind), " vars named `slm` or `SLM`. must have 1")
+}
+slm <- ncdf4::ncvar_get(jsbach_nc, names(jsbach_nc$var)[slm_ind])
 ntotal <- prod(dim(slm))
 nland <- length(which(slm == 1))
 nocean <- ntotal - nland
@@ -176,7 +224,7 @@ ntiles_dim_ind <- ntiles_dim_id + 1 # +1 since nc ids count from 0 but r counts 
 if (!any(names(jsbach_nc$var) == "cover_type")) {
     stop("this forcing file does not have variable `cover_type`")
 }
-cover_type_atts <- ncatt_get(jsbach_nc, "cover_type")
+cover_type_atts <- ncdf4::ncatt_get(jsbach_nc, "cover_type")
 lcts <- names(cover_type_atts) # e.g. "lct01" or "lct21"
 if (!any(grepl("^lct", lcts))) {
     stop("not any attribute of variable `cover_type` starts with \"lct\"")
@@ -189,7 +237,8 @@ for (lcti in seq_along(lcts)) {
 }
 lct <- data.frame(cover_type=lct_vals, 
                   name=lct_types, stringsAsFactors=F)
-message("--> there are ", length(lcts), " possible `cover_type`s:")
+message("--> based on the forcing file, there are ", length(lcts), 
+        " possible `cover_type`", ifelse(length(lcts) > 1, "s", ""), ":")
 print(lct)
 
 # load variable `cover_type`
@@ -208,8 +257,9 @@ for (tilei in seq_len(ntiles)) {
     tiles[[tilei]] <- cover_type_vals
     names(tiles)[tilei] <- tilei
 }
-message("--> of those, ", length(unlist(tiles)), 
-        " different `cover_type`s are saved in `ntiles`=", ntiles, " levels:")
+message("--> of those, ", length(unlist(tiles)), " `cover_type`",
+        ifelse(length(unlist(tiles)) > 1, "s", ""), " are saved in `ntiles`=", 
+        ntiles, " levels:")
 cat(capture.output(str(tiles)), sep="\n")
 
 # calc pft fraction with respect to grid area for all pfts
@@ -243,8 +293,8 @@ for (tilei in seq_len(ntiles)) {
             lon_dim <- jsbach_nc$dim$lon
             lat_dim <- jsbach_nc$dim$lat
         }
-        mask_var <- ncdf4::ncvar_def(name=paste0("mask_", pft_name),
-                                     units="", dim=list(lon_dim, lat_dim))
+        mask_var <- ncdf4::ncvar_def(name=paste0("mask_", pft_name), units="", 
+                                     dim=list(lon_dim, lat_dim), missval=0)
         outnc <- ncdf4::nc_create(filename=fmask, force_v4=T, vars=mask_var)
         ncdf4::ncvar_put(nc=outnc, varid=mask_var, vals=inds)
         ncdf4::nc_close(outnc)
@@ -257,34 +307,44 @@ for (tilei in seq_len(ntiles)) {
             system(cmd)
         }
         
-        # calc pft fraction with respect to grid cell area
-        # eq 1.5 jsbach docu: grid_area(j) * cover_fract(i,j,k) * veg_ratio_max(i,j)
+        # calc pft fraction with respect to grid cell area = eq 1.5 jsbach docu = 
+        # grid_area(j) * cover_fract(i,j,k) * veg_ratio_max(i,j)
         fouti <- paste0(outpath, "/pft_fract_box_", pft_name, ".nc")
         cnt <- cnt + 1
-        fouts[[cnt]] <- list(cover_type=cover_types[typei],
+        fouts[[cnt]] <- list(lev=cover_types[typei],
+                             cover_type=cover_types[typei],
                              name=names(cover_types)[typei],
                              fout=fouti, 
                              ncells=ncells, ncells_rel=ncells_rel)
-        cmd <- paste0(cdo, " -setlevel,", cover_types[typei])
-        if (outunit == "area") {
-            cmd <- paste0(cmd, " -mul ", farea)
-        }
+        cmd <- paste0(cdo, 
+                      " -setname,cover_fract", # since multiplication with mask file would yield varname of mask file
+                      " -setlevel,", cover_types[typei]) # PFT number
+        if (outunit == "area") cmd <- paste0(cmd, " -mul ", farea)
         cmd <- paste0(cmd, " -mul ", fmask)
         if (names(cover_types)[typei] == "glacier") { 
             # special case glacier: does not need multiplication with `veg_ratio_max` as
             # "glaciers either cover a grid box fully or are completely absent." jsbach docu 1.3, p. 7
             # --> `veg_ratio_max` is zero where `cover_type` = 1, i.e. glacier
-            cmd <- paste0(cmd, " -sellevel,", tilei, " ", fcover_fract)
+            cmd <- paste0(cmd, " -sellevel,", tilei, " -selname,cover_fract ", fcover_fract)
         } else {
-            cmd <- paste0(cmd, " -mul -sellevel,", tilei, " ", fcover_fract, " ", fveg_ratio_max)
+            cmd <- paste0(cmd, " -mul -sellevel,", tilei, " -selname,cover_fract ", fcover_fract, " -selname,veg_ratio_max ", fveg_ratio_max)
         }
         cmd <- paste0(cmd, " ", fouts[[cnt]]$fout)
         message("run `", cmd, "` ...")
         system(cmd)
 
+        # save non-glacier and ocean locations for bare land fraction calculation = `1 - veg_ratio_max`
+        if (tilei == 1 && typei == 1) { # declare everywhere
+            inds_non_glacier <- inds_ocean <- array(T, dim=dim(inds))
+        }
+        if (cover_types[typei] == 1) { # set glacier to false
+            inds_non_glacier[inds] <- F
+        }
+        inds_ocean[inds] <- F # set land to false 
+
         # remove mask file
-        if (remove_mask_files) {
-            message("`remove_mask_files`=T --> rm mask file ", fmask, " ...")
+        if (remove_tmp_files) {
+            message("`remove_tmp_files`=T --> rm mask file ", fmask, " ...")
             file.remove(fmask)
         }
 
@@ -292,26 +352,80 @@ for (tilei in seq_len(ntiles)) {
 
 } # for tilei ntiles
 
+## calc bare land fraction
+message("\n*********************************************\n",
+        "calc bare land = `1 - veg_ratio_max` at non-glacier locations ...")
+
+inds_non_glacier[inds_ocean] <- F # set ocean to NA
+ncells <- length(which(inds_non_glacier))
+ncells_rel <- ncells/nland*100
+message("--> ", ncells, " grid cells = ", round(ncells_rel, 2), " % of ", nland, " land cells") 
+
+# mask file for bare land
+fmask <- paste0(outpath, "/tmp_mask_cover_type_non_glacier.nc")
+message("create mask file ", fmask, " ...")
+mask_var <- ncdf4::ncvar_def(name="mask_non_glacier", units="", 
+                             dim=list(lon_dim, lat_dim), missval=0)
+outnc <- ncdf4::nc_create(filename=fmask, force_v4=T, vars=mask_var)
+ncdf4::ncvar_put(nc=outnc, varid=mask_var, vals=inds_non_glacier)
+ncdf4::nc_close(outnc)
+        
+# calc bare land
+fouti <- paste0(outpath, "/pft_fract_box_bare_land.nc")
+cnt <- cnt + 1
+fouts[[cnt]] <- list(lev=0,
+                     cover_type=NA,
+                     name=paste0("bare land (1-", veg_ratio_max_varname, ")"),
+                     fout=fouti, 
+                     ncells=ncells, ncells_rel=ncells_rel)
+cmd <- cdo
+if (outunit == "area") {
+    cmd <- paste0(cmd, " -mul ", farea)
+}
+cmd <- paste0(cmd,
+              " -setname,cover_fract", # since multiplication with mask file would yield varname of mask file
+              " -mul ", fmask, 
+              " -expr,'cover_fract=1-", veg_ratio_max_varname, "'", # same name as other pfts to get merged
+              " -selname,", veg_ratio_max_varname, " ", fveg_ratio_max, 
+              " ", fouti)
+message("run `", cmd, "` ...")
+system(cmd)
+
+# set bare land zaxis to get merged with other pfts along lev dimension
+cmd <- paste0(cdo, " zaxisdes ", fouts[[cnt-1]]$fout, " > ", outpath, "/tmp_zaxisdes.txt")
+message("run `", cmd, "` ...")
+system(cmd)
+cmd <- paste0(cdo, 
+              " -setlevel,", fouts[[cnt]]$lev,
+              " -setzaxis,", outpath, "/tmp_zaxisdes.txt ", fouti, " ", 
+              outpath, "/tmp && mv ", outpath, "/tmp ", fouti)
+message("run `", cmd, "` ...")
+system(cmd)
+if (remove_tmp_files) file.remove(paste0(outpath, "/tmp_zaxisdes.txt"))
+
+if (remove_tmp_files) {
+    message("`remove_tmp_files`=T --> rm mask file ", fmask, " ...")
+    file.remove(fmask)
+}
+
 # merge pfts together
 message("\n**********************************\n",
         "merge ", length(fouts), " files together ...")
+atts <- paste0("@lev", sapply(fouts, "[[", "lev"), "=\"",
+               "name=", sapply(fouts, "[[", "name"), 
+               "; cover_type=", sapply(fouts, "[[", "cover_type"), 
+               "; ncells=", sapply(fouts, "[[", "ncells"), 
+               "\"")
 cmd <- paste0(cdo,
               " -setattribute,", varout, "@slm_nocean=", nocean,
               " -setattribute,", varout, "@slm_nland=", nland,
               " -setattribute,", varout, "@slm_ntotal=", ntotal,
-              " ", paste(rev(paste0("-setattribute,", varout, "@lev", 
-                                    sapply(fouts, "[[", "cover_type"), "_ncells=\"", 
-                                    sapply(fouts, "[[", "ncells"), "\"")), 
-                         collapse=" "), 
-              " ", paste(rev(paste0("-setattribute,", varout, "@lev", 
-                                    sapply(fouts, "[[", "cover_type"), "=\"", 
-                                    sapply(fouts, "[[", "name"), "\"")), 
-                         collapse=" "), 
+              " ", paste(rev(paste0("-setattribute,", varout, atts)), collapse=" "), 
               " -setattribute,", varout, "@long_name=\"", long_name, "\"",
               " -setunit,\"", varunit, "\"",
               " -setname,\"", varout, "\"", 
               " -merge ", paste(sapply(fouts, "[[", "fout"), collapse=" "), " ", fout)
-message("\nrun `", cmd, "` ...")
+message("run `", cmd, "` ...")
 system(cmd)
                                                   
 # remove old `code`
@@ -320,8 +434,11 @@ message("\nrun `", cmd, "` ...")
 system(cmd)
 
 # remove tmp files
-invisible(file.remove(sapply(fouts, "[[", "fout")))
-if (outunit == "area") file.remove(farea)
+if (remove_tmp_files) {
+    message("\n`remove_tmp_files`=T --> rm merge files ...")
+    invisible(file.remove(sapply(fouts, "[[", "fout")))
+    if (outunit == "area") file.remove(farea)
+}
 
 # finished
 options(warn=0) # back to default

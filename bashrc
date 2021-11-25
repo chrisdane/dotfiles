@@ -147,9 +147,8 @@ else
             echo "Usage: myfind search_pattern"
             return 1
         else
-            #find -print 2>/dev/null | grep -i $1 
-            find . -name "$1" 2>/dev/null
-    fi
+            find -name "*$1*" 2>/dev/null | sort 
+        fi
     }
     when(){ 
         # info: /usr/share/zoneinfo and timedatectl list-timezones
@@ -225,6 +224,7 @@ else
         fi
     }
     archhelp(){
+        echo "debug"
         echo "journalctl --follow # or -f"
         echo "journalctl --since=today"
         echo "journalctl -b -1 # since last boot"
@@ -232,23 +232,26 @@ else
         echo "loginctl session-status # get session details"
         echo "dmesg -T"
         echo "tail -f /var/log/Xorg.0.log"
-        echo "mate-session-properties # get mate session details"
+        echo "/var/log/pacman.log"
+        echo "systemctl"
+        echo "systemctl restart NetworkManager.service"
+        echo "systemctl status/enable/start cups.service"
+        echo "list stuff"
+        echo "ip addr / ip link / ip r / ip tuntap show / ifconfig -a"
+        echo "nmcli; nmcli device"
         echo "lspci -k | grep -iEA5 'vga|3d|display # get hardware info"
         echo "xrandr; hwinfo --monitor; glxinfo"
-        echo "grep '/usr/s\?bin' /etc/systemd/system/display-manager.service # which login manager"
         echo "ntpq -p # update wrong time after reboot"
-        echo "ip addr / ip link / ip r / ip tuntap show / ifconfig -a"
-        echo "yarn cache clean"
-        echo "sudo paccache -r"
-        echo "yay -Yc # clean unneeded dependencies"
-        echo "yay -Scc # clean cache"
-        echo "yay -Syu --aur --sudoloop"
-        echo "pacman -U /var/cache/pacman/pkg/fname.pkg.tar.xz # downgrade"
+        echo "display manager"
+        echo "grep '/usr/s\?bin' /etc/systemd/system/display-manager.service # which login manager"
+        echo "window manager"
+        echo "mate-session-properties"
     }
     bashhelp(){
         echo "find . -name "*.bak" -type f -delete"
         echo "./script > script.log 2>&1 &"
         echo "ln -sfn path/to/file-name link-name"
+        echo "git grep --no-index -e pattern1 --and -e pattern2 --and -e pattern3"
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
         echo "find / -iname openssl.pc 2>/dev/null \# locate alternative"
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
@@ -262,6 +265,9 @@ else
     vimhelp(){
         echo "find missing bracket: 1) cursor on open or close bracket 2) %"
     }
+    fortranhelp() {
+        echo "line length!!!!!!!!!!!!!!"
+    }
     tarhelp(){
         echo "https://www.gnu.org/software/tar/manual/html_section/"
         echo "tar -cvf archive.tar f1 f2 # [c]reate archive named <[f]ile>"
@@ -269,6 +275,9 @@ else
         echo "tar -xvf archive.tar --wildcards \"*.nc\""
         echo "tar -xvf archive.tar --wildcards *{pat1,pat2}*nc"
         echo "tar -tf archive.tar # list files" 
+    }
+    ziphelp(){
+        echo "zip archive.zip file1 file2 # create"
     }
     markdownhelp(){
         echo "<details>"
@@ -350,6 +359,8 @@ else
         echo "cdo chname,var1,var2 in.nc out.nc"
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
+        echo "cdo daymean: 1,2,miss,3 --> (1+2+3)/3      = 6/3    = 2"
+        echo "cdo dayavg:  1,2,miss,3 --> (1+2+miss+3)/4 = miss/4 = miss"
         echo "cdo -r copy in out"
         echo "cdo -seltimestep,\$(cat steps | tr ' ' ',') in out"
         echo "cdo expr,'hvel=sqrt(u*u + v*v)' fin fout"
@@ -362,6 +373,7 @@ else
     ncohelp(){
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
         echo "ncpdq -a time,depth in out"
+        echo "ncap2 -v -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
     }
     condahelp(){
         echo "conda create -y -p /path <env>"
@@ -371,10 +383,10 @@ else
         echo "conda list"
         echo "conda install -c <chan> <pkg>"
         echo "conda clean --all"
-        echo "conda env remove -n <env> \# this removes all packages installed in <env>"
+        echo "conda env remove -n <env> # this removes all packages installed in <env>"
     }
     texhelp(){
-        echo "latexdiff -t CFONT old.tex new.tex > changes.tex \# for error"
+        echo "latexdiff -t CFONT old.tex new.tex > changes.tex # '-t UNDERLINE' (default) does not work; set link colors to black"
     }
     inkscapehelp(){
         echo "clip/mask: draw rectangle over area you want to clip. select both. objects -> clip -> set"

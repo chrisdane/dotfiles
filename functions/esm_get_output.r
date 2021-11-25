@@ -37,22 +37,26 @@ if (interactive()) {
     #outname <- "pictrl-spinup-grb.txt"
     #expidpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/hist_an"
     #outname <- "~/awicm1-recom_output_hist.ods"
-    #expidpath <- "/work/ba1103/a270094/AWIESM/test"
-    #outname <- "~/awicm1-recom_piControl_og_output.ods"
     #expidpath <- "/work/ba1103/a270073/out/mpiesm-s/test"
     #year <- 1860
     #outname <- "~/mpiesm-s_output.ods"
-    expidpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl"
-    year <- 2850
-    outname <- "~/awicm1-recom_piControl_output.ods"
-
-    #models <- c("echam6", "jsbach", "fesom", "recom") # recom and fesom double
-    #models <- c("echam6", "jsbach", "fesom")
-    #models <- "echam6"
+    #expidpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl"
+    #year <- 2850
+    #outname <- "~/awicm1-recom_piControl_output.ods"
+    #expidpath <- "/work/ab1095/a270094/AWIESM/SR_output"
+    #year <- 2000
+    #outname <- "~/awicm1-recom_piControl_og_chunk1_output.ods"
+    expidpath <- "/work/ba1103/a270094/AWIESM/test"
+    year <- 2030
+    outname <- "~/awicm1-recom_piControl_og_chunk2_output.ods"
+    
+    #models <- c("echam", "jsbach", "fesom", "recom") # recom and fesom double
+    #models <- c("echam", "jsbach", "fesom")
+    #models <- "echam"
     #models <- "fesom"
-    models <- "jsbach"
+    #models <- "jsbach"
     #models <- "recom"
-    #models <- c("echam6", "jsbach")
+    #models <- c("echam", "jsbach")
     #models <- c("fesom", "recom")
 
 # not interactive
@@ -67,7 +71,7 @@ if (interactive()) {
                     "   unnamed arg1: /path/that/contains/outdata/dir\n",
                     "   unnames arg2: year\n",
                     "   unnamed arg3: filename/of/output_table.ods (must have ending \".ods\", \".xlsx\" or \".txt\")\n",
-                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam6,jsbach,fesom,recom)\n",
+                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam,jsbach,fesom,recom)\n",
                     "   optional named arg --libpaths=/add/path/where/R/packages/are/installed,/separated/by/comma/if/more/than/one\n")
     args <- commandArgs(trailingOnly=T)
     if (length(args) < 2) {
@@ -155,33 +159,33 @@ known_intervals <- data.frame("interval"=unique(c(known_monthly_intervals$interv
                                                   known_annual_intervals$interval)),
                               stringsAsFactors=F)
 known_intervals$order <- rep(NA, t=length(known_intervals$interval))
-known_intervals$echam6_time <- rep(NA, t=length(known_intervals$interval))
-known_intervals$echam6_interval <- rep(NA, t=length(known_intervals$interval))
+known_intervals$echam_time <- rep(NA, t=length(known_intervals$interval))
+known_intervals$echam_interval <- rep(NA, t=length(known_intervals$interval))
 for (i in seq_along(known_intervals$interval)) {
     if (known_intervals$interval[i] == "hr") {
         known_intervals$order[i] <- 1
-        known_intervals$echam6_time[i] <- "1"
-        known_intervals$echam6_interval[i] <- "hours"
+        known_intervals$echam_time[i] <- "1"
+        known_intervals$echam_interval[i] <- "hours"
     } else if (known_intervals$interval[i] == "3hr") {
         known_intervals$order[i] <- 2
-        known_intervals$echam6_time[i] <- "3"
-        known_intervals$echam6_interval[i] <- "hours"
+        known_intervals$echam_time[i] <- "3"
+        known_intervals$echam_interval[i] <- "hours"
     } else if (known_intervals$interval[i] == "6hr") {
         known_intervals$order[i] <- 3
-        known_intervals$echam6_time[i] <- "6"
-        known_intervals$echam6_interval[i] <- "hours"
+        known_intervals$echam_time[i] <- "6"
+        known_intervals$echam_interval[i] <- "hours"
     } else if (known_intervals$interval[i] == "day") {
         known_intervals$order[i] <- 4
-        known_intervals$echam6_time[i] <- "1"
-        known_intervals$echam6_interval[i] <- "days"
+        known_intervals$echam_time[i] <- "1"
+        known_intervals$echam_interval[i] <- "days"
     } else if (known_intervals$interval[i] == "mon") { 
         known_intervals$order[i] <- 5
-        known_intervals$echam6_time[i] <- "1"
-        known_intervals$echam6_interval[i] <- "months"
+        known_intervals$echam_time[i] <- "1"
+        known_intervals$echam_interval[i] <- "months"
     } else if (known_intervals$interval[i] == "yr") { 
         known_intervals$order[i] <- 6
-        known_intervals$echam6_time[i] <- "1"
-        known_intervals$echam6_interval[i] <- "years"
+        known_intervals$echam_time[i] <- "1"
+        known_intervals$echam_interval[i] <- "years"
     } else {
         stop("output interval \"", known_intervals$interval[i], "\" not defined")
     }
@@ -434,18 +438,26 @@ for (i in seq_along(models)) {
             #      test4_195012.01_aclcim.nc 
             #      test_jsbach_jsbach_268512.grb
             #      test_jsbach_driving_1860.grb
+            #      SR_output_echam6_accw_200001.grb
             message("file = \"", file, "\"")
             stream <- tools::file_path_sans_ext(file) # remove ".<extension>" (no effect if no extension)
             stream <- sub(paste0(expid, "_"), "", stream) # remove "<expid>_" only once
-            if (grepl(paste0(models[i], "_"), stream)) {
-                stream <- sub(paste0(models[i], "_"), "", stream) # remove "<model>_" only once
+            if (grepl("echam", models[i])) { # model is any echam version
+                if (grepl(paste0("echam4_"), stream)) stream <- sub(paste0("echam4_"), "", stream) # remove "echam4_" only once
+                if (grepl(paste0("echam5_"), stream)) stream <- sub(paste0("echam5_"), "", stream) # remove "echam5_" only once
+                if (grepl(paste0("echam6_"), stream)) stream <- sub(paste0("echam6_"), "", stream) # remove "echam6_" only once
                 # accw_201412
-                # 195012.01_aclcim
-                # jsbach_268512
-                # driving_1860
+                # accw_200001
+            } else { # model is not any echam version
+                if (grepl(paste0(models[i], "_"), stream)) {
+                    stream <- sub(paste0(models[i], "_"), "", stream) # remove "<model>_" only once
+                    # 195012.01_aclcim
+                    # jsbach_268512
+                    # driving_1860
+                }
             }
 
-            # try different patterns to remove
+            # try different patterns to remove --> order matters!
             pattern_to_remove <- paste0(year, "12.01_") # case: test4_195012.01_aclcim.nc 
             if (grepl(pattern_to_remove, file)) { 
                 stream <- sub(pattern_to_remove, "", stream)
@@ -457,11 +469,17 @@ for (i in seq_along(models)) {
                 # accw
                 # jsbach
             }
+            pattern_to_remove <- paste0("_", year, "01") # case: SR_output_echam6_accw_200001.grb
+            if (grepl(pattern_to_remove, file)) { 
+                stream <- sub(pattern_to_remove, "", stream)
+                # accw
+            }
             pattern_to_remove <- paste0("_", year) # case: test_jsbach_driving_1860.grb
             if (grepl(pattern_to_remove, file)) { 
                 stream <- sub(pattern_to_remove, "", stream)
                 # driving
             }
+
 
             message("--> stream = \"", stream, "\" ", appendLF=F)
             if (nchar(stream) == 0 || length(stream) == 0) {
@@ -498,25 +516,32 @@ for (i in seq_along(models)) {
             if (cdo_silent) cmd <- paste0(cmd, "-s ")
             
             ## find and apply code table if present
-            # try 1/3: new esm tools: codes file same pattern as data file
+            # try 1/4: new esm tools: codes file same pattern as data file
             code_pattern <- paste0(file, ".codes") 
             message("\ncheck for .codes file with pattern \"", path, "/", code_pattern, "\" ... ", appendLF=F)
             codesfile <- list.files(path, pattern=code_pattern, full.names=T)
             message("found ", length(codesfile), " files")
             if (length(codesfile) == 0) {
                 if (!is.null(stream)) { 
-                    # try 2/3: old esm tools (echam/jsbach only)
+                    # try 2/4: old esm tools (echam/jsbach only)
                     code_pattern <- paste0("*", year, "12.01_", stream, ".codes")
                     message("check for .codes file with pattern \"", path, "/", code_pattern, "\" ... ", appendLF=F)
                     codesfile <- list.files(path, pattern=code_pattern, full.names=T)
                     message("found ", length(codesfile), " files")
                     if (length(codesfile) == 0) {
-                        # try 3/3: mpi-esm standard: logs/test_jsbach_driving.codes
+                        # try 3/4: mpi-esm standard: logs/test_jsbach_driving.codes
                         code_pattern <- paste0(expid, "_*", stream, ".codes")
                         tmppath <- paste0(dirname(dirname(path)), "/log")
                         message("check for .codes file with pattern \"", path, "/", code_pattern, "\" ... ", appendLF=F)
                         codesfile <- list.files(tmppath, pattern=glob2rx(code_pattern), full.names=T)
                         message("found ", length(codesfile), " files")
+                        if (length(codesfile) == 0) {
+                            # try 4/4: special: SR_output_200001.01_veg.codes
+                            code_pattern <- paste0(expid, "_", year, "01.01_", stream, ".codes")
+                            message("check for .codes file with pattern \"", path, "/", code_pattern, "\" ... ", appendLF=F)
+                            codesfile <- list.files(path, pattern=glob2rx(code_pattern), full.names=T)
+                            message("found ", length(codesfile), " files")
+                        }
                     }
                 }
             }
@@ -710,7 +735,7 @@ for (i in seq_along(models)) {
         message("determined output intervals of ", file_interval, " file:")
         print(tmp[,c("time", "interval")])
 
-        # try to determine operator (mean, inst, min, max, etc.) of echam6 or jsbach variable based on the namelist
+        # try to determine operator (mean, inst, min, max, etc.) of echam or jsbach variable based on the namelist
         if (!is.null(stream)) {
             if (check_nml) {
                 message("\nstream = ", stream, " is not NULL and `check_nml` is true ...")
@@ -800,7 +825,7 @@ for (i in seq_along(models)) {
                                     # try special case: the nml entries "'temp2', 'temp2:inst'" yield the 2 variables "temp2" and "temp2_2"
                                     if (substr(var2check, nchar(var2check) - 1, nchar(var2check)) == "_2") {
                                         message("Found special case: the last 2 characters of var2check are \"_2\".\n",
-                                                "This was done automatically by echam6 if, e.g., the nml entry \"'temp2', 'temp2:inst'\"",
+                                                "This was done automatically by echam if, e.g., the nml entry \"'temp2', 'temp2:inst'\"",
                                                 " was present in the nml.\n",
                                                 "Adopt the var_patterns ...")
                                         var2check <- substr(var2check, 1, nchar(var2check)-2)
@@ -856,9 +881,9 @@ for (i in seq_along(models)) {
                                         var_pattern <- names(found_varpatterns)[patterni]
                                         #if (tmp[vari,"name"] == "lsp_2" && tmp[vari,"interval"] == "6hr") stop("asd")
                                         time_echam <- known_intervals[which(known_intervals[,"interval"] == 
-                                                                            tmp[vari,"interval"]),"echam6_time"]
+                                                                            tmp[vari,"interval"]),"echam_time"]
                                         interval_echam <- known_intervals[which(known_intervals[,"interval"] == 
-                                                                                tmp[vari,"interval"]),"echam6_interval"]
+                                                                                tmp[vari,"interval"]),"echam_interval"]
                                         interval_pattern <- paste0(time_echam, ",'", interval_echam, "',") # 6, 'hours',
                                         stream_pattern <- paste0("'", stream, "'")
 
@@ -1198,7 +1223,7 @@ for (i in seq_along(models)) {
                     } # not special stream
                 } # mapping namelist defined for current model
             } # if nml_check
-        } # if echam6 or jsbach
+        } # if echam or jsbach
         
         # append new entry to table
         if (j == 1) {

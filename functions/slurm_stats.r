@@ -20,66 +20,100 @@ usage[[length(usage)+1]] <- list(what="2 person household per year", units=list(
 #######################################################
     
 exclude <- logs <- NULL # default
+lhelp <- F
 
 if (interactive()) {
     me <- "slurm_stats.r"
+    #path <- getwd()
     #path <- "/work/ab0246/a270073/awicm-test/CMIP6/CMIP_PMIP/dynveg_true/historical/scripts"
     #path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/scripts"
     #path <- "/work/ab1095/a270094/AWIESM/SR_output/scripts" # chunk 1
-    path <- "/work/ba1103/a270094/AWIESM/test/scripts" # chunk 2
+    #path <- "/work/ba1103/a270094/AWIESM/test/scripts" # chunk 2
+    path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/scripts"
+    #logs <- c("piControl_compute_29970101-29971231_33239962.log", "piControl_compute_33239962.log")
     #path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/scripts"
 
 } else { # if not interactive
 
-    # internal and user args
-    args <- commandArgs(trailingOnly=F)
+    args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
-    # user args only
-    args <- commandArgs(trailingOnly=T)
-    
+    args <- commandArgs(trailingOnly=T) # user args only
+    if (any(grepl("--help", args))) lhelp <- T
     path <- getwd()
+    #print(args)
 
-    # check for exclude
+} # if interactive or not 
+    
+help <- paste0("\nUsage:\n $ ", me, " [--help] [--exclude=1,2,3] [logfile1 [logfile2 ... logileN]]\n",
+               "   e.g. ", me, " --help\n", 
+               "        ", me, " *compute_*.log # default\n",
+               "        ", me, " *compute_????????.log\n")
+
+# stop if help
+if (lhelp) {
+    message(help)
+    if (interactive()) {
+        stop("stop here")
+    } else {
+        quit()
+    }
+}
+
+# continue if not help
+if (!interactive()) {
     if (any(grepl("--exclude", args))) {
         exclude <- sub("--exclude=", "", args[grep("--exclude=", args)])
         exclude <- strsplit(exclude, ",")[[1]]
-        exclude <- as.integer(exclude) # error if not successful
+        oo <- options()$warn; options(warn=2) # error on warning
+        exclude <- as.integer(exclude)
+        options(warn=oo) # restore value from before
         message("provided `exclude` of length ", length(exclude), " = ", 
                 paste(exclude, collapse=", "))
+        #print(args)   
         if (length(args) > 1) { # exclude and logs were provided
-            logs <- args[(grep("--exclude=", args)+1):length(args)] # everything after --exclude
+            args <- args[(grep("--exclude=", args)+1):length(args)] # everything after --exclude
+            logs <- args # remaining: either log files or grep pattern
+        } else {
+            # `logs` stays NULL
         }
-    } else {
-        logs <- args
+        #print(args)   
     }
-} # if interactive or not 
-#message(str(logs))
-    
-help <- paste0("\nUsage:\n $ ", me, " [--exclude=1,2,3] [logfile1 [logfile2 ... logileN]]\n",
-               "   e.g. ", me, "\n", 
-               "        ", me, " *compute_*.log # the default\n",
-               "        ", me, " *compute_????????.log\n")
+    #print(args)   
+} # if not interactive 
+#print(args)   
 
+# check log files or grep pattern
+if (is.null(logs)) { # no log files or grep pattern provided
+    grep_pattern <- "*compute*.log" # default
+    message("\nno logfiles provided --> use default grep pattern \"", grep_pattern, "\" ...")
+} else { # log files or grep pattern provided
+    # check if log files or grep pattern provided
+    message(str(logs))
+    if (file.exists(logs[1])) { # provided arg is a file
+        message("\nprovided ", length(logs), " logfile", ifelse(length(logs) > 1, "s", ""))
+        grep_pattern <- NULL
+    } else { # provided arg is grep pattern
+        grep_pattern <- logs
+    } 
+}
 
-# check logfile(s)
-if (is.null(logs)) { # no log files provided
-    message("\nno logfiles provided")
-    #logs <- list.files(pattern=glob2rx("*.log")) # use find to exclude links
-    grep_pattern <- "*compute*.log"
+# get logs from grep pattern
+if (interactive()) setwd(path)
+if (!is.null(grep_pattern)) {
     cmd <- paste0("find ", path, " -maxdepth 1 -type f -name \"", grep_pattern, "\" -printf \"%f\\n\" | sort")
     message("--> run `", cmd, "` ...")
     logs <- system(cmd, intern=T)
-    message("--> found ", length(logs), " logfiles")
+    message("--> found ", length(logs), " logfile", ifelse(length(logs) > 1, "s", ""))
     if (length(logs) == 0) {
         grep_pattern <- "*.log"
+        message("--> use 2nd default grep pattern \"", grep_pattern, "\" ...")
         cmd <- paste0("find ", path, " -maxdepth 1 -type f -name \"", grep_pattern, "\" -printf \"%f\\n\" | sort")
         message("--> run `", cmd, "` ...")
         logs <- system(cmd, intern=T)
         message("--> found ", length(logs), " logfiles")
     }
-} else {
-    message("provided ", length(logs), " logfiles")
 }
+
 if (length(logs) == 0) { # no log files found
     message(help)
     if (interactive()) {
@@ -88,9 +122,9 @@ if (length(logs) == 0) { # no log files found
         quit()
     }
 }
-    
-logs <- paste0(path, "/", logs)
 
+# check existance of all logfiles
+logs <- paste0(path, "/", logs)
 if (any(!file.exists(logs))) {
     inds <- which(!file.exists(logs))
     stop(length(inds), " provided logfile", ifelse(length(inds) > 1, "s", ""), " ",
@@ -113,6 +147,16 @@ if (is.null(exclude)) { # default: keep all logs
             length(exclude), " log", ifelse(length(exclude) > 1, "s", ""), ":\n",
             paste(paste0("   ", logs[exclude]), collapse="\n"))
     logs <- logs[-exclude]
+}
+
+if (length(logs) == 0) { # exclude removed all log files
+    message("--> exclude removed all logfiles")
+    message(help)
+    if (interactive()) {
+        stop("stop here")
+    } else {
+        quit()
+    }
 }
 
 # for all logfiles
@@ -144,10 +188,12 @@ if (length(jobids) == 0) {
     stop("zero log files contain the pattern \"", grep_pattern, "\"")
 }
 names(logs) <- jobids
+jobids <- unique(jobids) # remove potential duplicates e.g. by symlink logfiles
 
 # get stats of found jobids via `sacct`
 # https://slurm.schedmd.com/sacct.html
-message("\nget ", length(jobids), " job infos via `sacct` ...") 
+message("\nget infos of ", length(jobids), " unique jobid", 
+        ifelse(length(jobids) > 1, "s", ""), " via `sacct`:") 
 colnames <- c("jobid", "elapsed", "nnodes", "submit", "start") 
 cmd <- paste0("sacct ",
               "--noheader ",
@@ -281,33 +327,28 @@ for (i in seq_along(usage)) {
 
 message()
 
-if (interactive()) {
-
-    # get jobname
-    grep_pattern <- "* JobName          : "
-    cmd <- paste0("grep \"", grep_pattern, "\" ", logs[1])
-    jobname <- suppressWarnings(system(cmd, intern=T)) # e.g. "* JobName          : piControl"
-    if (length(jobname) == 0) {
-        jobname <- basename(dirname(path))
-    } else {
-        jobname <- trimws(jobname)
-        jobname  <- strsplit(jobname, " ")[[1]]
-        jobname <- jobname[length(jobname)]
-    }
-
-    if (T) { # plot queue time
-        plotname <- paste0("queue_time_hours_", jobname, ".png")
-        message("plot ", plotname, " ...")
-        png(plotname, width=2000, height=2000/(4/3), res=200, family="Nimbus Sans L")
-        plot(start, queue_hour, t="n", xaxt="n", yaxt="n",
-             xlab="date", ylab="queue time [hours]",
-             main=jobname)
-        axis.POSIXct(1, at=pretty(start, n=10), format="%b %d")
-        axis(2, at=pretty(queue_hour, n=10), las=2)
-        points(start, queue_hour)
-        lines(start, queue_hour)
-        dev.off()
-
-    } # if plot queue time
+# plot queue time
+grep_pattern <- "* JobName          : "
+cmd <- paste0("grep \"", grep_pattern, "\" ", logs[1])
+jobname <- suppressWarnings(system(cmd, intern=T)) # e.g. "* JobName          : piControl"
+if (length(jobname) == 0) {
+    jobname <- basename(dirname(path))
+} else {
+    jobname <- trimws(jobname)
+    jobname  <- strsplit(jobname, " ")[[1]]
+    jobname <- jobname[length(jobname)]
 }
+plotname <- paste0(normalizePath("~"), "/queue_time_hours_", jobname, ".png")
+message("\nplot ", plotname, " ...")
+png(plotname, width=2000, height=2000/(4/3), res=200, family="Nimbus Sans L")
+plot(start, queue_hour, t="n", xaxt="n", yaxt="n",
+     xlab="date", ylab="queue time [hours]",
+     main=jobname)
+axis.POSIXct(1, at=pretty(start, n=10), format="%b %d")
+axis(2, at=pretty(queue_hour, n=10), las=2)
+points(start, queue_hour)
+lines(start, queue_hour)
+dev.off()
+
+message()
 

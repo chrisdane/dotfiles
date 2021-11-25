@@ -147,8 +147,9 @@ else
             echo "Usage: myfind search_pattern"
             return 1
         else
-            find -print 2>/dev/null | grep -i $1 
-        fi
+            #find -print 2>/dev/null | grep -i $1 
+            find . -name "$1" 2>/dev/null
+    fi
     }
     when(){ 
         # info: /usr/share/zoneinfo and timedatectl list-timezones
@@ -708,12 +709,13 @@ else
         slurm_wait slurm_check.r slurm_stats.r 
         esm_check_err.r esm_get_output.r echam_get_mvstreams_from_atmout.r
         esm_get_esm_version_exp esm_get_esm_version_home 
+        esgf_get_variables.r esgf_json_tree.sh
         mycdoseasmean.r mycdoseassum.r mytrend.r mycdotrend.r mycdoeof.r
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r plotmyeof.r
         myncrcat.r
         convert_lon_360_to_180.r inertial.r
-        jsbach_pft_wrt_box.r
+        jsbach_tile2pft.r
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do

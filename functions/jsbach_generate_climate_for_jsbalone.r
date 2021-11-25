@@ -1,9 +1,12 @@
 # r version of generate_climate_for_jsbalone.ksh
 
-# 7 must-have `output`: tmin, tmax, precip, wspeed, swdown, lwdown, mpot
-# 2 optional `output`: qair, co2
-         
-# input must be defined on both land and ocean; missvals not allowed
+# 7 must-have variables in `output`: tmin, tmax, precip, wspeed, swdown, lwdown, mpot
+# 2 optional variables in `output`: qair, co2
+# --> variables in `output` will be calculated based on the variables in `input`
+# --> add needed commands to `output`
+
+# input model data must be defined on land AND ocean, missvals are not allowed
+# --> this is not checked by this script!
 
 rm(list=ls()); graphics.off()
 
@@ -14,7 +17,7 @@ clean <- T
 if (T) { # awi-esm-1-1-lr_kh800 piControl
     inpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata"
     outpath <- "/work/ba1103/a270073/forcing/jsbalone/climate/awi-esm-1-1-lr_kh800_piControl"
-    outprefix <- "climate_awi-esm-1-1-lr_kh800"
+    outprefix <- "climate_awi-esm-1-1-lr_kh800_piControl"
     remote <- ""
     from <- 2803
     to <- 2900
@@ -114,7 +117,8 @@ if (any(grepl("<ncatted>", unlist(output)))) {
     ncatted <- Sys.which("ncatted")
     if (ncatted == "") stop("could not find ncatted")
 }
-    
+ncks <- NULL
+
 path <- getwd()
 
 # do for all years
@@ -244,9 +248,25 @@ for (yeari in seq_along(years)) {
 
     # merge results
     message("\nmerge output ...")
-    cmd <- paste0(cdo, " ", cdo_silent, " merge ", paste(fouts, collapse=" "), " ", outprefix, "_", years[yeari], ".nc") 
+    fout <- paste0(outprefix, "_", years[yeari], ".nc")
+    cmd <- paste0(cdo, " ", cdo_silent, " merge ", paste(fouts, collapse=" "), " ", fout)
     if (T) message("run `", cmd, "` ...")
     system(cmd)
+
+    # check if result is netcdf format "classic" 
+    cmd <- paste0(ncdump, " -k ", fout, " 2>/dev/null") 
+    if (F) message("run `", cmd, "` ...")
+    format <- suppressWarnings(system(cmd, intern=T))
+    if (format != "classic") {
+        message("\n`ncdump -k` of result is \"", format, "\" != \"classic\"")
+        if (is.null(ncks)) {
+            ncks <- Sys.which("ncks")
+            if (ncks == "") stop("could not find ncks")
+        }
+        cmd <- paste0(ncks, " -O --fl_fmt=classic ", fout, " ", fout) # overwrite
+        if (T) message("run `", cmd, "` ...")
+        system(cmd)
+    }
 
     # clean
     if (clean) {

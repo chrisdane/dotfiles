@@ -132,7 +132,7 @@ else
         less -i $file
     }
     pwd2(){
-        printf "\$(readlink -f .) = "
+        #printf "\$(readlink -f .) = "
         readlink -f . # or pwd -P
     }
     pwd3(){
@@ -143,6 +143,14 @@ else
         diff $1 $2 | vim -R -
     } # or `diff old new | colordiff`
     myfind(){
+        if [ $# -eq 0 ]; then
+            echo "Usage: myfind search_pattern"
+            return 1
+        else
+            find -name "*$1*" 2>/dev/null 
+        fi
+    }
+    myfinds(){
         if [ $# -eq 0 ]; then
             echo "Usage: myfind search_pattern"
             return 1
@@ -317,7 +325,7 @@ else
         echo "@other pc: git reset --hard origin/branchname # caution: overwrites potential local changes irreversible"
         echo "rebase branch"
         echo "git checkout commit_from_where_my_branch_should_start"
-        echo "git branch new_branch # create"
+        echo "git checkout -b new_branch # create and checkout new branch"
         echo "git cherry-pick commit_i_want_to_include"
         echo "git branch -d old_branch # delete old branch locally"
         echo "git push origin --delete old_branch # delete old branch remote"
@@ -392,7 +400,9 @@ else
         echo "clip/mask: draw rectangle over area you want to clip. select both. objects -> clip -> set"
         echo "crop white space: select -> edit -> resize page to selection"
     }
-    
+    slurmhelp(){
+        echo "scontrol show jobid -dd jobid"
+    }
     # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
     #/bin/echo "$(printf "%*s" 131072 ".")" > /dev/null --> too long
@@ -753,8 +763,10 @@ else
         fi
     fi
     if check_existance squeue; then
-        sme() { squeue -u $(whoami) ; }
-        smi() { squeue -u $(whoami) -i 1 ; }
+        #sme() { squeue -u $(whoami) ; }
+        sme() { squeue -u $(whoami) -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
+        #smi() { squeue -u $(whoami) -i 1 ; }
+        smi() { squeue -u $(whoami) -i 1 -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
     fi
     if check_existance scontrol; then
         smee() {

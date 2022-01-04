@@ -134,7 +134,7 @@ if (T) { # set F for blank .Rprofile
     # - from e.g. "3.6.x" to "3.7.x", package re-compilation _may_ be necessary
     # --> no general rule found: e.g. r 3.5 packages may or may not work in r 3.6 and vice versa
     # --> minimum version-dependent package directory structure is 3.5, 3.6, etc.
-    newLibPaths_main <- normalizePath("~/scripts/r/packages/bin") # hardware-independent path where packages should be installed
+    newLibPaths_main <- "~/scripts/r/packages/bin" # hardware-independent path where packages should be installed
     rversion_x.y <- paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. "3.6" and not "3.6.1"
     newLibPaths <- paste0(newLibPaths_main, "/r_", rversion_x.y) # currently running r version in format e.g. "3.6" and not "3.6.1"
     newLibPaths <- c(

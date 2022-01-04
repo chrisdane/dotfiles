@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# finger gets full user name from passwd's GECOS entry (man 5 passwd)
+getent passwd "$1" 
+
+# alternative
+#lslogins -l <user>
+

@@ -29,7 +29,8 @@ if (interactive()) {
     #path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/scripts"
     #path <- "/work/ab1095/a270094/AWIESM/SR_output/scripts" # chunk 1
     #path <- "/work/ba1103/a270094/AWIESM/test/scripts" # chunk 2
-    path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/scripts"
+    #path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/scripts"
+    path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl/scripts"
     #logs <- c("piControl_compute_29970101-29971231_33239962.log", "piControl_compute_33239962.log")
     #path <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/scripts"
 
@@ -98,7 +99,10 @@ if (is.null(logs)) { # no log files or grep pattern provided
 }
 
 # get logs from grep pattern
-if (interactive()) setwd(path)
+if (interactive()) {
+    opath <- getwd()
+    setwd(path)
+}
 if (!is.null(grep_pattern)) {
     cmd <- paste0("find ", path, " -maxdepth 1 -type f -name \"", grep_pattern, "\" -printf \"%f\\n\" | sort")
     message("--> run `", cmd, "` ...")
@@ -293,8 +297,10 @@ message(paste(paste0("--> ", facs, " runs need ",
 message("\nmean nnodes per run: ", mean(df$nnodes, na.rm=T))
 
 # print node hour stats
+message("\ntotal node hours of ", dim(df)[1], " runs: ", 
+        round(sum(df$node_hours, na.rm=T)), " node hours")
 node_hours_per_run <- mean(df$node_hours, na.rm=T)
-message("\nmean node hours per run: ", round(node_hours_per_run), " node hours")
+message("mean node hours per run: ", round(node_hours_per_run), " node hours")
 facs <- c(10, 100, 150, 165, seq(200, 1000, b=100))
 message(paste(paste0("--> ", facs, " runs need ", 
                      round(facs*node_hours_per_run), " node hours"), 
@@ -325,8 +331,6 @@ for (i in seq_along(usage)) {
     }
 }
 
-message()
-
 # plot queue time
 grep_pattern <- "* JobName          : "
 cmd <- paste0("grep \"", grep_pattern, "\" ", logs[1])
@@ -338,17 +342,29 @@ if (length(jobname) == 0) {
     jobname  <- strsplit(jobname, " ")[[1]]
     jobname <- jobname[length(jobname)]
 }
-plotname <- paste0(normalizePath("~"), "/queue_time_hours_", jobname, ".png")
+y <- queue_hour # default
+unit <- "hours"
+if (all(queue_hour < 1)) {
+    y <- queue_min
+    unit <- "mins"
+}
+if (all(queue_min < 1)) {
+    y <- queue_sec
+    unit <- "secs"
+}
+plotname <- paste0(normalizePath("~"), "/queue_time_", jobname, ".png")
 message("\nplot ", plotname, " ...")
 png(plotname, width=2000, height=2000/(4/3), res=200, family="Nimbus Sans L")
-plot(start, queue_hour, t="n", xaxt="n", yaxt="n",
-     xlab="date", ylab="queue time [hours]",
+plot(start, y, t="n", xaxt="n", yaxt="n",
+     xlab="date", ylab=paste0("queue time [", unit, "]"),
      main=jobname)
 axis.POSIXct(1, at=pretty(start, n=10), format="%b %d")
-axis(2, at=pretty(queue_hour, n=10), las=2)
-points(start, queue_hour)
-lines(start, queue_hour)
-dev.off()
+axis(2, at=pretty(y, n=10), las=2)
+points(start, y)
+lines(start, y)
+invisible(dev.off())
+
+if (interactive()) setwd(opath)
 
 message()
 

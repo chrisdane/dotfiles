@@ -63,7 +63,7 @@ for (argi in seq_along(args)) {
     arg <- args[argi]
     #print(arg)
     if (!grepl("=", arg)) {
-        stop("argument must be of form `varname=/path/to/file/with/variable/on/tiles`")
+        stop("all arguments must be of form `varname=/path/to/file/with/variable/on/tiles`")
     }
     arg <- strsplit(arg, "=")[[1]] # len2: varname path
     if (length(arg) != 2) {

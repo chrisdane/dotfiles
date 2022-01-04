@@ -100,7 +100,7 @@ else
         fi
         source liquidprompt # check ~/.liquidpromptrc
     else 
-        echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt'"
+        echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/liquidprompt/liquidprompt ~/bin/liquidprompt"
     fi
 
     # enable make autocomplete:
@@ -557,12 +557,14 @@ else
     fi
 
     # check if module tun is available or not (it is not after system upgrade)
-    modprobe tun &> /dev/null # silent output
-    if [ $? -ne 0 ]; then # if not successfull either due to missing permissions or file not found
-        tun_file=$(find /lib/modules/`uname -r` -print | grep -i "tun.ko")
-        if [ ${#tun_file} == 0 ]; then # if missing file 
-            echo "'modprobe tun' raised some problem, consider restart:"
-            modprobe tun
+    if check_existance modprobe; then
+        modprobe tun &> /dev/null # silent output
+        if [ $? -ne 0 ]; then # if not successfull either due to missing permissions or file not found
+            tun_file=$(find /lib/modules/`uname -r` -print | grep -i "tun.ko")
+            if [ ${#tun_file} == 0 ]; then # if missing file 
+                echo "'modprobe tun' raised some problem, consider restart:"
+                modprobe tun
+            fi
         fi
     fi
 
@@ -711,7 +713,7 @@ else
                 echo "Usage: 'modulegrep cdo' or 'modulegrep ^r/' will run 'module avail -t 2>&1 | grep -i \$1'"
             else
                 #echo "run 'module avail -t 2>&1 | grep -i $1'"
-                module avail -t 2>&1 | grep -i $1
+                module avail -t 2>&1 | grep -i $1 | sort
             fi
         }
         echo "defined modulegrep()"
@@ -726,13 +728,15 @@ else
         psme cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall 
-        myfinger.r finduser.r 
+        myfinger myfinger.r finduser.r 
         get_timestep.r 
         slurm_wait slurm_check.r slurm_stats.r 
-        esm_check_err.r esm_get_output.r echam_get_mvstreams_from_atmout.r
+        esm_check_err.r esm_check_yaml.r esm_get_output.r echam_get_mvstreams_from_atmout.r
         esm_get_esm_version_exp esm_get_esm_version_home 
         esgf_get_variables.r esgf_json_tree.sh
-        mycdoseasmean.r mycdoseassum.r mytrend.r mycdotrend.r mycdoeof.r
+        mycdoseasmean.r mycdoseassum.r 
+        mycdosplitlevel.r
+        mytrend.r mycdotrend.r mycdoeof.r
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r plotmyeof.r
         myncrcat.r
@@ -764,7 +768,10 @@ else
     fi
     if check_existance squeue; then
         #sme() { squeue -u $(whoami) ; }
-        sme() { squeue -u $(whoami) -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
+        sme() { 
+            echo "squeue -u $(whoami) -o \"%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R\""
+            squeue -u $(whoami) -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
+        } 
         #smi() { squeue -u $(whoami) -i 1 ; }
         smi() { squeue -u $(whoami) -i 1 -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
     fi

@@ -769,8 +769,8 @@ else
     if check_existance squeue; then
         #sme() { squeue -u $(whoami) ; }
         sme() { 
-            echo "squeue -u $(whoami) -o \"%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R\""
-            squeue -u $(whoami) -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
+            echo "squeue -u $(whoami) -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
+            squeue -u $(whoami) -o "%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
         } 
         #smi() { squeue -u $(whoami) -i 1 ; }
         smi() { squeue -u $(whoami) -i 1 -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a

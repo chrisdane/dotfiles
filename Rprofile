@@ -48,6 +48,9 @@
 #remotes::install_github("nickmckay/LiPD-Utilities", subdir="R")
 #pid=system("sleep 100 & echo $!", intern=T) leads to `sh <defunct>` zombie
 #source(textConnection(file.lines.collapsed), ...)
+#abline(a=0, b=1) 1:1 line
+#ls("package:seacarb") # list all functions of package alphabetical
+#base::getRversion() > "4.1.2"
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 
@@ -207,6 +210,8 @@ if (T) { # set F for blank .Rprofile
                           )
             if (Sys.getenv("TERM") == "xterm-256color") {
                 packages <- c("colorout", packages) # try to load colorout package first
+            } else {
+                warning("$XTERM = \"", Sys.getenv("TERM"), "\" not defined")
             }
             npkg <- length(packages)
             nchar_no <- nchar(npkg)
@@ -299,14 +304,14 @@ if (T) { # set F for blank .Rprofile
                     } else { # built from source
                         message("  source", appendLF=F) # does this cover all other cases?
                     }
-                    # library path
+                    # add version
+                    message("  ", sprintf("%5s", pkginfo$Version), appendLF=F)
+                    # add path from where package was loaded
                     tmp <- base::find.package(pkg)
                     if (substr(tmp, 1, nchar(normalizePath("~"))) == normalizePath("~")) {
                         tmp <- paste0("~", substr(tmp, nchar(normalizePath("~")) + 1, nchar(tmp)))
                     }
                     message("  ", tmp, appendLF=F)
-                    # version
-                    message("  ", pkginfo$Version, appendLF=F)
                     # additional text
                     if (F && pkg == "oce") {
                         checktext <- paste0("data('coastlineWorld', package='", i, "')")

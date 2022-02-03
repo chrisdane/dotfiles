@@ -270,6 +270,11 @@ else
         echo "printf '%s\\n' '\${arr[@]}'"
         echo "for f in \${arr[@]}; do echo \$f; cdo ntime \$f; done"
     }
+    vpnhelp(){
+        echo "sudo openconnect -v --background --certificate=cert --csd-wrapper=script --timestamp --printcookie -u <name> <server>"
+        echo "certificate: deutsche-telekom-root-ca-2.pem"
+        echo "csd-wrapper script: /usr/lib/openconnect/csd-wrapper.sh"
+    }
     vimhelp(){
         echo "find missing bracket: 1) cursor on open or close bracket 2) %"
     }
@@ -332,27 +337,32 @@ else
         echo "@other pc: git remote prune origin # to delete the old branch in the 'git branch -av' list"
     }
     llg(){
-        repofiles=$(git ls-tree --full-tree --name-only -r HEAD) # string l=1
+        repofiles="$(git ls-tree --full-tree --name-only -r HEAD)"
         if [ $? -ne 0 ]; then
             return 1
         fi
-        declare -a repofiles_vec=($repofiles) # array l=n
+        #repofiles_vec=("${repofiles}"); # does not work if spaces in fname
+        #repofiles_vec=$(printf '%s\n' "${repofiles}") # does not work if spacecs in fname
+        #declare -a repofiles_vec=("${repofiles}") # does not work if spaces in fname
+        IFS=$'\n' read -r -d '' -a repofiles_vec < <( printf '%s\n' "${repofiles}" && printf '\0' ) # works
         #printf ' %s' "${repofiles_vec[@]}"
         nrepofiles=${#repofiles_vec[@]} # n
-        rootpath=$(git rev-parse --show-toplevel) # may include unneeded prefixes
+        repopath=$(git rev-parse --show-toplevel) # full path as of `readlink -f`
         declare -a vec=()
         for i in $(seq 0 $(( $nrepofiles - 1))); do # concatenate path and files
             #echo "$i: ${repofiles_vec[$i]}"
-            vec[$i]="$rootpath/${repofiles_vec[$i]}"
+            vec[$i]=${repopath}/"${repofiles_vec[$i]}"
         done # todo: without loop
         #printf ' %s' "${vec[@]}"
-        printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
-        dus=$(du -hc $(echo $repofiles)) # for `du`, /home/user` cannot be abbreviated with `~/`
+        #printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
+        dus=$(du -hc "${vec[@]}" | sort -h)
         homeprefix=$(readlink -f ~/)
-        patt='~' # need this extra variable for line below
-        dus="${dus//$homeprefix/$patt}" # replace "[/optional/prefix]/home/user" with pattern $patt
+        repl_pat_home='~' # need this extra variable for line below
+        repl_path_repo=$repopath
+        dus="${dus//$homeprefix/$repl_pat_home}" # replace "[/optional/prefix]/home/user" with pattern
         printf '%s\n' "${dus[@]}"
-        echo "--> $nrepofiles tracked files in repo ${rootpath//$HOME/$patt}"
+        printf '%s' "--> $nrepofiles tracked files in repo; total size of ${repopath//$homeprefix/$repl_pat_home}: "
+        du -hcs $repopath | tail -1
     }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
@@ -731,8 +741,9 @@ else
         myfinger myfinger.r finduser.r 
         get_timestep.r 
         slurm_wait slurm_check.r slurm_stats.r 
-        esm_check_err.r esm_check_yaml.r esm_get_output.r echam_get_mvstreams_from_atmout.r
+        esm_check_err.r esm_get_output.r 
         esm_get_esm_version_exp esm_get_esm_version_home 
+        echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         esgf_get_variables.r esgf_json_tree.sh
         mycdoseasmean.r mycdoseassum.r 
         mycdosplitlevel.r
@@ -740,7 +751,7 @@ else
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r plotmyeof.r
         myncrcat.r
-        convert_lon_360_to_180.r inertial.r
+        convert_lon_360_to_180.r wind.r inertial.r
         jsbach_tile2pft.r
         )
     mkdir -p ~/bin

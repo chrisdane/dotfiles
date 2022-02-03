@@ -145,6 +145,7 @@ set ffs=unix,dos,mac
 
 " enable r-syntax in .Rprofile
 au BufReadPost *.Rprofile set syntax=r
+au BufReadPost *Rprofile set syntax=r
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo

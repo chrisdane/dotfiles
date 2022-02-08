@@ -374,7 +374,7 @@ else
                 repo=$(basename $(git rev-parse --show-toplevel))
                 cmd="git push https://${token}@github.com/${user}/${repo}.git"
                 #cmd="git push https://oauth2:${token}@github.com/${user}/${repo}.git"
-                #echo "run '$cmd'"
+                echo "run '$cmd'"
                 eval $cmd
             else
                 echo "could not find ~/.myprofile"

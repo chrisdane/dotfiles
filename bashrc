@@ -370,13 +370,13 @@ else
                 token=$(grep ghtoken ~/.myprofile | cut -d ' ' -f1)
                 token=${token:1}
                 url=$(git config --get remote.origin.url) # https://[<user>]@github.com/<user_or_group>/<reponame>.git
-                user=$(basename $(dirname $url))
+                usergroup=$(basename $(dirname $url))
                 repo=$(basename $(git rev-parse --show-toplevel))
-                cmd="git push https://${token}@github.com/${user}/${repo}.git"
-                #cmd="git push https://oauth2:${token}@github.com/${user}/${repo}.git"
+                cmd="git push https://${token}@github.com/${usergroup}/${repo}.git"
+                #cmd="git push https://oauth2:${token}@github.com/${usergroup}/${repo}.git"
                 #echo "run '$cmd'"
                 eval $cmd
-                git fetch # change 'ahead by 1 commit' to 'up-to-date'
+                git fetch # change `ahead by 1 commit` to `up-to-date`; not needed for default `git pull`
             else
                 echo "could not find ~/.myprofile"
                 return 1

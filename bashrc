@@ -817,7 +817,7 @@ else
             echo "hash    = $esm_tools_hash"
             echo "src     = $esm_tools_src_path"
         else
-            echo "esm-tools not found"
+            echo "could not find esm-tools"
             return 1
         fi
     } # esm_tools_info

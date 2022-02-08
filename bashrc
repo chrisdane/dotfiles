@@ -796,37 +796,86 @@ else
         }
     fi
 
-    # esm_master specific stuff
+    # esm_tools specific stuff
+    esm_tools_info() {
+        if command -v esm_tools > /dev/null 2>&1; then
+            echo "run 'esm_tools --version' ..."
+            esm_tools_version=$(esm_tools --version) # e.g. "esm_tools, 6.1.3"
+            esm_master_bin=$(which esm_master) # e.g. ~/.local/bin/esm_master
+            esm_master_py_bin=$(head -1 $esm_master_bin) # "#!/path"
+            esm_master_py_bin=${esm_master_py_bin:2} # "/path"
+            esm_tools_src_path=$($esm_master_py_bin -c "import site; print(site.getusersitepackages())") # e.g. ~/.local/lib/python3.8/site-packages
+            esm_tools_src_path=$(head -1 $esm_tools_src_path/esm-tools.egg-link) # /path/to/esm_tools/src/
+            esm_tools_src_path=$(dirname $esm_tools_src_path) # without /src
+            owd=$(pwd); cd $esm_tools_src_path
+            esm_tools_src_path=$(pwd) # normalize path; better than readlink -f
+            esm_tools_branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+            esm_tools_hash=$(git rev-parse --short HEAD)
+            cd $owd
+            echo "version = $esm_tools_version"
+            echo "branch  = $esm_tools_branch"
+            echo "hash    = $esm_tools_hash"
+            echo "src     = $esm_tools_src_path"
+        else
+            echo "esm-tools not found"
+            return 1
+        fi
+    } # esm_tools_info
     if check_existance esm_master; then
         recomp_recom() {
-            if [ -d ~/esm/awicm-1.0-recom ]; then 
+            if [[ ! -z "$@" && -d $"$@" ]]; then # provided dir is not empty and found
+                setup_path=$(cd "$@"; pwd) # better than readlink -f
+                if [[ ! -d "$setup_path/recom" ]]; then 
+                    echo "provided setup dir \"$setup_path\" does not have a \"recom\" subdir"
+                    return 1
+                fi
+                if [[ ! -d "$setup_path/fesom-1.4" ]]; then 
+                    echo "provided setup dir \"$setup_path\" does not have a \"fesom-1.4\" subdir"
+                    return 1
+                fi
+                echo "setup_path = $setup_path"
+                setup_name=$(basename $setup_path) # e.g. "awicm-1.0-recom"
+                echo "--> setup name = $setup_name"
+                echo "compile recom and fesom with esm_master"
+                esm_master_get_info
                 if command -v host &> /dev/null; then
                     hostname=$(host $(hostname)) # ollie1.awi.de has address 172.18.20.82
                     hostname=$(echo $hostname | cut -d' ' -f1)
                 else
                     hostname=$(hostname)
                 fi
-                msg="$(date): recom+fesom recompile finished on $hostname"
-                # must be in parent path of awicm-1.0
+                # must be in parent path of setup
                 owd=$(pwd)
-                echo; echo "cd ~/esm"
-                cd ~/esm
-                echo "esm_master recomp-awicm-1.0-recom/recom"; echo
-                esm_master recomp-awicm-1.0-recom/recom
-                echo; echo "esm_master recomp-awicm-1.0-recom/fesom"; echo
-                esm_master recomp-awicm-1.0-recom/fesom
+                echo; echo "cd $(dirname $setup_path)"
+                cd $(dirname $setup_path)
+                echo; echo "esm_master recomp-$setup_name/recom"; echo
+                tic_recom=$(date +%s)
+                esm_master recomp-$setup_name/recom # in this 
+                toc_recom=$(date +%s)
+                echo; echo "esm_master recomp-$setup_name/fesom"; echo
+                tic_fesom=$(date +%s)
+                esm_master recomp-$setup_name/fesom # order!
+                toc_fesom=$(date +%s)
+                msg="finished recom ($((($toc_recom - $tic_recom))) sec) and fesom ($((($toc_fesom - $tic_fesom)/60)) min) compile on $hostname"
                 if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
                     zenity --info --text="$msg"
                 else # inform just in terminal
                     echo "program zenity not found"
                     echo $msg
                 fi
-                echo "cd $owd"
+                echo; echo "cd back to old dir $owd"
                 cd $owd
-            else
-                echo "directory ~/esm/awicm-1.0-recom not found"
+                echo "finished"
+            else # provided dir is empty or not found
+                if [[ ! -z "$@" ]]; then
+                    echo "provided directory \"$@\" not found"
+                    return 1
+                else
+                    echo "provided directory \"$@\" empty"
+                    return 1
+                fi
             fi
-        } # recomp_recom()
+        } # recomp_recom
     fi # if esm_master exists
 
     # recom stuff

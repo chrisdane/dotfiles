@@ -376,6 +376,7 @@ else
                 #cmd="git push https://oauth2:${token}@github.com/${user}/${repo}.git"
                 #echo "run '$cmd'"
                 eval $cmd
+                git fetch # change 'ahead by 1 commit' to 'up-to-date'
             else
                 echo "could not find ~/.myprofile"
                 return 1

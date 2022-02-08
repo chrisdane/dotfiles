@@ -364,6 +364,27 @@ else
         printf '%s' "--> $nrepofiles tracked files in repo; total size of ${repopath//$homeprefix/$repl_pat_home}: "
         du -hcs $repopath | tail -1
     }
+    gp(){
+        if git rev-parse --git-dir > /dev/null 2>&1; then
+            if [ -f ~/.myprofile ]; then
+                token=$(grep ghtoken ~/.myprofile | cut -d ' ' -f1)
+                token=${token:1}
+                url=$(git config --get remote.origin.url) # https://[<user>]@github.com/<user_or_group>/<reponame>.git
+                user=$(basename $(dirname $url))
+                repo=$(basename $(git rev-parse --show-toplevel))
+                cmd="git push https://${token}@github.com/${user}/${repo}.git"
+                #cmd="git push https://oauth2:${token}@github.com/${user}/${repo}.git"
+                #echo "run '$cmd'"
+                eval $cmd
+            else
+                echo "could not find ~/.myprofile"
+                return 1
+            fi
+        else
+            echo "current dir $(pwd) is not a repo dir"
+            return 1
+        fi
+    } # gp
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
         echo "cdo --operators"

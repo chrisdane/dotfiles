@@ -413,6 +413,18 @@ else
         echo "cdo eof,40 anom_fin eigen_val eigen_vec" 
         echo "cdo eofcoeff eigen_vec anom_fin obase"
     }
+    # argument list too long
+    #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
+    #/bin/echo "$(printf "%*s" 131072 ".")" > /dev/null --> too long
+    # --> $(getconf PAGE_SIZE)*32 = 4096*32 = 131072
+    # --> this is hardcoded in binfmts.h
+    # getconf ARG_MAX = 2097152
+    # too long: 2612711 characters wout multiple spaces
+    # ok:       2612710 characters wout multiple spaces
+    # start counting from: `cdo a b`
+    #                          1234 -> nchar = 4 in this example
+    # --> it seems multiple spaces count as single spaces
+    # --> it seems to be independet of the number of input files provided (29355 in this example)
     ncohelp(){
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
         echo "ncpdq -a time,depth in out"
@@ -438,18 +450,15 @@ else
     slurmhelp(){
         echo "scontrol show jobid -dd jobid"
     }
-    # argument list too long
-    #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
-    #/bin/echo "$(printf "%*s" 131072 ".")" > /dev/null --> too long
-    # --> $(getconf PAGE_SIZE)*32 = 4096*32 = 131072
-    # --> this is hardcoded in binfmts.h
-    # getconf ARG_MAX = 2097152
-    # too long: 2612711 characters wout multiple spaces
-    # ok:       2612710 characters wout multiple spaces
-    # start counting from: `cdo a b`
-    #                          1234 -> nchar = 4 in this example
-    # --> it seems multiple spaces count as single spaces
-    # --> it seems to be independet of the number of input files provided (29355 in this example)
+    officehelp(){
+        echo "enter line before TOC:"
+        echo "1: rightclick toc -> edit -> do not protect index against manual changes"
+        echo "2: click in upper left corner of toc"
+        echo "3: [alt+enter] twice"
+        echo "enter field number = page count +1:"
+        echo "1: insert -> field -> more fields"
+        echo "2: insert formula -> formula = page+1"
+    }
 
     # aliase
     # check aliase with 'type alias'

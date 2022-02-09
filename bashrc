@@ -55,6 +55,8 @@ else
     if [ -f /etc/bashrc ]; then
         source /etc/bashrc
     fi
+    
+    export HISTCONTROL=ignoreboth # ignore commands with leading space and duplicates
 
     # use bash completion, if installed
     if [ -f /etc/bash_completion ]; then
@@ -369,14 +371,14 @@ else
             if [ -f ~/.myprofile ]; then
                 token=$(grep ghtoken ~/.myprofile | cut -d ' ' -f1)
                 token=${token:1}
-                url=$(git config --get remote.origin.url) # https://[<user>]@github.com/<user_or_group>/<reponame>.git
+                url=$(git config --get remote.origin.url) # https://[<user>]@github.com/<user_or_group>/<repo>.git
                 usergroup=$(basename $(dirname $url))
                 repo=$(basename $(git rev-parse --show-toplevel))
                 cmd="git push https://${token}@github.com/${usergroup}/${repo}.git"
                 #cmd="git push https://oauth2:${token}@github.com/${usergroup}/${repo}.git"
                 #echo "run '$cmd'"
                 eval $cmd
-                git fetch # change `ahead by 1 commit` to `up-to-date`; not needed for default `git pull`
+                git fetch # change `ahead by 1 commit` to `up-to-date`; not needed for default `git push`
             else
                 echo "could not find ~/.myprofile"
                 return 1
@@ -385,6 +387,7 @@ else
             echo "current dir $(pwd) is not a repo dir"
             return 1
         fi
+        history -d $((HISTCMD)) # remove last command from bash history: the actual `gp`-call
     } # gp
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"

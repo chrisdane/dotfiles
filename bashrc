@@ -419,6 +419,13 @@ else
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
         echo "ncpdq -a time,depth in out"
         echo "ncap2 -v -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
+        echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
+    }
+    ncviewhelp() {
+        echo "ncview -minmax all Sample.nc"
+    }
+    pyhelp(){
+        echo "%run scriptname"
     }
     condahelp(){
         echo "conda create -y -p /path <env>"
@@ -467,8 +474,8 @@ else
         alias vi='vimx' # for +clipboard
         alias vim='vimx'
     fi
-    alias less="less -i"
-    alias more="less -i"
+    alias less="less -i -R" # ignore case; escape colors
+    alias more="less -i -R"
 
     # own variables
     export VISUAL=vim

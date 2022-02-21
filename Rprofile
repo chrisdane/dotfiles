@@ -51,6 +51,18 @@
 #abline(a=0, b=1) 1:1 line
 #ls("package:seacarb") # list all functions of package alphabetical
 #base::getRversion() > "4.1.2"
+# variable dims nc versus r:
+#1
+#ncdump: time, lat, lon
+#     r: lon , lat, time; Chunking: [1440,720,1]
+#2
+#ncdump: lon,  lat, time
+#     r: time, lat, lon; Chunking: [1,720,1440]
+#3
+#ncdump: lat, lon, time
+#     r: time, lon, lat; Chunking: [1,1440,720]
+# --> ncdf4 reverses variable dims
+# --> ncdump -h header does NOT display the dim order
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 

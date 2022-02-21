@@ -95,16 +95,6 @@ else
         PS1='\[\033[0;34m\]\h:$(show_temp)°C:$(pwd)/>\[\033[0m\] '
     fi
 
-    # use liquidprompt if available https://github.com/nojhan/liquidprompt
-    if [ -x "$(command -v liquidprompt)" ]; then 
-        if [ -n "$(LC_ALL=C type -t show_temp)" ] && [ "$(LC_ALL=C type -t show_temp)" = function ]; then 
-            LP_PS1_PREFIX="$(show_temp)°C " # add my cpu temp to liquidprompt
-        fi
-        source liquidprompt # check ~/.liquidpromptrc
-    else 
-        echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/liquidprompt/liquidprompt ~/bin/liquidprompt"
-    fi
-
     # enable make autocomplete:
     # https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
     complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
@@ -929,8 +919,18 @@ else
         echo ""
         source ~/.myprofile
     fi
+    
+    # replace prompt with liquidprompt if git is available (thats why do it after .myprofile)
+    if [ -x "$(command -v liquidprompt)" ]; then 
+        if [ -n "$(LC_ALL=C type -t show_temp)" ] && [ "$(LC_ALL=C type -t show_temp)" = function ]; then 
+            LP_PS1_PREFIX="$(show_temp)°C " # add my cpu temp to liquidprompt
+        fi
+        source liquidprompt # check ~/.liquidpromptrc
+    else 
+        echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
+    fi
 
-    # Finish
+    # finish
     printf '%*s' "$ncol" | tr ' ' "*"
     printf " ~/.bashrc finish "
     printf '%*s' "$ncol" | tr ' ' "*"

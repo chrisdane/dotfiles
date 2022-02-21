@@ -1,0 +1,12 @@
+# override liquidprompt defaults
+
+LP_HOSTNAME_ALWAYS=1 # 0: show the hostname, except when locally connected; 1: always show the hostname; -1: never
+LP_COLOR_HOST="$BLUE" # color for hostname
+LP_ENABLE_PERM=0 # no write permission in currenct dir
+LP_ENABLE_PROXY=0 # http proxy deteceted
+LP_ENABLE_LOAD=0 # display load average over past 1 min when > thr
+LP_ENABLE_BATT=0 # display status of battery
+LP_ENABLE_JOBS=0 # display number of running and sleeping jobs
+LP_ENABLE_TEMP=0 # display highest sys temp; needs `sensors` or `acpi`
+LP_ENABLE_DETACHED_SESSIONS=0 # display number of detached multiplexer sessions; needs `screen` or `tmux`
+

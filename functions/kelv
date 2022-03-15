@@ -1,0 +1,7 @@
+#!/bin/bash
+
+read -p "Fahrenheit: " fhr
+kelv=$(echo "scale=2;(5/9)*($fhr+459.67)" | bc)
+cels=$(echo "scale=2;(5/9)*($fhr-32)" | bc)
+echo "$temp Fahrenheit = $kelv Kelvin = $cels Celsius"
+

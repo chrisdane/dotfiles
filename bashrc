@@ -785,7 +785,7 @@ else
         slurm_wait slurm_check.r slurm_stats.r 
         esm_check_err.r esm_get_output.r 
         esm_get_esm_version_exp esm_get_esm_version_home 
-        echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
+        echam_get_mvstreams_from_atmout.r
         fesom1_nod3d_levelwise.r fesom1_shifttime_-1dt.r
         esgf_get_variables.r esgf_json_tree.sh
         mycdoseasmean.r mycdoseassum.r 
@@ -797,6 +797,7 @@ else
         rechunk.r
         convert_lon_360_to_180.r wind.r inertial.r
         jsbach_tile2pft.r
+        kelv feet dom
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do

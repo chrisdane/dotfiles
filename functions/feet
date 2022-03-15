@@ -1,0 +1,6 @@
+#!/bin/bash
+
+read -p "feet: " feet
+meter=$(echo "scale=4;$feet/3.2808 " | bc)
+echo "$feet feet = $meter meter"
+

@@ -78,14 +78,15 @@ if (!interactive()) {
             # `logs` stays NULL
         }
         #print(args)   
+    } else {
+        logs <- args # remaining: either log files or grep pattern
     }
-    #print(args)   
 } # if not interactive 
 #print(args)   
 
 # check log files or grep pattern
 if (is.null(logs)) { # no log files or grep pattern provided
-    grep_pattern <- "*compute*.log" # default
+    grep_pattern <- "*_compute_*.log" # default
     message("\nno logfiles provided --> use default grep pattern \"", grep_pattern, "\" ...")
 } else { # log files or grep pattern provided
     # check if log files or grep pattern provided
@@ -104,14 +105,14 @@ if (interactive()) {
     setwd(path)
 }
 if (!is.null(grep_pattern)) {
-    cmd <- paste0("find ", path, " -maxdepth 1 -type f -name \"", grep_pattern, "\" -printf \"%f\\n\" | sort")
+    cmd <- paste0("find ", path, " -maxdepth 1 -type f -name \"", grep_pattern, "\" -not -name \"*_observe_compute_*\" -printf \"%f\\n\" | sort")
     message("--> run `", cmd, "` ...")
     logs <- system(cmd, intern=T)
     message("--> found ", length(logs), " logfile", ifelse(length(logs) > 1, "s", ""))
-    if (length(logs) == 0) {
+    if (length(logs) == 0) { # 2nd try
         grep_pattern <- "*.log"
         message("--> use 2nd default grep pattern \"", grep_pattern, "\" ...")
-        cmd <- paste0("find ", path, " -maxdepth 1 -type f -name \"", grep_pattern, "\" -printf \"%f\\n\" | sort")
+        cmd <- paste0("find ", path, " -maxdepth 1 -type f -name \"", grep_pattern, "\" -not -name \"*_observe_compute_*\" -printf \"%f\\n\" | sort")
         message("--> run `", cmd, "` ...")
         logs <- system(cmd, intern=T)
         message("--> found ", length(logs), " logfiles")
@@ -125,6 +126,8 @@ if (length(logs) == 0) { # no log files found
     } else {
         quit()
     }
+} else {
+    print(logs)
 }
 
 # check existance of all logfiles
@@ -198,16 +201,16 @@ jobids <- unique(jobids) # remove potential duplicates e.g. by symlink logfiles
 # https://slurm.schedmd.com/sacct.html
 message("\nget infos of ", length(jobids), " unique jobid", 
         ifelse(length(jobids) > 1, "s", ""), " via `sacct`:") 
-colnames <- c("jobid", "elapsed", "nnodes", "submit", "start") 
+colnames <- c("jobid", "account", "start", "submit", "elapsed", "nnodes") 
 cmd <- paste0("sacct ",
               "--noheader ",
               "--jobs=<jobids> ",
               #"--partition=compute,compute2 ",
               "--state=completed ",
               "--format=", paste(colnames, collapse=","))
-#message("run `", cmd, "` ...")
-cmd <- sub("<jobids>", paste(jobids, collapse=","), cmd)
 message("run `", cmd, "` ...")
+cmd <- sub("<jobids>", paste(jobids, collapse=","), cmd)
+#message("run `", cmd, "` ...")
 sacct <- base::pipe(cmd)
 df <- read.table(sacct, header=F, col.names=colnames, stringsAsFactors=F)
 # for one jobid e.g.:
@@ -254,13 +257,14 @@ for (logi in seq_along(queue)) {
     queue[logi] <- paste0(round(tmp, 2), " ", attributes(tmp)$units)
 }
 df$queue <- queue
-# start and submit not needed anymore --> drop from data frame
-df$start <- df$submit <- NULL
+# submit not needed anymore --> drop from data frame
+df$submit <- NULL
 
 # calc energy assuming a constant energy transfer per node
 df$energy_kWh <- energy_transfer_node * df$node_hours / 1e3 # W * h / 1e3 = kWh
 
 # print result
+options(width=1000)
 print(df, row.names=seq_len(dim(df)[1]))
 
 # print elapsed stats without queue time

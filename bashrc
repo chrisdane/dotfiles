@@ -114,12 +114,12 @@ else
         fi
     }
     tl(){
-        file=$(ls -t *.log | head -n1)
+        file=$(ls -t *.log | grep -v _observe_ | head -n1)
         echo `ls --color=auto -lFh $(pwd)/$file`
         tail -f $file
     }
     ml(){
-        file=$(ls -t *.log | head -n1)
+        file=$(ls -t *.log | grep -v _observe_ | head -n1)
         echo `ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
@@ -149,6 +149,12 @@ else
         else
             find -name "*$1*" 2>/dev/null | sort 
         fi
+    }
+    psme(){
+        ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
+    }
+    topme(){
+        top -u $(whoami)
     }
     when(){ 
         # info: /usr/share/zoneinfo and timedatectl list-timezones
@@ -294,17 +300,22 @@ else
     githelp(){
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
+        echo "dir=<distant_dir_to_check>"
+        echo "git --git-dir=\$dir/.git --work-tree=\$dir <any_git_cmd>"
         echo diff
         echo "git diff [from] to"
         echo "git diff --name-only"
         echo "git diff 6843db8 -- '*.functions'"
         echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
         echo branch
-        echo "git push origin feature # push local branch to server"
-        echo "git push origin --delete remoteBranchName"
+        echo "git checkout -b branchname # create local"
+        echo "git checkout -d branchname # delete local"
+        echo "git push origin branchname # create remote"
+        echo "git push origin --delete branchname # delete remote"
         echo commit
         echo "git reset --hard HEAD^ # remove last commit; also deletes unstaged changes!"
         echo "git reset --hard HEAD~2 # remove last 2 commits; also deletes unstaged changes!"
+        echo "git push origin -f # update remote"
         echo merge
         echo "git merge -s ours # --strategy"
         echo stash
@@ -766,7 +777,7 @@ else
     # link dotfiles-repo functions to bin
     fs=(
         diff_filelists.r diff_namelists.r
-        psme cpu cpuall cpu_total mem scpd 
+        cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall 
         myfinger myfinger.r finduser.r 
@@ -775,6 +786,7 @@ else
         esm_check_err.r esm_get_output.r 
         esm_get_esm_version_exp esm_get_esm_version_home 
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
+        fesom1_nod3d_levelwise.r fesom1_shifttime_-1dt.r
         esgf_get_variables.r esgf_json_tree.sh
         mycdoseasmean.r mycdoseassum.r 
         mycdosplitlevel.r
@@ -782,6 +794,7 @@ else
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r plotmyeof.r
         myncrcat.r
+        rechunk.r
         convert_lon_360_to_180.r wind.r inertial.r
         jsbach_tile2pft.r
         )
@@ -830,7 +843,7 @@ else
     # esm_tools specific stuff
     esm_tools_info() {
         if command -v esm_tools > /dev/null 2>&1; then
-            echo "run 'esm_tools --version' ..."
+            #echo "run 'esm_tools --version' ..."
             esm_tools_version=$(esm_tools --version) # e.g. "esm_tools, 6.1.3"
             esm_master_bin=$(which esm_master) # e.g. ~/.local/bin/esm_master
             esm_master_py_bin=$(head -1 $esm_master_bin) # "#!/path"
@@ -856,21 +869,29 @@ else
         recomp_recom() {
             if [[ ! -z "$@" && -d $"$@" ]]; then # provided dir is not empty and found
                 setup_path=$(cd "$@"; pwd) # better than readlink -f
-                if [[ ! -d "$setup_path/recom" ]]; then 
+                printf "setup_path = $setup_path"
+                setup_name=$(basename $setup_path) # e.g. "awicm-1.0-recom"
+                echo " --> setup name = $setup_name"
+                recom_path="${setup_path}/recom"
+                echo "recom_path = $recom_path"
+                if [[ ! -d "${recom_path}" ]]; then 
                     echo "provided setup dir \"$setup_path\" does not have a \"recom\" subdir"
                     return 1
                 fi
-                if [[ ! -d "$setup_path/fesom-1.4" ]]; then 
+                fesom_path="${setup_path}/fesom-1.4"
+                echo "fesom_path = $fesom_path"
+                if [[ ! -d "${fesom_path}" ]]; then 
                     echo "provided setup dir \"$setup_path\" does not have a \"fesom-1.4\" subdir"
                     return 1
                 fi
-                echo "setup_path = $setup_path"
-                setup_name=$(basename $setup_path) # e.g. "awicm-1.0-recom"
-                echo "--> setup name = $setup_name"
-                echo "compile recom and fesom with esm_master"
-                esm_master_get_info
+                recom_branch=$(git --git-dir=${recom_path}/.git --work-tree=${recom_path} branch| sed -n -e 's/^\* \(.*\)/\1/p')
+                recom_hash=$(git --git-dir=${recom_path}/.git --work-tree=${recom_path} rev-parse --short HEAD)
+                fesom_branch=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} branch| sed -n -e 's/^\* \(.*\)/\1/p')
+                fesom_hash=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} rev-parse --short HEAD)
+                echo "compile recom on branch ${recom_branch} (${recom_hash}) and fesom on branch ${fesom_branch} (${fesom_hash}) with esm_master"
+                esm_tools_info
                 if command -v host &> /dev/null; then
-                    hostname=$(host $(hostname)) # ollie1.awi.de has address 172.18.20.82
+                    hostname=$(host $(hostname))
                     hostname=$(echo $hostname | cut -d' ' -f1)
                 else
                     hostname=$(hostname)
@@ -896,15 +917,15 @@ else
                 fi
                 echo; echo "cd back to old dir $owd"
                 cd $owd
-                echo "finished"
+                echo "finished. DONT FORGET TO COPY THE NEW FESOM BINARY TO EXPID!!!"
             else # provided dir is empty or not found
                 if [[ ! -z "$@" ]]; then
                     echo "provided directory \"$@\" not found"
-                    return 1
                 else
                     echo "provided directory \"$@\" empty"
-                    return 1
                 fi
+                echo "provide esm setup dir with recom and fesom-1.4 subdirs"
+                return 1
             fi
         } # recomp_recom
     fi # if esm_master exists

@@ -26,16 +26,15 @@ fi
     
 echo "scontrol show jobid -dd $1"
 while sleep 1; do 
-
     status=$(scontrol show jobid -dd $1 | grep JobState) # "JobState=PENDING Reason=Resources Dependency=(null)"
-    if ! [ $? -eq 0 ]; then
-        exit
-    fi
     status=$(echo $status | cut -d' ' -f1) # "JobState=PENDING"
     status=$(echo $status | cut -d'=' -f2) # "PENDING" or "RUNNING"
-    echo "$(date): status of $hostname job $1: $status"
+    partition=$(scontrol show jobid -dd $1 | grep Partition) # "Partition=compute,compute2 AllocNode:Sid=mlogin100:10034"
+    partition=$(echo $partition | cut -d' ' -f1) # "Partition=compute,compute2"
+    partition=$(echo $partition | cut -d'=' -f2) # "compute,compute2"
+    echo "$(date): slurm job $1 on partition $partition submitted at $hostname: $status"
     if [ "$status" == "RUNNING" ]; then
-        msg="slurm job $1 started on $hostname"
+        msg="slurm job $1 on partition $partition submitted at $hostname started!"
         if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
             echo "run zenity ..."
             zenity --info --text="$msg"
@@ -46,6 +45,5 @@ while sleep 1; do
         echo "stopping slurm_wait"
         exit
     fi # if job is running or not
-
 done # while 
 

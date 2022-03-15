@@ -1,2 +1,0 @@
-#!/bin/bash
-ps -u $(whoami) # todo: ps -u $whoami -F > ps_out

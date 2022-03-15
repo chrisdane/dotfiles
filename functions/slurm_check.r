@@ -69,7 +69,8 @@ if (any(squeue$ST != "R")) { # not running
 }
 
 # step 2/2: check if user has running jobs
-cmd <- paste0("squeue -u ", user)
+#cmd <- paste0("squeue -u ", user)
+cmd <- paste0("squeue -u ", user, " -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\"") # jobid partition jobname account user status time nodes nodelist
 message("\nrun `", cmd, "` ...")
 squeue <- base::pipe(cmd)
 squeue <- read.table(squeue, header=T, stringsAsFactors=F)
@@ -107,6 +108,4 @@ if (any(squeue$ST == "R")) { # running
 } else { # if any running job or not
     message("--> there are no running jobs")
 } 
-
-
 

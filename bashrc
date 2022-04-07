@@ -786,7 +786,7 @@ else
         esm_check_err.r esm_get_output.r 
         esm_get_esm_version_exp esm_get_esm_version_home 
         echam_get_mvstreams_from_atmout.r
-        fesom1_nod3d_levelwise.r fesom1_shifttime_-1dt.r
+        fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_setgrid_regrid.r
         esgf_get_variables.r esgf_json_tree.sh
         mycdoseasmean.r mycdoseassum.r 
         mycdosplitlevel.r
@@ -823,13 +823,11 @@ else
         fi
     fi
     if check_existance squeue; then
-        #sme() { squeue -u $(whoami) ; }
         sme() { 
-            echo "squeue -u $(whoami) -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
-            squeue -u $(whoami) -o "%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
+            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
         } 
-        #smi() { squeue -u $(whoami) -i 1 ; }
-        smi() { squeue -u $(whoami) -i 1 -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
     fi
     if check_existance scontrol; then
         smee() {
@@ -889,7 +887,7 @@ else
                 recom_hash=$(git --git-dir=${recom_path}/.git --work-tree=${recom_path} rev-parse --short HEAD)
                 fesom_branch=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} branch| sed -n -e 's/^\* \(.*\)/\1/p')
                 fesom_hash=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} rev-parse --short HEAD)
-                echo "compile recom on branch ${recom_branch} (${recom_hash}) and fesom on branch ${fesom_branch} (${fesom_hash}) with esm_master"
+                echo; echo "compile 1) recom on branch ${recom_branch} (${recom_hash}) and then 2) fesom on branch ${fesom_branch} (${fesom_hash}) with esm_tools"
                 esm_tools_info
                 if command -v host &> /dev/null; then
                     hostname=$(host $(hostname))
@@ -918,7 +916,9 @@ else
                 fi
                 echo; echo "cd back to old dir $owd"
                 cd $owd
-                echo "finished. DONT FORGET TO COPY THE NEW FESOM BINARY TO EXPID!!!"
+                echo; echo "finished"
+                echo; echo "DONT FORGET TO COPY THE NEW FESOM BINARY TO EXPID!!!"
+                echo
             else # provided dir is empty or not found
                 if [[ ! -z "$@" ]]; then
                     echo "provided directory \"$@\" not found"

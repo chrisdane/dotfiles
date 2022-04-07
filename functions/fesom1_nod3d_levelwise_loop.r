@@ -28,7 +28,27 @@ if (F) { # awi-esm-1-1-lr_kh800 piControl
     years <- as.integer(substr(basename(files), 14, 17))
     start <- 1; end <- length(files)
     njobs_wanted <- 20
-} else if (T) { # awi-esm-1-1-lr_kh800 ssp585
+} else if (F) { # awi-esm-1-1-lr_kh800 ssp126
+    prefix <- "awi-esm-1-1-lr_kh800_ssp126"
+    meshdir <- "/pool/data/AWICM/FESOM1/MESHES/core"
+    outdir <- "/mnt/lustre02/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/levelwise"
+    shifttime <- "-1day"
+    files <- list.files("/mnt/lustre02/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/fesom", 
+                        pattern="^thetao_fesom*", full.names=T)
+    years <- as.integer(substr(basename(files), 14, 17))
+    start <- 1; end <- length(files)
+    njobs_wanted <- 10
+} else if (T) { # awi-esm-1-1-lr_kh800 ssp245
+    prefix <- "awi-esm-1-1-lr_kh800_ssp245"
+    meshdir <- "/pool/data/AWICM/FESOM1/MESHES/core"
+    outdir <- "/mnt/lustre02/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp245/outdata/levelwise"
+    shifttime <- "-1day"
+    files <- list.files("/mnt/lustre02/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp245/outdata/fesom", 
+                        pattern="^thetao_fesom*", full.names=T)
+    years <- as.integer(substr(basename(files), 14, 17))
+    start <- 1; end <- length(files)
+    njobs_wanted <- 10
+} else if (F) { # awi-esm-1-1-lr_kh800 ssp585
     prefix <- "awi-esm-1-1-lr_kh800_ssp585"
     meshdir <- "/pool/data/AWICM/FESOM1/MESHES/core"
     outdir <- "/mnt/lustre02/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp585/outdata/levelwise"
@@ -89,7 +109,7 @@ for (jobi in seq_len(njobs)) {
         # ollie example scripts: https://swrepo1.awi.de/plugins/mediawiki/wiki/hpc/index.php/Slurm_Example_Scripts
         # ollie partition limits: https://swrepo1.awi.de/plugins/mediawiki/wiki/hpc/index.php/SLURM#Partitions
         cmd <- c("#!/bin/bash",
-                 paste0("#SBATCH --job-name=loop_", basename(fname), "      # Specify job name"),
+                 paste0("#SBATCH --job-name=", basename(fname), "      # Specify job name"),
                  "#SBATCH --partition=shared     # Specify partition name",
                  #"#SBATCH --partition=prepost     # Specify partition name",
                  #"#SBATCH --ntasks=1             # Specify max. number of tasks to be invoked",

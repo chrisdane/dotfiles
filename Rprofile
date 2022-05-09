@@ -12,9 +12,10 @@
 # file.edit()
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
 # getSrcDirectory
+# remove all white space: gsub(" ", "", x, fixed=T)
 # anyNA(x) is more efficient than any(is.na(x))
 # which.min is more efficient than which(x == min(x)). ATTENTION: which.min(c(1,1,2)) = 1, i.e. the second (and 3rd,4th,...) minimum is negelected
-#which(abs(zlevels - center_around) == min(abs(zlevels - center_around)))
+# which(abs(zlevels - center_around) == min(abs(zlevels - center_around)))
 # cols_rgb_p <- rgb(t(col2rgb(cols_p)/255), alpha=alpha_rgb)
 # mean1 <- function(x) mean(x)
 # mean2 <- function(x) sum(x) / length(x)
@@ -24,13 +25,16 @@
 # any(x == 10) is faster than 10 %in% x
 # unlist(x, use.names=F) is faster than unlist(x)
 # check stats:::t.test.default()
+# SDMTools::grid.info(lats=lats, cellsize=diff(lons)[1])$area --> average 0.2% difference to `cdo gridarea`
 # library(pryr) --> object_size(), mem_used(), mem_change() 
 #file_sizes_byte <- file.size(files)
 #file_sizes_pretty <- sapply(file_sizes_byte, utils:::format.object_size, "auto")
 # strsplit(x, "\\s+")[[1]] arbitrary number of spaces blanks
 # getAnywhere(objectname)
-# system.file("extdata", "2012.csv", package = "testdat")
+# legend("topleft", "abc", col=1, lty=1, pch=22, pt.bg=col2rgba("gray", 0.3), pt.lwd=0, pt.cex=4, bty="n", cex=2)
+# # system.file("extdata", "2012.csv", package = "testdat")
 # options(menu.graphics=FALSE) #graphics dialogs always seem to crash R
+# inds <- matrix(inds, nrow=1) # multi dim index
 # sort(x, index.return=T)$ix
 # pdf.options(useDingbats = TRUE) https://yihui.name/knitr/demo/graphics/
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
@@ -63,6 +67,20 @@
 #     r: time, lon, lat; Chunking: [1,1440,720]
 # --> ncdf4 reverses variable dims
 # --> ncdump -h header does NOT display the dim order
+#londim <- ncdf4::ncdim_def(name="lon", units="degrees_east", vals=lons)
+#latdim <- ncdf4::ncdim_def(name="lat", units="degrees_north", vals=lats)
+#mondim <- ncdf4::ncdim_def(name="month", units="month", vals=months)
+#ncvars <- vector("list", l=length(data))
+#names(ncvars) <- vars
+#for (i in seq_along(data)) {
+#    ncvars[[i]] <- ncdf4::ncvar_def(name=vars[i], units=units[i], dim=list(londim, latdim, mondim), missval=NaN)
+#}
+#outnc <- ncdf4::nc_create(fout, vars=ncvars, force_v4=T)
+#for (i in seq_along(data)) {
+#    ncdf4::ncvar_put(outnc, ncvars[[i]], data[[i]])
+#}
+#ncdf4::nc_close(outnc)
+
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 
@@ -84,8 +102,12 @@ if (T) { # set F for blank .Rprofile
     # check LD_LIBRARY_PATH
     if (interactive()) {
         #Sys.setenv(LD_LIBRARY_PATH=paste0(Sys.getenv("LD_LIBRARY_PATH"), ":/sw/spack-rhel6/udunits-2.2.28-h6kiqa/lib"))
-        message("LD_LIBRARY_PATH =")
-        message(paste(paste0("   ", strsplit(Sys.getenv("LD_LIBRARY_PATH"), ":")[[1]]), collapse="\n"))
+        message("LD_LIBRARY_PATH = ", appendLF=F)
+        if (Sys.getenv("LD_LIBRARY_PATH") != "") {
+            message("\n", paste(paste0("   ", strsplit(Sys.getenv("LD_LIBRARY_PATH"), ":")[[1]]), collapse="\n"))
+        } else {
+            message("<none set>")
+        }
     }
     
     # C compiler used to build this R 

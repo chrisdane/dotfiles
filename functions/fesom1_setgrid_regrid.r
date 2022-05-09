@@ -22,7 +22,8 @@ if (interactive()) {
 usage <- paste0("\nUsage:\n $ ", me, 
                 " griddes=/path/to/griddes.nc [regrid=-remapycon,global_1] [cmd_before_regrid=-shifttime,-1day] outdir=/path/to/save/result file1 [file2 filen]\n",
                 "\n",
-                " with e.g. griddes=/mnt/lustre01/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc\n")
+                " with e.g. griddes=/mnt/lustre01/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc\n",
+                "           griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n")
 
 # check
 if (length(args) < 3) { # griddes, outdir, file1

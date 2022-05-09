@@ -15,7 +15,8 @@ if (interactive()) {
 
 usage <- paste0("\nUsage:\n", 
                 " $ ", me, " \"time/ntime,nodes_2d/126859\" <outpath> <files>\n",
-                " $ ", me, " \"time/ntime,lat/1,lon/1440\" <outpath> <files>\n")
+                " $ ", me, " \"time/ntime,lat/1,lon/1440\" <outpath> <files>\n",
+                " $ ", me, " \"time/1,lat/180,lon/360\" <outpath> <files>\n")
 
 # check
 if (length(args) < 3) {
@@ -23,7 +24,6 @@ if (length(args) < 3) {
     quit()
 }
 chunkarg <- args[1]
-if (!grepl("/ntime", chunkarg)) stop("chunkarg \"", chunkarg, "\" must contain \"/ntime\"")
 pathout <- args[2]
 if (file.access(pathout, mode=0) == -1) { # not existing
     message("pathout = \"", pathout, "\" does not exist. try to create ... ", appendLF=F)
@@ -46,12 +46,15 @@ for (fi in seq_along(files)) {
     if (!file.exists(files[fi])) {
         message("fin ", files[fi], " does not exist. skip")
     } else {
-        cmd <- paste0("cdo -s ntime ", files[fi])
-        message("file ", fi, "/", length(files), ": run `", cmd, "` ... ", appendLF=F)
-        ntime <- as.integer(system(cmd, intern=T))
-        if (is.na(ntime)) stop("no success")
-        message(ntime)
-        tmp <- sub("ntime", ntime, chunkarg)
+        tmp <- chunkarg
+        if (grepl("/ntime", tmp)) { # replace "ntime" with actual ntime
+            cmd <- paste0("cdo -s ntime ", files[fi])
+            message("file ", fi, "/", length(files), ": run `", cmd, "` ... ", appendLF=F)
+            ntime <- as.integer(system(cmd, intern=T))
+            if (is.na(ntime)) stop("no success")
+            message(ntime)
+            tmp <- sub("ntime", ntime, tmp)
+        }
         #fout <- paste0(pathout, "/", basename(files[fi]), "_", gsub("[[:punct:]]", "_", tmp))
         fout <- paste0(pathout, "/", basename(files[fi]))
         if (file.exists(fout)) {

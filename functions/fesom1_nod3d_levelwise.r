@@ -8,7 +8,7 @@
 # runtime stats:
 # prepost, core, daily,  12 x 28/29/30/31 timesteps: 49    min per year (subsequent mergetime ~1min)
 # prepost, core, daily, 365 x           1 timestep : 45    min per year (subsequent mergetime ~2min)
-#  shared, core, daily,  12 x 28/29/30/31 timesteps: 12-17 min per year
+#  shared, core, daily,  12 x 28/29/30/31 timesteps: 7-28 min per year
 # --> check fesom1_nod3d_levelwise_loop.r
 
 rm(list=ls()); graphics.off()

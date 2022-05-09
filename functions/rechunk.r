@@ -15,8 +15,7 @@ if (interactive()) {
 
 usage <- paste0("\nUsage:\n", 
                 " $ ", me, " \"time/ntime,nodes_2d/126859\" <outpath> <files>\n",
-                " or\n",
-                " $ ", me, " \"timr/ntime,lat/1,lon/1440\" <outpath> <files>\n")
+                " $ ", me, " \"time/ntime,lat/1,lon/1440\" <outpath> <files>\n")
 
 # check
 if (length(args) < 3) {

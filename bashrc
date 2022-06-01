@@ -228,6 +228,7 @@ else
     }
     githelp(){
         echo "get default brach of repo: cat .git/refs/remotes/origin/HEAD"
+        echo "get hash: git rev-parse --short HEAD"
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
         echo "dir=<distant_dir_to_check>"
@@ -240,10 +241,13 @@ else
         echo "git diff --word-diff-regex=."
         echo "git diff --color-words=."
         echo branch
-        echo "git checkout -b branchname # create local"
-        echo "git checkout -d branchname # delete local"
-        echo "git push origin branchname # create remote"
-        echo "git push origin --delete branchname # delete remote"
+        echo "git branch -b bname # create local"
+        echo "git checkout bname # old"
+        echo "git switch -c bname origin/bname # new; copy and switch to remote branch"
+        echo "git branch -d bname # delete local"
+        echo "git push origin bname # create remote"
+        echo "git push origin --delete bname # delete remote"
+        echo "compare: https://github.com/user/repo/compare"
         echo commit
         echo "git reset --hard HEAD^ # remove last commit; also deletes unstaged changes!"
         echo "git reset --hard HEAD~2 # remove last 2 commits; also deletes unstaged changes!"
@@ -333,6 +337,7 @@ else
         echo "for f in *01.grb; do echo \$f; cdo -t echam6 -f nc copy \$f \$f.nc; done"
         echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
         echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
+        echo "merge different variables: cdo merge"
         echo "cdo chname,var1,var2 in.nc out.nc"
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
@@ -673,11 +678,6 @@ else
         echo
     fi # if systemctl exists
 
-    # run bash stuff if available
-    if ! check_existance nc-config; then
-        echo nc-config is missing!
-    fi
-    
     # run R stuff if available
     if check_existance Rscript; then
         if check_existance mytimes.r; then
@@ -893,6 +893,11 @@ else
         source liquidprompt # check ~/.liquidpromptrc
     else 
         echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
+    fi
+    
+    # run bash stuff if available
+    if ! check_existance nc-config; then
+        echo nc-config is missing!
     fi
 
     # finish

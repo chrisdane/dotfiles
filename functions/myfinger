@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # finger gets full user name from passwd's GECOS entry (man 5 passwd)
-getent passwd "$1" 
+#echo "input: $@"
+names=( $@ )
+for namei in "${names[@]}"; do
+    printf "getent passwd $namei: "
+    getent passwd "$namei" 
+done
 
 # alternative
 #lslogins -l <user>

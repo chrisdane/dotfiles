@@ -32,7 +32,7 @@ if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
 
 options(width=3000) # increase length per print line from default 80
 
-if (F) {
+if (T) {
     #install.packages("devtools")
     #devtools::install_github("jsta/nml")
     library(nml) # https://github.com/jsta/nml

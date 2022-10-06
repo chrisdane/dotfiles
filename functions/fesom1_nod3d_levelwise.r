@@ -1,14 +1,15 @@
 #!/usr/bin/env Rscript
 
-# apply spheRlab::sl.grid.FESOM3Ddata1Dto2D to input files
-# --> the ncdf4::nc_create() and ncdf4::ncvar_put() calls take a long time if files are large 
-# --> use cdo splityearmon (and splitday) to reduce file sizes:
+# convert fesom1 3D variables saved non-levelwise to levelwise using  
+# spheRlab::sl.grid.FESOM3Ddata1Dto2D() from https://github.com/FESOM/spheRlab.git
+# --> the ncdf4::nc_create() and ncdf4::ncvar_put() calls in sl.grid.FESOM3Ddata1Dto2D() take a long time if files are large 
+# --> use cdo splityearmon (and splitday) to reduce file sizes
 # --> must apply `shifttime` before if necessary
 
 # runtime stats:
-# prepost, core, daily,  12 x 28/29/30/31 timesteps: 49    min per year (subsequent mergetime ~1min)
-# prepost, core, daily, 365 x           1 timestep : 45    min per year (subsequent mergetime ~2min)
-#  shared, core, daily,  12 x 28/29/30/31 timesteps: 7-28 min per year
+# mistral:prepost, core, daily,  12 x 28/29/30/31 timesteps: 49    min per year (subsequent mergetime ~1min)
+# mistral:prepost, core, daily, 365 x           1 timestep : 45    min per year (subsequent mergetime ~2min)
+# mistral:shared , core, daily,  12 x 28/29/30/31 timesteps: 7-28 min per year
 # --> check fesom1_nod3d_levelwise_loop.r
 
 rm(list=ls()); graphics.off()
@@ -28,7 +29,9 @@ if (interactive()) {
 }
 
 usage <- paste0("\nUsage:\n $ ", me, 
-                " meshdir=/path/to/mesh outdir=/path/to/save/result [idepth=/path/to/idepth] [shifttime=shifttimearg] file1 [file2 filen]\n")
+                " meshdir=/path/to/mesh outdir=/path/to/save/result [idepth=/path/to/idepth] [shifttime=shifttimearg] file1 [file2 filen]\n",
+                "\n",
+                "e.g. meshdir=/pool/data/AWICM/FESOM1/MESHES/core/\n")
 
 # check
 if (length(args) < 3) { # meshdir, outdir, file1
@@ -111,14 +114,14 @@ if (length(args) == 0) {
     quit()
 }
 files <- args
-message(length(files), " files:")
+message("\n", length(files), " files:")
 options(width=1000)
 print(data.frame(file=files))
 options(width=80)
+message()
 
 ################
 
-message("\nload necessary packages ...")
 # load ncdf4 package
 check <- T
 if (!any(search() == paste0("package:ncdf4"))) {
@@ -128,8 +131,9 @@ if (!any(search() == paste0("package:ncdf4"))) {
 if (!check) { # no success
     stop("could not load ncdf4 package from\n",
          paste(paste0("   ", .libPaths()), collapse="\n"), "\n",
-         "install with\n   `install.packages(\"ncdf4\")\n",
-         "or\n   `install.packages(\"ncdf4\", lib=\"/path/where/the/package/should/get/installed\")")
+         "install with\n   `install.packages(\"ncdf4\")`\n",
+         "or\n   `install.packages(\"ncdf4\", lib=\"/path/where/the/package/should/get/installed\")`\n",
+         "in an R session")
 }
 
 # load spheRlab package
@@ -172,7 +176,7 @@ for (fi in seq_along(files)) {
         } else {
 
             # cdo splityearmon
-            message("\ncdo shifttime (if necessary) and splityearmon 1 file ...")
+            message("\ncdo shifttime (if provided) and splityearmon 1 file ...")
             outdir_splityearmon <- paste0(outdir, "/splityearmon_", suffix, "_", Sys.getpid())
             if (dir.exists(outdir_splityearmon)) {
                 stop("outdir_splityearmon = ", outdir_splityearmon, " already exists. this should not happen")
@@ -192,23 +196,23 @@ for (fi in seq_along(files)) {
             if (dir.exists(outdir_splitday)) {
                 stop("outdir_splitday = ", outdir_splitday, " already exists. this should not happen")
             } else {
-                dir.create(outdir_splitday)
+                dir.create(outdir_splitday) # this should work since outdir was already checked earlier
             }
             for (fj in seq_along(files_splityearmon)) {
                 ntime <- system(paste0("cdo ntime ", outdir_splityearmon, "/", files_splityearmon[fj]), intern=T)
                 ntime <- as.integer(ntime)
-                if (F && ntime > 1) { # splitday necessary
+                if (T && ntime > 1) { # splitday necessary
                     cmd <- paste0("cdo splitday ", 
                                   outdir_splityearmon, "/", files_splityearmon[fj], " ", 
                                   outdir_splitday, "/", tools::file_path_sans_ext(files_splityearmon[fj]), "_")
                     message("run `", cmd, "` ...")
                     system(cmd)
                     invisible(file.remove(outdir_splityearmon, "/", files_splityearmon[fj]))
-                } else { # splitday not necessary
+                } else { # splitday not necessary --> simply rename
                     invisible(file.rename(from=paste0(outdir_splityearmon, "/", files_splityearmon[fj]), 
                                           to=paste0(outdir_splitday, "/", files_splityearmon[fj])))
                 }
-            }
+            } # for fj
             files_splitday <- list.files(outdir_splitday)
 
             # spheRlab::sl.grid.FESOM3Ddata1Dto2D
@@ -217,7 +221,8 @@ for (fi in seq_along(files)) {
             if (debug) source(paste0(spheRlab_path, "/sl.grid.FESOM3Ddata1Dto2D.R")) # reload in case of changes
             for (fj in seq_along(files_splitday)) {
                 ifile <- paste0(outdir_splitday, "/", files_splitday[fj])
-                message("split ", fj, "/", length(files_splitday), ": ", ifile, " ...")
+                message("********************************************\n",
+                        "split file ", fj, "/", length(files_splitday), ": ", ifile, " ...")
                 ofilej <- paste0(outdir_splitday, "/", tools::file_path_sans_ext(files_splitday[fj]), "_levelwise.", file_ext)
                 ofiles[fj] <- ofilej
                 cnt <- cnt + 1

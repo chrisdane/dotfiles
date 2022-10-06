@@ -746,12 +746,14 @@ else
         myfinger myfinger.r finduser.r 
         get_timestep.r 
         slurm_wait slurm_check.r slurm_stats.r
-        esm_check_yaml.r esm_check_err.r esm_get_output.r
+        esm_check_yaml.r esm_check_err.r esm_check_paths.r esm_get_output.r
         esm_get_esm_version_exp esm_get_esm_version_home
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         jsbach_pft_wrt_box.r 
-        fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_setgrid_regrid.r
+        fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r
+        recom_calc_pCO2a.r
         esgf_get_variables.r esgf_json_tree.sh
+        mymergegrid.r 
         mycdoseasmean.r mycdoseassum.r 
         mycdosplitlevel.r
         mytrend.r mycdotrend.r mycdoeof.r
@@ -822,7 +824,7 @@ else
             echo "version = $esm_tools_version"
             echo "branch  = $esm_tools_branch"
             echo "hash    = $esm_tools_hash"
-            echo "src     = $esm_tools_src_path"
+            echo "src     = $esm_tools_src_path ($(hostname))"
         else
             echo "could not find esm_tools"
             return 1

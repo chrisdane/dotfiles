@@ -20,7 +20,7 @@ trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\
 
 # check
 usage <- paste0("\nUsage:\n $ ", me, " ",
-                "--fin=<provide input filename>",
+                "--fin=<provide input filename> ",
                 "--dry=F",
                 "--outdir=`dirname fin` ",
                 "--varname_cdo_in=`cdo showname fin` ",

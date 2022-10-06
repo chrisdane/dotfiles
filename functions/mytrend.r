@@ -1,16 +1,17 @@
 #!/usr/bin/env Rscript
 
-# calc linear regression (stats::lm) on (lon,lat,time) data and save temporal trend and its significance as (lon,lat)
+# calc linear regression (stats::lm) on (lon,lat,time) data and save temporal trend and its std. error and p value
 
 if (interactive()) { # test
-    fin <- "/isibhv/projects/paleo_work/cdanek/post/echam5/yearsum/wisoaprt_d_post/cosmos-aso-wiso_Hol-T_wiso_mm_echam5_yearsum_wisoaprt_d_post_sellevel_2_global_yearsum_0004-7000.nc"
+    #fin <- "/isibhv/projects/paleo_work/cdanek/post/echam5/yearsum/wisoaprt_d_post/cosmos-aso-wiso_Hol-T_wiso_mm_echam5_yearsum_wisoaprt_d_post_sellevel_2_global_yearsum_0004-7000.nc"
     #fout <- "/isibhv/projects/paleo_work/cdanek/post/echam5/yearsum/lm_wisoaprt_d_post_as_time_slope/cosmos-aso-wiso_Hol-T_wiso_mm_echam5_yearsum_mylm_wisoaprt_d_post_as_time_slope_sellevel_2_global_yearsum_0004-7000.nc"
     #fout <- "/isibhv/projects/paleo_work/cdanek/post/echam5/yearsum/lm_wisoaprt_d_post_as_time_slope/cosmos-aso-wiso_Hol-T_wiso_mm_echam5_yearsum_mylm_wisoaprt_d_post_as_time_slope_sig_0.01_sellevel_2_global_yearsum_0004-7000.nc"
-    fout <- "/isibhv/projects/paleo_work/cdanek/post/echam5/yearsum/lm_wisoaprt_d_post_as_time_slope/cosmos-aso-wiso_Hol-T_wiso_mm_echam5_yearsum_mylm_wisoaprt_d_post_as_time_slope_sig_0.05_sellevel_2_global_yearsum_0004-7000.nc"
+    #fout <- "/isibhv/projects/paleo_work/cdanek/post/echam5/yearsum/lm_wisoaprt_d_post_as_time_slope/cosmos-aso-wiso_Hol-T_wiso_mm_echam5_yearsum_mylm_wisoaprt_d_post_as_time_slope_sig_0.05_sellevel_2_global_yearsum_0004-7000.nc"
+    #fin <- "/work/ba1103/a270073/post/EN.4.2.2/select/mldepthdensp030_m/EN.4.2.2_EN.4.2.2_select_mldepthdensp030_m_global_Jan-Dec_1980-2020.nc"
+    #fout <- "/work/ba1103/a270073/post/EN.4.2.2/select/mldepthdensp030_m/EN.4.2.2_EN.4.2.2_select_mldepthdensp030_m_trend_global_Jan-Dec_1980-2020.nc"
+    fin <- "/work/ba1103/a270073/post/EN.4.2.2/select/mldepthdensp030_m/EN.4.2.2_EN.4.2.2_select_mldepthdensp030_m_global_annual_1980-2020.nc"
+    fout <- "/work/ba1103/a270073/post/EN.4.2.2/select/mldepthdensp030_m/EN.4.2.2_EN.4.2.2_select_mldepthdensp030_m_trend_global_annual_1980-2020.nc"
     lm_method <- "stats::lm"
-    #significance <- 0.01
-    significance <- 0.05
-    trend_dt_unit <- "years"
     
 } else {
 
@@ -22,8 +23,6 @@ if (interactive()) { # test
                    "--fin=/path/to/input.nc ",
                    "--fout=/path/to/output.nc ",
                    "--lm_method=stats::lm ",
-                   "--significance=0.01 ",
-                   "--trend_dt_unit=years",
                    "\n")
 
     # check args 
@@ -47,20 +46,15 @@ if (interactive()) { # test
     } else {
         lm_method <- "stats::lm" # default
     }
-    if (any(grepl("--significance", args))) {
-        significance <- sub("--significance=", "", args[grep("--significance=", args)])
-    } else {
-        significance <- 0.01 # default
-    }
-    if (any(grepl("--trend_dt_unit", args))) {
-        trend_dt_unit <- sub("--trend_dt_unit=", "", args[grep("--trend_dt_unit=", args)])
-    } else {
-        trend_dt_unit <- "years" # default
-    }
 
 } # if interactive or not
 
+options(warn=0) # 
+
 ## checks 
+if (file.exists(fout)) {
+    stop("fout ", fout, " already exists")
+}
 if (file.access(fin, mode=0) == -1) {
     stop("input file \"", fin, "\" does not exist")
 }
@@ -84,10 +78,6 @@ fout <- paste0(outpath, "/", basename(fout))
 if (!any(lm_method == c("stats::lm"))) {
     stop("`lm_method` = ", lm_method, " not implemented")
 }
-
-if (!is.finite(significance)) stop("provided `significance` = ", significance, " is not finite")
-if (significance < 0) stop("provided `significance` = ", significance, " < 0 not allowed")
-if (significance >= 1) stop("provided `significance` = ", significance, " >= 1 not allowed")
 
 message("\nload ncdf4 package ...")
 library(ncdf4)
@@ -121,33 +111,18 @@ for (vari in seq_along(vars)) {
         } else {
         
             # get time dim vals
-            time <- nc$dim$time$vals
-            timeunit <- nc$dim$time$units
-            if (grepl(" since ", timeunit)) { # relative time
-                origin <- substr(timeunit, 
-                                 start=regexpr(" since ", timeunit) + 7,
-                                 stop=nchar(timeunit))
-                if (grepl("days since ", timeunit)) {
-                    posixct <- as.POSIXct(time*86400, origin=origin, tz="UTC")
-                } else {
-                    stop("need to set mult factor for time unit ", timeunit)
-                }
-            } else { # absolute time
-                stop("absolute time unit ", timeunit, " not implemented")
-            }
+            posixct <- as.POSIXct(strsplit(trimws(system(paste0("cdo -s showdate ", nc$file), intern=T)), "  ")[[1]], tz="UTC")
+            time <- as.numeric(posixct)
             from <- as.POSIXlt(min(posixct))
             to <- as.POSIXlt(max(posixct))
-            if (trend_dt_unit == "years") {
-                trend_dt_val <- to$year - from$year + 1
-            } else {
-                stop("`trend_dt_unit` = ", trend_dt_unit, " not implemented yet")
-            }
-            
-            # get variable unit and apply temporal trend multiplication
-            varunit <- nc$var[[vari]]$units # e.g. "°C"
-            varunit <- paste0(varunit, " / ", trend_dt_val, " ", trend_dt_unit) # e.g. "°C / 1000 years"
-            message("calc temporal trends from ", from, " to ", to, 
-                    " (", trend_dt_val, " ", trend_dt_unit, ") ...")
+            #trend_dt_tot_years <- to$year - from$year + 1  # "1980-01-16 UTC" "2020-12-16 UTC" --> 40 years
+            trend_dt_tot_years <- length(from$year:to$year) # "1980-01-16 UTC" "2020-12-16 UTC" --> 41 years
+            save_trend_per_decade <- save_trend_per_century <- save_trend_per_millenium <- F
+            if (trend_dt_tot_years >= 10) save_trend_per_decade <- T
+            if (trend_dt_tot_years >= 100) save_trend_per_century <- T
+            if (trend_dt_tot_years >= 1000) save_trend_per_millenium <- T
+
+            message("calc temporal trends from ", from, " to ", to, " (", trend_dt_tot_years, " years) ...")
 
             # save result
             slope_mat <- std_error_mat <- t_val_mat <- p_val_mat <- array(NA, dim=dims_of_var[c("lon", "lat")])
@@ -161,6 +136,7 @@ for (vari in seq_along(vars)) {
                                         initial=1, style=3)
             
             # do for all lons and lats
+            df <- NULL # save degrees of freedom
             for (i in seq_len(dims_of_var["lon"])) {
                 for (j in seq_len(dims_of_var["lat"])) {
 
@@ -172,32 +148,36 @@ for (vari in seq_along(vars)) {
                     cmd <- paste0("ts <- data[", paste(cmd, collapse=","), "]") 
                     eval(parse(text=cmd)) # e.g. `ts <- data[1,1,]`
                     
-                    if (lm_method == "stats::lm") {
-                        lm <- stats::lm(ts ~ time)
-                        # get trend over whole time
-                        if (T) {
-                            slope <- lm$fitted.values[dims_of_var["time"]] - lm$fitted.values[1] # end of fit minus start of fit
-                        } else if (F) {
-                            # problem: non-equal dt throughout the time series
-                            # but very similar as method above
-                            slope <- lm$coefficients[2] * dims_of_var["time"] * mean(unique(diff(time))) # = slope * dt * nt
-                        }
-                        lm <- summary(lm)
-                        if (i == 1 && j == 1) df <- lm$df[2]
-                        std_error <- lm$coefficients[2,"Std. Error"]
-                        t_val <- lm$coefficients[2,"t value"]
-                        p_val <- lm$coefficients[2,"Pr(>|t|)"]
-                    } else {
-                        stop("`lm_method` = ", lm_method, " not implemented")
-                    }
+                    if (all(is.na(ts))) {
 
-                    # save result if significant 
-                    if (p_val < significance) { # e.g. < 0.01
+                    } else { # some non-NA in ts
+
+                        if (lm_method == "stats::lm") {
+                            lm <- stats::lm(ts ~ time)
+                            # get trend over whole time
+                            if (T) {
+                                slope <- lm$fitted.values[dims_of_var["time"]] - lm$fitted.values[1] # end of fit minus start of fit
+                            } else if (F) {
+                                # problem: non-equal dt throughout the time series
+                                # but very similar as method above
+                                slope <- lm$coefficients[2] * dims_of_var["time"] * mean(unique(diff(time))) # = slope * dt * nt
+                            }
+                            lm <- summary(lm)
+                            if (is.null(df)) df <- lm$df[2]
+                            std_error <- lm$coefficients[2,"Std. Error"]
+                            t_val <- lm$coefficients[2,"t value"]
+                            p_val <- lm$coefficients[2,"Pr(>|t|)"]
+                        } else {
+                            stop("`lm_method` = ", lm_method, " not implemented")
+                        }
+
+                        # save result
                         slope_mat[i,j] <- slope
                         std_error_mat[i,j] <- std_error
                         t_val_mat[i,j] <- t_val
                         p_val_mat[i,j] <- p_val
-                    }
+
+                    } # if some non-NA in ts
         
                     # update progress bar
                     setTxtProgressBar(pb, value=cnt)
@@ -208,27 +188,60 @@ for (vari in seq_along(vars)) {
             # close progress bar
             close(pb)
 
+            # calc slope per year
+            message("\nconvert slopes per ", trend_dt_tot_years, " years to slopes per year: divide total trend by ", trend_dt_tot_years, " years ...")
+            slope_mat_per_year <- slope_mat/trend_dt_tot_years
+            std_error_mat_per_year <- std_error_mat/trend_dt_tot_years
+            if (save_trend_per_decade) slope_mat_per_decade <- slope_mat_per_year*10
+            if (save_trend_per_century) slope_mat_per_century <- slope_mat_per_year*100
+            if (save_trend_per_millenium) slope_mat_per_millenium <- slope_mat_per_year*1000
+
             # output
             message("save ", fout, " ...")
             lon_dim <- nc$dim$lon
             lat_dim <- nc$dim$lat
-            slope_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_as_time_slope"),
-                                          units=varunit, dim=list(lon_dim, lat_dim))
-            std_error_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_as_time_std_error"),
-                                              units=varunit, dim=list(lon_dim, lat_dim))
-            t_val_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_as_time_t_val"),
+            varunit <- nc$var[[vari]]$units # e.g. "°C"
+            slope_per_year_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_per_year"),
+                                                   units=paste0(varunit, " / year"), dim=list(lon_dim, lat_dim))
+            ncvars <- list(slope_per_year_var)
+            if (save_trend_per_decade) {
+                slope_per_decade_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_per_decade"),
+                                                         units=paste0(varunit, " / decade"), dim=list(lon_dim, lat_dim))
+                ncvars <- c(ncvars, list(slope_per_decade_var))
+            }
+            if (save_trend_per_century) {
+                slope_per_century_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_per_century"),
+                                                          units=paste0(varunit, " / century"), dim=list(lon_dim, lat_dim))
+                ncvars <- c(ncvars, list(slope_per_century_var))
+            }
+            if (save_trend_per_millenium) {
+                slope_per_millenium_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_per_millenium"),
+                                                            units=paste0(varunit, " / millenium"), dim=list(lon_dim, lat_dim))
+                ncvars <- c(ncvars, list(slope_per_millenium_var))
+            }
+            std_error_per_year_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_per_year_std_error"),
+                                                       units=paste0(varunit, " / year"), dim=list(lon_dim, lat_dim))
+            t_val_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_t_val"),
                                           units="", dim=list(lon_dim, lat_dim))
-            p_val_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_as_time_p_val"),
+            p_val_var <- ncdf4::ncvar_def(name=paste0("lm_", vars[vari], "_p_val"),
                                           units="", dim=list(lon_dim, lat_dim))
             outnc <- ncdf4::nc_create(filename=fout, force_v4=T, 
-                                      vars=list(slope_var, std_error_var, t_val_var, p_val_var))
-            ncdf4::ncvar_put(nc=outnc, varid=slope_var, vals=slope_mat)
-            ncdf4::ncvar_put(nc=outnc, varid=std_error_var, vals=std_error_mat)
+                                      vars=c(ncvars, list(std_error_per_year_var, t_val_var, p_val_var)))
+            ncdf4::ncvar_put(nc=outnc, varid=slope_per_year_var, vals=slope_mat_per_year)
+            if (save_trend_per_decade) {
+                ncdf4::ncvar_put(nc=outnc, varid=slope_per_decade_var, vals=slope_mat_per_decade)
+            }
+            if (save_trend_per_century) {
+                ncdf4::ncvar_put(nc=outnc, varid=slope_per_century_var, vals=slope_mat_per_century)
+            }
+            if (save_trend_per_millenium) {
+                ncdf4::ncvar_put(nc=outnc, varid=slope_per_millenium_var, vals=slope_mat_per_millenium)
+            }
+            ncdf4::ncvar_put(nc=outnc, varid=std_error_per_year_var, vals=std_error_mat_per_year)
             ncdf4::ncvar_put(nc=outnc, varid=t_val_var, vals=t_val_mat)
             ncdf4::ncvar_put(nc=outnc, varid=p_val_var, vals=p_val_mat)
             ncdf4::ncatt_put(nc=outnc, varid=0, "input", fin)
             ncdf4::ncatt_put(nc=outnc, varid=0, "lm_method", lm_method)
-            ncdf4::ncatt_put(nc=outnc, varid=0, "lm_significance", significance)
             ncdf4::ncatt_put(nc=outnc, varid=0, "lm_df", df)
             ncdf4::nc_close(outnc)
 

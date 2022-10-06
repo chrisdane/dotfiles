@@ -183,12 +183,15 @@ else
     bashhelp(){
         echo "find . -name "*.bak" -type f -delete"
         echo "./script > script.log 2>&1 &"
+        echo "nohup sh -c './script arg1 arg2' > script.log 2>&1 &"
         echo "ln -sfn path/to/file-name link-name"
+        echo "git diff --no-index f1 f2"
         echo "git grep --no-index -e pattern1 --and -e pattern2 --and -e pattern3"
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
         echo "find / -iname openssl.pc 2>/dev/null \# locate alternative"
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
         echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
+        echo "wget url -P destination"
         echo "wget -r -no-parent -e robots=off url"
         echo "while read -r f; do mv '\$f' '\${f//:/_}'; done <files.txt"
         echo "arr=(\$(ls -F historical2_185012* | grep -v codes))"
@@ -367,6 +370,7 @@ else
     # --> it seems multiple spaces count as single spaces
     # --> it seems to be independet of the number of input files provided (29355 in this example)
     ncohelp(){
+        echo "ncatted -O -h -a history,global,d,, mesh_core_deriv_3d_geo.nc # remove history"
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
         echo "ncpdq -a time,depth in out"
         echo "ncap2 -v -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
@@ -378,6 +382,7 @@ else
     }
     pyhelp(){
         echo "%run scriptname"
+        echo "ipynb2py: jupyter nbconvert --to script 'file.ipynb'"
     }
     condahelp(){
         echo "conda create -y -p /path <env>"
@@ -398,6 +403,7 @@ else
     }
     slurmhelp(){
         echo "scontrol show jobid -dd jobid"
+        echo "scancel {1000..1050}"
     }
     officehelp(){
         echo "enter line before TOC:"
@@ -407,6 +413,27 @@ else
         echo "enter field number = page count +1:"
         echo "1: insert -> field -> more fields"
         echo "2: insert formula -> formula = page+1"
+    }
+    octavehelp(){
+        echo "yay -S octave-netcdf"
+        echo "pkg install -forge -verbose netcdf"
+        echo "pkg load netcdf"
+        echo "test_netcdf"
+        echo "pkg install -forge -verbose io"
+        echo "pkg install -forge -verbose statistics"
+        echo "pkg install -forge -verbose octproj"
+    }
+    swifthelp(){
+        echo "swift upload container/subdir f1 [f2]"
+    }
+    qgishelp(){
+        echo "get hull"
+        echo "1 save lon,lat coords as two columns ascii"
+        echo "2 qgis -> layer -> add layer -> add delimited text layer"
+        echo "3 processing toolbox -> vector geometry -> concave hull k-nearest neighbour"
+        echo "4 processing toolbox -> vector geometry -> extract vertices"
+        echo "5 processing toolbox -> vector geometry -> add geometry attributes"
+        echo "6 export -> csv -> select coords"
     }
 
     # aliase
@@ -797,7 +824,7 @@ else
             echo "hash    = $esm_tools_hash"
             echo "src     = $esm_tools_src_path"
         else
-            echo "could not find esm-tools"
+            echo "could not find esm_tools"
             return 1
         fi
     } # esm_tools_info

@@ -40,7 +40,7 @@
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
 # list.files(pattern = glob2rx('*.tif'))
 # list.files(pattern = '^.*\\.tif$')
-# sprintf("%02i", 1) --> 01
+# sprintf("%02i", 1) --> 01; sprintf("%2s", "a") --> " a"
 # rJava pkg error: JDK is incomplete! Please make sure you have a complete JDK. JRE is *not* sufficient: sudo R CMD javareconf
 # cat(capture.output(str(dates_in_list)), sep="\n")
 # return(as.list(environment())) # return everything defined in function
@@ -67,19 +67,19 @@
 #     r: time, lon, lat; Chunking: [1,1440,720]
 # --> ncdf4 reverses variable dims
 # --> ncdump -h header does NOT display the dim order
-#londim <- ncdf4::ncdim_def(name="lon", units="degrees_east", vals=lons)
-#latdim <- ncdf4::ncdim_def(name="lat", units="degrees_north", vals=lats)
-#mondim <- ncdf4::ncdim_def(name="month", units="month", vals=months)
-#ncvars <- vector("list", l=length(data))
-#names(ncvars) <- vars
-#for (i in seq_along(data)) {
-#    ncvars[[i]] <- ncdf4::ncvar_def(name=vars[i], units=units[i], dim=list(londim, latdim, mondim), missval=NaN)
+#ncvars <- vector("list", l=length(clim))
+#names(ncvars) <- names(clim)
+#for (vi in seq_along(ncvars)) {
+#    ncvars[[vi]] <- ncdf4::ncvar_def(name=names(ncvars)[vi], units="", dim=list(londim, latdim, mondim), missval=NaN)
 #}
-#outnc <- ncdf4::nc_create(fout, vars=ncvars, force_v4=T)
-#for (i in seq_along(data)) {
-#    ncdf4::ncvar_put(outnc, ncvars[[i]], data[[i]])
+#outnc <- ncdf4::nc_create(fclim_out, vars=ncvars, force_v4=T)
+#for (i in seq_along(ncvars)) {
+#    ncdf4::ncvar_put(outnc, ncvars[[i]], clim[[i]])
 #}
 #ncdf4::nc_close(outnc)
+#time <- as.POSIXlt(strsplit(trimws(system(paste0("cdo -s showdate ", nc$file), intern=T)), "  ")[[1]], tz="UTC")
+#axis(4, pretty(diff(temp2), n=10), las=2, col=2, col.ticks=2, col.axis=2)
+#mtext("annual temp change [C]", side=4, line=3, col=2)
 
 if (T) { # set F for blank .Rprofile
 

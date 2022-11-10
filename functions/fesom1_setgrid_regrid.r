@@ -123,7 +123,7 @@ for (fi in seq_along(files)) {
     fout <- gsub("\\_+", "_", fout) # replace repeated underscores by one underscore
     if (file.exists(fout)) stop("fout ", fout, " already exists")
     cmd <- paste0(cmd, " ", fin, " ", fout)
-    message("file ", fi, "/", length(files), ": run `", cmd, "` ...")
+    message("\nfile ", fi, "/", length(files), ": run `", cmd, "` ...")
     elapsed[fi] <- system.time(system(cmd))[3]
 
 } # for fi

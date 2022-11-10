@@ -109,7 +109,7 @@ if (interactive()) {
 
 ## defaults
 cdo_silent <- F
-check_nml <- T
+check_nml <- F
 
 # known models
 known_models <- c("echam", "jsbach", "fesom", "recom", "oifs") # known models so far
@@ -303,7 +303,7 @@ for (i in seq_along(models)) {
     # find model output files of year
     outfiles <- NULL 
     message("\ngrep files for `", path, "/*", year, "*` ...")
-    outfiles <- list.files(path=path, pattern=paste0("*", year, "*"), full.names=T)
+    outfiles <- list.files(path=path, pattern=year, full.names=T)
     
     if (length(outfiles) > 0) { # found files
         # keep only files with ".nc", ".grb" or "" extensions
@@ -430,15 +430,19 @@ for (i in seq_along(models)) {
         if (ftype == "non-nc") {
             
             # check if cdo module is loaded
-            cdo_check <- system("cdo -V", ignore.stderr=T) == 0
-            if (!cdo_check) {
+            cdo <- Sys.which("cdo")
+            if (cdo == "") {
                 cmd <- "module load cdo"
                 message(cmd, " ...")
                 system(cmd)
+                cdo <- Sys.which("cdo")
+            }
+            if (cdo == "") {
+                stop("could not find or module load cdo")
             }
 
             # construct cdo grb->nc conversion command 
-            cmd <- "cdo "
+            cmd <- paste0(cdo, " ")
             if (cdo_silent) cmd <- paste0(cmd, "-s ")
             
             ## find and apply code table if present

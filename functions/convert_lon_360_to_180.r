@@ -4,7 +4,8 @@
 if (!file.exists("~/scripts/r/functions/myfunctions.r")) {
     stop("\"~/scripts/r/functions/myfunctions.r\" does not exist")
 } else {
-    source("~/scripts/r/functions/myfunctions.r") # loads convert_lon_360_to_180()
+    message("run `source(\"~/scripts/r/functions/myfunctions.r\")` ...")
+    source("~/scripts/r/functions/myfunctions.r")
 }
 
 # get argument names of convert_lon_360_to_180()

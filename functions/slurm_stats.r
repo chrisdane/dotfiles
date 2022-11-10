@@ -88,8 +88,8 @@ if (length(logs) == 0) { # no log files found
 logs <- as.list(logs)
 for (li in seq_along(logs)) {
     if (!dir.exists(dirname(logs[[li]]))) stop("directory ", dirname(logs[[li]]), " does not exist")
-    message("search recursively for pattern ", li, "/", length(logs), ": \"", glob2rx(basename(logs[[li]])), "\" ...")
-    fs <- list.files(dirname(logs[[li]]), pattern=glob2rx(basename(logs[[li]])), full.names=T, recursive=T)
+    message("search for pattern ", li, "/", length(logs), ": \"", glob2rx(basename(logs[[li]])), "\" ...")
+    fs <- list.files(dirname(logs[[li]]), pattern=glob2rx(basename(logs[[li]])), full.names=T, recursive=F)
     if (length(fs) == 0) stop("found zero files")
     linkinds <- which(Sys.readlink(fs) != "")
     if (length(linkinds) > 0) {

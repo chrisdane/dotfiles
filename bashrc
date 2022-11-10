@@ -114,13 +114,13 @@ else
         fi
     }
     tl(){
-        file=$(ls -t *.log | grep -v _observe_ | head -n1)
-        echo `ls --color=auto -lFh $(pwd)/$file`
+        file=$(\ls -t *.log | grep -v _observe_ | head -n1)
+        echo `\ls --color=auto -lFh $(pwd)/$file`
         tail -f $file
     }
     ml(){
-        file=$(ls -t *.log | grep -v _observe_ | head -n1)
-        echo `ls --color=auto -lFh $(pwd)/$file`
+        file=$(\ls -t *.log | grep -v _observe_ | head -n1)
+        echo `\ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
     pwd2(){
@@ -768,7 +768,7 @@ else
         diff_filelists.r diff_namelists.r
         cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
-        checkall 
+        checkall check_nc_integrity.r 
         myfinger myfinger.r finduser.r 
         get_timestep.r 
         slurm_wait slurm_check.r slurm_stats.r

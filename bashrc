@@ -193,6 +193,7 @@ else
         echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
         echo "wget url -P destination"
         echo "wget -r -no-parent -e robots=off url"
+        echo "wget -r --spider --no-parent --no-remove-listing <url> 2>>listing.txt"
         echo "while read -r f; do mv '\$f' '\${f//:/_}'; done <files.txt"
         echo "arr=(\$(ls -F historical2_185012* | grep -v codes))"
         echo "printf '%s\\n' '\${arr[@]}'"
@@ -394,6 +395,10 @@ else
         echo "conda clean --all"
         echo "conda env remove -n <env> # this removes all packages installed in <env>"
     }
+    jupyterhelp(){
+        echo "ssh -L localhost:9999:localhost:9999 user@host"
+        echo "jupyter lab --no-browser --port=9999"
+    }
     texhelp(){
         echo "latexdiff -t CFONT old.tex new.tex > changes.tex # '-t UNDERLINE' (default) does not work; set link colors to black"
     }
@@ -413,6 +418,7 @@ else
         echo "enter field number = page count +1:"
         echo "1: insert -> field -> more fields"
         echo "2: insert formula -> formula = page+1"
+        echo "libreoffice --convert-to \"pdf\" file.txt"
     }
     octavehelp(){
         echo "yay -S octave-netcdf"
@@ -434,6 +440,26 @@ else
         echo "4 processing toolbox -> vector geometry -> extract vertices"
         echo "5 processing toolbox -> vector geometry -> add geometry attributes"
         echo "6 export -> csv -> select coords"
+    }
+    wgethelp(){
+        echo "user='cdanek1'"; user='cdanek1'
+        echo "pw='mypw'"; pw='mypw'
+        echo "url='ftp://my.cmems-du.eu/Core/GLOBAL_MULTIYEAR_PHY_001_030/cmems_mod_glo_phy_my_0.083_P1D-m/1993/01/mercatorglorys12v1_gl12_mean_19930101_R19930106.nc'"
+        echo "url='ftp://my.cmems-du.eu/Core/SEALEVEL_GLO_PHY_L4_REP_OBSERVATIONS_008_047/dataset-duacs-rep-global-merged-allsat-phy-l4/2016/*'"
+        echo "url='ftp://my.cmems-du.eu/Core/OCEANCOLOUR_GLO_BGC_L4_MY_009_104/cmems_obs-oc_glo_bgc-plankton_my_l4-gapfree-multi-4km_P1D/'"
+        echo "url='ftp://my.cmems-du.eu/Core/OCEANCOLOUR_GLO_BGC_L4_MY_009_104/cmems_obs-oc_glo_bgc-plankton_my_l4-multi-4km_P1M /'"
+        echo "url='ftp://my.cmems-du.eu/Core/OCEANCOLOUR_GLO_BGC_L4_MY_009_104/cmems_obs-oc_glo_bgc-pp_my_l4-multi-4km_P1M /'"
+        echo "url='ftp://my.cmems-du.eu/Core/GLOBAL_MULTIYEAR_BGC_001_029/cmems_mod_glo_bgc_my_0.25_P1M-m/'"
+        url='ftp://my.cmems-du.eu/Core/GLOBAL_MULTIYEAR_BGC_001_029/cmems_mod_glo_bgc_my_0.25_P1M-m/'
+        echo "# get file names"
+        echo "curl -l $url --user '$user':'$pw' # enter user and pw directly"
+        echo "curl --netrc-file ~/.netrc -l $url # use user and pw from .netrc"
+        echo "# download in background (-bqc):"
+        echo "nohup wget -r -bqc --no-directories --user='$user' --password='$pw' $url > dl.log 2>&1 & # this will show pw in top"
+        echo "cat ~/.wgetrc"
+        echo "user=$user"
+        echo "password=$pw"
+        echo "nohup wget -r -bqc --no-directories $url > dl.log 2>&1 & # will look for ~/.wgetrc"
     }
 
     # aliase

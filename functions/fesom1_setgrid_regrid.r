@@ -23,7 +23,10 @@ usage <- paste0("\nUsage:\n $ ", me,
                 " griddes=/path/to/griddes.nc [regrid=-remapycon,global_1] [cmd_before_regrid=-shifttime,-1day] outdir=/path/to/save/result file1 [file2 filen]\n",
                 "\n",
                 " with e.g. griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc\n",
-                "           griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n")
+                "           griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n",
+                "\n",
+                " runs `cdo [remapycon,global_1] -setgrid,<fesom1_griddes.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`\n",
+                " input must either be 2D or, if 3D, levelwise\n")
 
 # check
 if (length(args) < 3) { # griddes, outdir, file1

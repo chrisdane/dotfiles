@@ -6,12 +6,19 @@ rm(list=ls()); graphics.off()
 
 if (interactive()) {
     me <- "fesom1_nod3d_levelwise_fast.r"
-    args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
-              "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/levelwise",
-              "shifttime=-1day",
-              "debug=true",
-              #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20130101.nc")
-              "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/uo_fesom_20130101.nc")
+    if (F) {
+        args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
+                  "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/levelwise",
+                  "shifttime=-1day",
+                  "debug=true",
+                  #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20130101.nc")
+                  "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/uo_fesom_20130101.nc")
+    } else if (T) {
+        args <- c("meshdir=/work/ollie/cdanek/mesh/fesom/CbSCL",
+                  "outdir=~/test",
+                  "debug=true",
+                  "~/test/temp.nc")
+    }
 } else {
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -192,7 +199,7 @@ for (fi in seq_along(files)) {
             # get nod3d dimension name
             if (is.null(n3dimname)) {
                 message("first file: get nod3d dimname ... ", appendLF=F)
-                n3dimname <- paste0(ncks, " -m ", files[fi])
+                n3dimname <- paste0(ncks, " -m ", files[fi]) # like ncdump -h
                 n3dimname <- system(n3dimname, intern=T) # e.g. "    nodes_3d = 3668773 ;"
                 ind <- grep(paste0(" = ", n3, " ;"), n3dimname)
                 if (length(ind) != 1) {
@@ -255,16 +262,18 @@ for (fi in seq_along(files)) {
                     arr_woutNA <- ncdf4::ncvar_get(nc, ncvars[[vi]]$name) # load data of current level wout NA
                     var_dims <- dim(arr_woutNA) # e.g. (119130,12); n2=126859
                     nod_ind <- which(var_dims == length(okinds)) # in this loop all variables have nod3d dim
-                    new_dims <- c(n2, 1, var_dims[-nod_ind]) # n2, 1 placeholder for depth, all other dims
+                    new_dims <- c(nod2=n2, depth=1, var_dims[-nod_ind]) # n2, 1 placeholder for depth, all other dims
                     arr_wNA <- array(NA, dim=new_dims)
                     lhsinds <- rep(",", t=length(new_dims))
                     lhsinds[nod_ind] <- "okinds"
                     lhsinds <- paste(lhsinds, collapse="")
                     cmd <- paste0("arr_wNA[", lhsinds, "] <- arr_woutNA") 
-                    eval(parse(text=cmd)) # e.g. "arr_wNA[okinds,] <- arr_woutNA" or  "arr_wNA[okinds,,,] <- arr_woutNA" depending on input dims
+                    eval(parse(text=cmd)) # e.g. "arr_wNA[okinds,] <- arr_woutNA" or "arr_wNA[okinds,,,] <- arr_woutNA" depending on input dims
+                    start <- c(nod2=1, depth=li, rep(1, t=length(var_dims)-1))
+                    count <- c(nod2=n2, depth=1, rep(-1, t=length(var_dims)-1)) # -1 for complete dim
+                    #stop("asd")
                     ncdf4::ncvar_put(ncout, ncvars[[vi]], vals=arr_wNA, 
-                                     start=c(1, li, rep(1, t=length(var_dims)-1)),
-                                     count=c(n2, 1, rep(-1, t=length(var_dims)-1))) # -1 for complete dim
+                                     start=start, count=count)
                     if (li == 1) {
                         varatts <- ncdf4::ncatt_get(nc, ncvars[[vi]]$name) # original atts
                         for (ai in seq_along(varatts)) {

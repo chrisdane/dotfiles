@@ -9,17 +9,20 @@ if (interactive()) {
     if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/levelwise",
-                  "shifttime=-1day",
-                  "debug=true",
+                  #"shifttime=-1day",
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20130101.nc")
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/uo_fesom_20130101.nc")
     } else if (T) {
+        args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
+                  "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/post/recom",
+                  "shifttime=-1mon",
+                  "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/recom/bgc22_fesom_39440101.nc")
+    } else if (F) {
         args <- c("meshdir=/work/ollie/cdanek/mesh/fesom/CbSCL",
                   "outdir=~/test",
-                  "debug=true",
                   "~/test/temp.nc")
     }
-} else {
+} else { # if not interactive
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
@@ -29,7 +32,7 @@ if (interactive()) {
 usage <- paste0("\nUsage:\n $ ", me, 
                 " meshdir=/path/to/mesh outdir=/path/to/save/result [shifttime=-1d] file1 [file2 filen]\n",
                 "\n",
-                "e.g. meshdir=/pool/data/AWICM/FESOM1/MESHES/core/\n")
+                "e.g. meshdir=/pool/data/AWICM/FESOM1/MESHES/core\n")
 
 # check
 if (length(args) < 3) { # meshdir, outdir, file1
@@ -88,13 +91,6 @@ if (any(grepl("^shifttime=", args))) {
     args <- args[-ind]
 }
 if (!is.null(shifttime)) message("shifttime = ", shifttime)
-
-debug <- F # default
-if (any(grepl("^debug=", args))) {
-    ind <- which(grepl("^debug=", args))
-    debug <- T
-    args <- args[-ind]
-}
 
 if (length(args) == 0) {
     message(usage)
@@ -259,7 +255,7 @@ for (fi in seq_along(files)) {
                 for (vi in seq_along(ncvars)) {
                     if (li == 1) message("var ", vi, "/", length(ncvars), ": ", ncvars[[vi]]$name, "\nlev ", appendLF=F) 
                     message(li, " ", appendLF=F)
-                    arr_woutNA <- ncdf4::ncvar_get(nc, ncvars[[vi]]$name) # load data of current level wout NA
+                    arr_woutNA <- ncdf4::ncvar_get(nc, ncvars[[vi]]$name, collapse_degen=F) # load data of current level wout NA; keep dims of length 1
                     var_dims <- dim(arr_woutNA) # e.g. (119130,12); n2=126859
                     nod_ind <- which(var_dims == length(okinds)) # in this loop all variables have nod3d dim
                     new_dims <- c(nod2=n2, depth=1, var_dims[-nod_ind]) # n2, 1 placeholder for depth, all other dims
@@ -269,8 +265,8 @@ for (fi in seq_along(files)) {
                     lhsinds <- paste(lhsinds, collapse="")
                     cmd <- paste0("arr_wNA[", lhsinds, "] <- arr_woutNA") 
                     eval(parse(text=cmd)) # e.g. "arr_wNA[okinds,] <- arr_woutNA" or "arr_wNA[okinds,,,] <- arr_woutNA" depending on input dims
-                    start <- c(nod2=1, depth=li, rep(1, t=length(var_dims)-1))
-                    count <- c(nod2=n2, depth=1, rep(-1, t=length(var_dims)-1)) # -1 for complete dim
+                    start <- c(nod2=1,  depth=li, rep(1, t=length(var_dims)-1)) # nod2, depth, all_other_dims_without_input_nod3_dim
+                    count <- c(nod2=n2, depth=1,  rep(-1, t=length(var_dims)-1)) # -1 for complete dim
                     #stop("asd")
                     ncdf4::ncvar_put(ncout, ncvars[[vi]], vals=arr_wNA, 
                                      start=start, count=count)

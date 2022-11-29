@@ -49,9 +49,12 @@ if (interactive()) {
     #expidpath <- "/work/ba1103/a270094/AWIESM/test"
     #year <- 2030
     #outname <- "~/awicm1-recom_piControl_og_chunk2_output.ods"
-    expidpath <- "/work/ab0246/a270073/out/awicm3-v3.1/test_mon"
-    year <- 2000
-    outname <- "~/awicm3_output.ods"
+    #expidpath <- "/work/ab0246/a270073/out/awicm3-v3.1/test_mon"
+    #year <- 2000
+    #outname <- "~/awicm3_output.ods"
+    expidpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-hist"
+    year <- 1850
+    outname <- "~/awicm1-recom_production.ods"
 
     #models <- c("echam", "jsbach", "fesom", "recom") # recom and fesom double
     #models <- c("echam", "jsbach", "fesom")
@@ -112,21 +115,32 @@ cdo_silent <- F
 check_nml <- F
 
 # known models
-known_models <- c("echam", "jsbach", "fesom", "recom", "oifs") # known models so far
+# !!! must have `interval_files` and `patttern`
+known_models <- list("echam"=list(interval_files="monthly",
+                                  pattern="_<year>12.01"),
+                     "jsbach"=list(interval_files="monthly",
+                                   pattern="_<year>12.01"),
+                     "fesom"=list(interval_files="annual",
+                                  pattern="_<year>0101"),
+                     "recom"=list(interval_files="annual",
+                                  pattern="_<year>0101"),
+                     "oifs"=list(interval_files="monthly",
+                                 pattern="_<year>-<year+1>.nc_<year>0131-<year+1>0131")) # known models so far
 known_stream_models <- c("echam", "jsbach")
 
 # known variables to throw out
 known_rm_vars <- vector("list", l=length(known_models))
-names(known_rm_vars) <- known_models
+names(known_rm_vars) <- names(known_models)
 known_rm_vars[["echam"]] <- c("hyai", "hyam", "hybi", "hybm")
-known_rm_vars[["jsbach"]] <- known_rm_vars[["echam"]]
+known_rm_vars[["jsbach"]] <- known_rm_vars[["echam"]] # same as echam
 known_rm_vars[["oifs"]] <- c("time_instant", "time_instant_bounds", 
                              "time_centered", "time_centered_bounds", 
                              "time_counter", "time_counter_bounds")
 
 # known dimensions
+# !!! time dim must be named 
 known_dims <- vector("list", l=length(known_models))
-names(known_dims) <- known_models
+names(known_dims) <- names(known_models)
 known_dims[["echam"]] <- c("stream", "operator", "nml_entry", "code", "table", "time"="time", "lon", "lat", "lev", "plev", "nsp", "nc2", "soil_layer")
 known_dims[["jsbach"]] <- c("stream", "operator", "nml_entry", "code", "table", "time"="time", "lon", "lat", "depth", "lev", "tiles", "soil_layer", "belowsurface")
 known_dims[["fesom"]] <- c("time"="time", 
@@ -179,9 +193,15 @@ if (is.null(models)) { # not provided by user
 }
 
 # check models
-if (any(is.na(match(models, known_models)))) {
-    inds <- which(is.na(match(models, known_models)))
-    warning("`models` = \"", paste(models[inds], collapse="\", \""), "\" unknown")
+for (mi in seq_along(known_models)) {
+    if (is.null(known_models[[mi]]$interval_files)) stop("must provide `interval_files` of known_models[[", mi, "]]")
+    if (is.null(known_models[[mi]]$pattern)) stop("must provide `pattern` of known_models[[", mi, "]]")
+}
+
+if (any(is.na(match(models, names(known_models))))) {
+    inds <- which(is.na(match(models, names(known_models))))
+    message("\nprovided `models` = \"", paste(models[inds], collapse="\", \""), 
+            "\" are not defined in `known_models`. remove and continue ...")
     models <- models[-inds]
 }
 if (length(models) == 0) {
@@ -302,8 +322,11 @@ for (i in seq_along(models)) {
     
     # find model output files of year
     outfiles <- NULL 
-    message("\ngrep files for `", path, "/*", year, "*` ...")
-    outfiles <- list.files(path=path, pattern=year, full.names=T)
+    pattern <- known_models[[models[i]]]$pattern
+    if (grepl("<year>", pattern)) pattern <- sub("<year>", year, pattern)
+    if (grepl("<year+1>", pattern)) pattern <- sub("<year+1>", year+1, pattern)
+    message("\ngrep files for `", path, "/*", pattern, "*` ...")
+    outfiles <- list.files(path=path, pattern=pattern, full.names=T)
     
     if (length(outfiles) > 0) { # found files
         # keep only files with ".nc", ".grb" or "" extensions
@@ -345,6 +368,10 @@ for (i in seq_along(models)) {
     # jsbach: hist_jsbach_yassoyr_185005.nc -> monthly 
     # fesom: hist_fesom_wo_18500101.nc -> annual
     
+    # 
+    #files_wout_year <- sub(year, "", outfiles)
+    #files_wout
+
     options(width=1000) # increase width per line for print
     for (j in seq_along(outfiles)) {
 
@@ -546,7 +573,7 @@ for (i in seq_along(models)) {
         message("\nFound ", ndims, " dims:")
         print(dims)
         message("\nFound ", nvars, " vars:")
-        print(vars)
+        print(vars, row.names=F)
         
         # throw out some variables
         if (any(!is.na(match(vars[,"name"], known_rm_vars[[models[i]]])))) {
@@ -575,7 +602,7 @@ for (i in seq_along(models)) {
         # try to determine long name and code of every variable
         message("\nTry do determine variable long name and code if possible ...")
         for (k in seq_along(varids)) {
-            message("var ", k, ": ", vars[k,"name"], " atts:")
+            message("var ", k, "/", length(varids), ": ", vars[k,"name"], " atts:")
             atts <- ncdf.tools::infoNcdfAtts(paste0(path, "/", file), var.id=varids[k])
             print(atts)
             ## longname
@@ -594,7 +621,8 @@ for (i in seq_along(models)) {
                     #message("found \"description\" attribute: ", tmp[k,"longname"])
                 } else {
                     message("no attribute named either \"long_name\" or \"description\" found for variable ", 
-                            vars[k,"name"], " of outfiles[", j, "] = ", file, ". skip ...\n")
+                            vars[k,"name"], " of outfiles[", j, "] = ", file, "\n")
+                    tmp[k,"longname"] <- NA
                 }
             }
             # code
@@ -607,7 +635,7 @@ for (i in seq_along(models)) {
             if (length(table_ind) != 0) {
                 tmp[k,"table"] <- as.integer(atts[table_ind,"value"])
             }
-        }
+        } # for k
         
         if (F) {
             ff = "/work/ba0989/a270077/CMIP6_PMIP4/a270073/CMIP6/CMIP_PMIP/dynveg_true/hist/outdata/fesom/hist_fesom_wo_18500101.nc"
@@ -649,19 +677,14 @@ for (i in seq_along(models)) {
         dt <- gsub(" ", "", dt) # e.g. "10years" 
         message("--> dt = ", dt)
         if (dt == "0seconds") { # `cdo tinfo` only 1 timestep or no success
-            if (T) {
-                message("special")
-                if (models[i] == "fesom") { # test
-                    dt <- "1month"
-                } else if (models[i] == "oifs") {
-                    dt <- "1month"
-                }
+            if (known_models[[models[i]]]$interval_files == "monthly") {
+                dt <- "1month"
+            } else if (known_models[[models[i]]]$interval_files == "annual") {
+                dt <- "1year"
             } else {
-                # ask user
-                dt <- readline(prompt=paste0("dt of file ", file, "? (allowed: \"hour\", \"Xhours\", \"day\", \"Xdays\", \"month\", \"Xmonths\", \"year\" or \"Xyears\")"))
-                if (!any(sapply(c("hour", "hours", "day", "days", "month", "months", "year", "years"), grepl, dt))) stop("not allowed")
+                stop("not implemented")
             }
-        }
+        } # if dt = 0seconds --> file has 1 timestep
 
         for (k in seq_len(nvars)) {
             ntime_per_var <- as.integer(tmp[k,known_dims[[models[i]]]["time"]])

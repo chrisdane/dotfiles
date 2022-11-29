@@ -5,6 +5,15 @@
 # --> the ncdf4::nc_create() and ncdf4::ncvar_put() calls in sl.grid.FESOM3Ddata1Dto2D() take a long time if files are large 
 # --> use cdo splityearmon (and splitday) to reduce file sizes
 # --> must apply `shifttime` before if necessary
+# this is done:
+#```
+#remotes::install_github("FESOM/spheRlab")
+#library(spheRlab)
+#library(ncdf4)
+#spheRlab::sl.grid.FESOM3Ddata1Dto2D(ifile=fin, 
+#                                    ofile=fout,
+#                                    meshdir="/pool/data/AWICM/FESOM1/MESHES/core/")
+#```
 
 # runtime stats:
 # mistral:prepost, core, daily,  12 x 28/29/30/31 timesteps: 49    min per year (subsequent mergetime ~1min)

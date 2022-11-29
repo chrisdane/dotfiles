@@ -90,7 +90,7 @@ else
     # attach cpu temp to prompt if available
     if [ -x "$(command -v sensors)" ]; then
         show_temp(){
-            sensors | grep -oP 'Package id 0.*?\+\K[0-9.]+'
+            sensors 2> /dev/null | grep -oP 'Package id 0.*?\+\K[0-9.]+' # dont show potential errors
         }
         PS1='\[\033[0;34m\]\h:$(show_temp)°C:$(pwd)/>\[\033[0m\] '
     fi

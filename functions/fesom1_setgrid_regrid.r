@@ -24,6 +24,8 @@ usage <- paste0("\nUsage:\n $ ", me,
                 "\n",
                 " with e.g. griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc\n",
                 "           griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n",
+                "           griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_nodes.nc\n",
+                "           griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_elements.nc\n",
                 "\n",
                 " runs `cdo [remapycon,global_1] -setgrid,<fesom1_griddes.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`\n",
                 " input must either be 2D or, if 3D, levelwise\n")

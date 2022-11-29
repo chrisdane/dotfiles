@@ -53,7 +53,7 @@ else
 
     # Source global definitions
     if [ -f /etc/bashrc ]; then
-        source /etc/bashrc
+        source /etc/bashrc # todo: difference `.` and `source # todo: difference `.` and `source``
     fi
     
     export HISTCONTROL=ignoreboth # ignore commands with leading space and duplicates
@@ -430,6 +430,8 @@ else
         echo "pkg install -forge -verbose octproj"
     }
     swifthelp(){
+        echo "module load py-python-swiftclient"
+        echo "swift list"
         echo "swift upload container/subdir f1 [f2]"
     }
     qgishelp(){

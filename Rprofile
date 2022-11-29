@@ -40,6 +40,7 @@
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
 # list.files(pattern = glob2rx('*.tif'))
 # list.files(pattern = '^.*\\.tif$')
+# intersect(intersect(a,b),c) = Reduce(intersect, list(a,b,c))
 # sprintf("%02i", 1) --> 01; sprintf("%2s", "a") --> " a"
 # rJava pkg error: JDK is incomplete! Please make sure you have a complete JDK. JRE is *not* sufficient: sudo R CMD javareconf
 # cat(capture.output(str(dates_in_list)), sep="\n")

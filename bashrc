@@ -770,7 +770,7 @@ else
         rnohup mnohup nclnohup 
         checkall check_nc_integrity.r 
         myfinger myfinger.r finduser.r 
-        get_timestep.r 
+        get_timestep.r get_dir_sizes.sh 
         slurm_wait slurm_check.r slurm_stats.r
         esm_check_yaml.r esm_check_err.r esm_check_paths.r esm_get_output.r
         esm_get_esm_version_exp esm_get_esm_version_home

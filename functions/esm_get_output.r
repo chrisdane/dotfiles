@@ -365,6 +365,7 @@ for (i in seq_along(models)) {
             #      test_jsbach_jsbach_268512.grb
             #      test_jsbach_driving_1860.grb
             #      SR_output_echam6_accw_200001.grb
+            #      esm-hist_185001.01_accw
             message("file = \"", file, "\"")
             stream <- tools::file_path_sans_ext(file) # remove ".<extension>" (no effect if no extension)
             stream <- sub(paste0(expid, "_"), "", stream) # remove "<expid>_" only once
@@ -381,9 +382,10 @@ for (i in seq_along(models)) {
                     # jsbach_268512
                     # driving_1860
                 }
+                # 185001.01_accw
             }
 
-            # try different patterns to remove --> order matters!
+            # try different patterns to remove; order matters!
             pattern_to_remove <- paste0(year, "12.01_") # case: test4_195012.01_aclcim.nc 
             if (grepl(pattern_to_remove, file)) { 
                 stream <- sub(pattern_to_remove, "", stream)
@@ -405,7 +407,11 @@ for (i in seq_along(models)) {
                 stream <- sub(pattern_to_remove, "", stream)
                 # driving
             }
-
+            pattern_to_remove <- paste0(year, "01.01_") # case: esm-hist_185001.01_accw
+            if (grepl(pattern_to_remove, file)) { 
+                stream <- sub(pattern_to_remove, "", stream)
+                # accw
+            }
 
             message("--> stream = \"", stream, "\" ", appendLF=F)
             if (nchar(stream) == 0 || length(stream) == 0) {

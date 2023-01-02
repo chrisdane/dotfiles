@@ -773,11 +773,12 @@ else
         checkall check_nc_integrity.r 
         myfinger myfinger.r finduser.r 
         get_timestep.r get_dir_sizes.sh 
-        slurm_wait slurm_check.r slurm_stats.r
+        slurm_wait slurm_check.r slurm_stats.r slurm_get_npes.r
         esm_check_yaml.r esm_check_err.r esm_check_paths.r esm_get_output.r
         esm_get_esm_version_exp esm_get_esm_version_home
+        esm_tools_helpers.sh
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
-        jsbach_pft_wrt_box.r 
+        jsbach_pft_wrt_box.r jsbach_tile2pft.r jsbach_plot_pft.r 
         fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r
         recom_calc_pCO2a.r
         esgf_get_variables.r esgf_json_tree.sh
@@ -790,7 +791,6 @@ else
         myncrcat.r
         rechunk.r
         convert_lon_360_to_180.r wind.r inertial.r
-        jsbach_tile2pft.r
         when.r kelv feet dom
         )
     mkdir -p ~/bin
@@ -833,98 +833,6 @@ else
         }
     fi
 
-    # esm_tools specific stuff
-    esm_tools_info() {
-        if command -v esm_tools > /dev/null 2>&1; then
-            #echo "run 'esm_tools --version' ..."
-            esm_tools_version=$(esm_tools --version) # e.g. "esm_tools, 6.1.3"
-            esm_master_bin=$(which esm_master) # e.g. ~/.local/bin/esm_master
-            esm_master_py_bin=$(head -1 $esm_master_bin) # "#!/path"
-            esm_master_py_bin=${esm_master_py_bin:2} # "/path"
-            esm_tools_src_path=$($esm_master_py_bin -c "import site; print(site.getusersitepackages())") # e.g. ~/.local/lib/python3.8/site-packages
-            esm_tools_src_path=$(head -1 $esm_tools_src_path/esm-tools.egg-link) # /path/to/esm_tools/src/
-            esm_tools_src_path=$(dirname $esm_tools_src_path) # without /src
-            owd=$(pwd); cd $esm_tools_src_path
-            esm_tools_src_path=$(pwd) # normalize path; better than readlink -f
-            esm_tools_branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
-            esm_tools_hash=$(git rev-parse --short HEAD)
-            cd $owd
-            echo "version = $esm_tools_version"
-            echo "branch  = $esm_tools_branch"
-            echo "hash    = $esm_tools_hash"
-            echo "src     = $esm_tools_src_path ($(hostname))"
-        else
-            echo "could not find esm_tools"
-            return 1
-        fi
-    } # esm_tools_info
-    if check_existance esm_master; then
-        recomp_recom() {
-            if [[ ! -z "$@" && -d $"$@" ]]; then # provided dir is not empty and found
-                setup_path=$(cd "$@"; pwd) # better than readlink -f
-                printf "setup_path = $setup_path"
-                setup_name=$(basename $setup_path) # e.g. "awicm-1.0-recom"
-                echo " --> setup name = $setup_name"
-                recom_path="${setup_path}/recom"
-                echo "recom_path = $recom_path"
-                if [[ ! -d "${recom_path}" ]]; then 
-                    echo "provided setup dir \"$setup_path\" does not have a \"recom\" subdir"
-                    return 1
-                fi
-                fesom_path="${setup_path}/fesom-1.4"
-                echo "fesom_path = $fesom_path"
-                if [[ ! -d "${fesom_path}" ]]; then 
-                    echo "provided setup dir \"$setup_path\" does not have a \"fesom-1.4\" subdir"
-                    return 1
-                fi
-                recom_branch=$(git --git-dir=${recom_path}/.git --work-tree=${recom_path} branch| sed -n -e 's/^\* \(.*\)/\1/p')
-                recom_hash=$(git --git-dir=${recom_path}/.git --work-tree=${recom_path} rev-parse --short HEAD)
-                fesom_branch=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} branch| sed -n -e 's/^\* \(.*\)/\1/p')
-                fesom_hash=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} rev-parse --short HEAD)
-                echo; echo "compile 1) recom on branch ${recom_branch} (${recom_hash}) and then 2) fesom on branch ${fesom_branch} (${fesom_hash}) with esm_tools"
-                esm_tools_info
-                if command -v host &> /dev/null; then
-                    hostname=$(host $(hostname))
-                    hostname=$(echo $hostname | cut -d' ' -f1)
-                else
-                    hostname=$(hostname)
-                fi
-                # must be in parent path of setup
-                owd=$(pwd)
-                echo; echo "cd $(dirname $setup_path)"
-                cd $(dirname $setup_path)
-                echo; echo "esm_master recomp-$setup_name/recom"; echo
-                tic_recom=$(date +%s)
-                esm_master recomp-$setup_name/recom # in this 
-                toc_recom=$(date +%s)
-                echo; echo "esm_master recomp-$setup_name/fesom"; echo
-                tic_fesom=$(date +%s)
-                esm_master recomp-$setup_name/fesom # order!
-                toc_fesom=$(date +%s)
-                msg="finished recom ($((($toc_recom - $tic_recom))) sec) and fesom ($((($toc_fesom - $tic_fesom)/60)) min) compile on $hostname"
-                if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
-                    zenity --info --text="$msg"
-                else # inform just in terminal
-                    echo "program zenity not found"
-                    echo $msg
-                fi
-                echo; echo "cd back to old dir $owd"
-                cd $owd
-                echo; echo "finished"
-                echo; echo "DONT FORGET TO COPY THE NEW FESOM BINARY TO EXPID!!!"
-                echo
-            else # provided dir is empty or not found
-                if [[ ! -z "$@" ]]; then
-                    echo "provided directory \"$@\" not found"
-                else
-                    echo "provided directory \"$@\" empty"
-                fi
-                echo "provide esm setup dir with recom and fesom-1.4 subdirs"
-                return 1
-            fi
-        } # recomp_recom
-    fi # if esm_master exists
-
     # recom stuff
     recom_normalize_nml() {
         fout=$(basename $1)
@@ -933,6 +841,11 @@ else
         sed -i 's/1\.d-/1e-/' $fout # 1.d- --> 1e-
         sed -i '/^[[:space:]]*$/d' $fout # rm white spaces
     }
+
+    # esm_tools stuff
+    if [ -f ~/bin/esm_tools_helpers.sh ]; then
+        source ~/bin/esm_tools_helpers.sh
+    fi
 
     # load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
@@ -944,15 +857,24 @@ else
     fi
     
     # replace prompt with liquidprompt if git is available (thats why do it after .myprofile)
-    if [ -x "$(command -v liquidprompt)" ]; then 
-        if [ -n "$(LC_ALL=C type -t show_temp)" ] && [ "$(LC_ALL=C type -t show_temp)" = function ]; then 
-            LP_PS1_PREFIX="$(show_temp)°C " # add my cpu temp to liquidprompt
+    if true; then
+        if [ -x "$(command -v liquidprompt)" ]; then 
+            if [ -n "$(LC_ALL=C type -t show_temp)" ] && [ "$(LC_ALL=C type -t show_temp)" = function ]; then 
+                LP_PS1_PREFIX="$(show_temp)°C " # add my cpu temp to liquidprompt
+            fi
+            source liquidprompt # check ~/.liquidpromptrc
+        else 
+            echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
         fi
-        source liquidprompt # check ~/.liquidpromptrc
-    else 
-        echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
     fi
-    
+    if false; then
+        if [ -x "$(command -v starship)" ]; then 
+            eval "$(starship init bash)"
+        else 
+            echo "could not load starship --> run 'curl -O https://starship.rs/install.sh', 'chmod +x install.sh', './install.sh -b ~/.local/bin', 'ln -s ~/sw/starship/starship ~/bin/starship'"
+        fi
+    fi
+
     # run bash stuff if available
     if ! check_existance nc-config; then
         echo nc-config is missing!

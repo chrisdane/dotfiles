@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# convert fesom1 3D variables saved non-levelwise to levelwise using ncks  
+# convert fesom1 3D variables saved non-levelwise to levelwise using `ncks -d nod3d,from-1,to-1 # -1 since ncks counts from zero`  
 
 rm(list=ls()); graphics.off()
 

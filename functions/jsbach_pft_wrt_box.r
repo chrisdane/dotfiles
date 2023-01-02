@@ -1,15 +1,5 @@
 #!/usr/bin/env Rscript
 
-# get jsbach PFT fraction or area with respect to grid area and not vegetated area (=`cover_fract`) via
-# ```
-# if `outunit` = "fraction"
-#   if glacier (`cover_type`=1)
-#       pft_fract_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time)
-#   else 
-#       pft_fract_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time) * veg_ratio_max(lon,lat,time)
-# if `outunit` = "area"
-#   same as in `outunit` = "fraction" case but RHS multiplied with `area_m2(lon,lat)`
-# ```
 # - run `jsbach_pft_wrt_box.r` in terminal to display help
 # - simple cdo commands are not possible since mapping from `cover_type` to `cover_fract` is needed as indicated by the different `tilelev` and `pftlev` dimensions above (see reference at the end of script)
 # - the warning `cdo(2) mul (Warning): Input parameters have different levels!` can be ignored
@@ -21,7 +11,7 @@
 options(warn=2) # stop on warnings    
 
 if (interactive()) { # test
-    fjsbach <- "/mnt/lustre02/work/ba1103/a270094/AWIESM/test/input/jsbach/jsbach.nc"
+    fjsbach <- "/work/ba1103/a270094/AWIESM/test/input/jsbach/jsbach.nc"
     fcover_fract <- "/work/ba1103/a270073/post/jsbach/select/cover_fract/awi-esm-1-1-lr_kh800_piControl_og_jsbach_select_cover_fract_global_Jan-Dec_1950-1951.nc"
     cover_fract_varname <- "cover_fract"
     fveg_ratio_max <- "/work/ba1103/a270073/post/jsbach/select/veg_ratio_max/awi-esm-1-1-lr_kh800_piControl_og_jsbach_select_veg_ratio_max_global_Jan-Dec_1950-1951.nc"
@@ -36,7 +26,18 @@ if (interactive()) { # test
     # get args
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
-    help <- paste0("\nUsage:\n",
+    help <- paste0("\nGet jsbach PFT fraction or area with respect to grid area and not vegetated area (=`cover_fract`).\n\n",
+                   "If `outunit` = \"fraction\":\n",
+                   "  if glacier (`cover_type`=1)\n",
+                   "    pft_fract_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time)\n",
+                   "  else\n",
+                   "    pft_fract_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time) * veg_ratio_max(lon,lat,time)\n",
+                   "If `outunit` = \"area\":\n",
+                   "  pft_area_box(lon,lat,pftlev,time) = same as in `outunit` = \"fraction\" case but RHS multiplied with `area_m2(lon,lat)`\n",
+                   "\n",
+                   "The `cdo fldsum` of the result of the `outunit=\"fraction\"`-case divided by the number of land cells and muliplied by 100 gives the percentage of pft wrt global land cover.\n",
+                   "\n", 
+                   "Usage:\n",
                    " $ ", me, " ",
                    "--jsbach=/path/to/input/jsbach.nc ",
                    "--cover_fract=/path/to/cover_fract.nc ",
@@ -45,8 +46,9 @@ if (interactive()) { # test
                    "--veg_ratio_max_varname=veg_ratio_max ",
                    "--fout=/path/to/outputfile ",
                    "--outunit=fraction ",
-                   "--remove_tmp_files=T",
-                   "\n")
+                   "--remove_tmp_files=T\n",
+                   "\n",
+                   "e.g. --jsbach=/work/ab0995/from_Mistral/ab0995/a270046/meshes_default/core/tarfilesT63/input/jsbach/jsbach_T63CORE2_11tiles_5layers_1850.nc\n")
 
     # check args 
     args <- commandArgs(trailingOnly=T)
@@ -163,7 +165,7 @@ if (!any(cover_fract_varnames == cover_fract_varname)) {
          "\" equals `cover_fract_varname` = \"", cover_fract_varname, "\"\n",
          "rerun script with `--cover_fract_varname=<correct_varname>`")
 } else {
-    message("--> found cover_fract varname = \"", cover_fract_varname)
+    message("--> found cover_fract varname = \"", cover_fract_varname, "\"")
 }
 
 # check varnames of veg_ratio_max file 
@@ -176,7 +178,7 @@ if (!any(veg_ratio_max_varnames == veg_ratio_max_varname)) {
          "\" equals `veg_ratio_max_varname` = \"", veg_ratio_max_varname, "\"\n",
          "rerun script with `--veg_ratio_max_varname=<correct_varname>`")
 } else {
-    message("--> found veg_ratio_max varname = \"", veg_ratio_max_varname)
+    message("--> found veg_ratio_max varname = \"", veg_ratio_max_varname, "\"")
 }
 
 # open jsbach forcing file
@@ -237,7 +239,7 @@ for (lcti in seq_along(lcts)) {
 }
 lct <- data.frame(cover_type=lct_vals, 
                   name=lct_types, stringsAsFactors=F)
-message("--> based on the forcing file, there are ", length(lcts), 
+message("--> based on this forcing file, there are ", length(lcts), 
         " possible `cover_type`", ifelse(length(lcts) > 1, "s", ""), ":")
 print(lct)
 
@@ -257,7 +259,7 @@ for (tilei in seq_len(ntiles)) {
     tiles[[tilei]] <- cover_type_vals
     names(tiles)[tilei] <- tilei
 }
-message("--> of those, ", length(unlist(tiles)), " `cover_type`",
+message("--> in this specific file, ", length(unlist(tiles)), " `cover_type`",
         ifelse(length(unlist(tiles)) > 1, "s", ""), " are saved in `ntiles`=", 
         ntiles, " levels:")
 cat(capture.output(str(tiles)), sep="\n")
@@ -265,6 +267,7 @@ cat(capture.output(str(tiles)), sep="\n")
 # calc pft fraction with respect to grid area for all pfts
 fouts <- list()
 cnt <- 0
+pid <- Sys.getpid()
 for (tilei in seq_len(ntiles)) {
     
     cover_types <- tiles[[tilei]]
@@ -287,7 +290,7 @@ for (tilei in seq_len(ntiles)) {
         ncells_rel <- ncells/nland*100
         message("--> ", ncells, " grid cells = ", round(ncells_rel, 2), " % of ", nland, " land cells") 
         pft_name <- gsub(" ", "_", names(cover_types)[typei])
-        fmask <- paste0(outpath, "/tmp_mask_cover_type_", cover_types[typei], "_", pft_name, ".nc")
+        fmask <- paste0(outpath, "/tmp_mask_cover_type_", cover_types[typei], "_", pft_name, "_", pid, ".nc")
         message("create mask file ", fmask, " ...")
         if (tilei == 1 && typei == 1) {
             lon_dim <- jsbach_nc$dim$lon
@@ -301,7 +304,7 @@ for (tilei in seq_len(ntiles)) {
 
         # get area in m2
         if (outunit == "area" && tilei == 1 && typei == 1) {
-            farea <- paste0(outpath, "/tmp_area_m2.nc")
+            farea <- paste0(outpath, "/tmp_area_m2_", pid, ".nc")
             cmd <- paste0(cdo, " gridarea ", fmask, " ", farea)
             message("run `", cmd, "` ...")
             system(cmd)
@@ -309,7 +312,7 @@ for (tilei in seq_len(ntiles)) {
         
         # calc pft fraction with respect to grid cell area = eq 1.5 jsbach docu = 
         # grid_area(j) * cover_fract(i,j,k) * veg_ratio_max(i,j)
-        fouti <- paste0(outpath, "/pft_fract_box_", pft_name, ".nc")
+        fouti <- paste0(outpath, "/pft_fract_box_", pft_name, "_", pid, ".nc")
         cnt <- cnt + 1
         fouts[[cnt]] <- list(lev=cover_types[typei],
                              cover_type=cover_types[typei],
@@ -362,7 +365,7 @@ ncells_rel <- ncells/nland*100
 message("--> ", ncells, " grid cells = ", round(ncells_rel, 2), " % of ", nland, " land cells") 
 
 # mask file for bare land
-fmask <- paste0(outpath, "/tmp_mask_cover_type_non_glacier.nc")
+fmask <- paste0(outpath, "/tmp_mask_cover_type_non_glacier_", pid, ".nc")
 message("create mask file ", fmask, " ...")
 mask_var <- ncdf4::ncvar_def(name="mask_non_glacier", units="", 
                              dim=list(lon_dim, lat_dim), missval=0)
@@ -371,7 +374,7 @@ ncdf4::ncvar_put(nc=outnc, varid=mask_var, vals=inds_non_glacier)
 ncdf4::nc_close(outnc)
         
 # calc bare land
-fouti <- paste0(outpath, "/pft_fract_box_bare_land.nc")
+fouti <- paste0(outpath, "/pft_fract_box_bare_land_", pid, ".nc")
 cnt <- cnt + 1
 fouts[[cnt]] <- list(lev=0,
                      cover_type=NA,
@@ -392,16 +395,16 @@ message("run `", cmd, "` ...")
 system(cmd)
 
 # set bare land zaxis to get merged with other pfts along lev dimension
-cmd <- paste0(cdo, " zaxisdes ", fouts[[cnt-1]]$fout, " > ", outpath, "/tmp_zaxisdes.txt")
+cmd <- paste0(cdo, " zaxisdes ", fouts[[cnt-1]]$fout, " > ", outpath, "/tmp_zaxisdes_", pid, ".txt")
 message("run `", cmd, "` ...")
 system(cmd)
 cmd <- paste0(cdo, 
               " -setlevel,", fouts[[cnt]]$lev,
-              " -setzaxis,", outpath, "/tmp_zaxisdes.txt ", fouti, " ", 
+              " -setzaxis,", outpath, "/tmp_zaxisdes_", pid, ".txt ", fouti, " ", 
               outpath, "/tmp && mv ", outpath, "/tmp ", fouti)
 message("run `", cmd, "` ...")
 system(cmd)
-if (remove_tmp_files) file.remove(paste0(outpath, "/tmp_zaxisdes.txt"))
+if (remove_tmp_files) file.remove(paste0(outpath, "/tmp_zaxisdes_", pid, ".txt"))
 
 if (remove_tmp_files) {
     message("`remove_tmp_files`=T --> rm mask file ", fmask, " ...")

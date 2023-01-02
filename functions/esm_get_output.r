@@ -115,7 +115,7 @@ cdo_silent <- F
 check_nml <- F
 
 # known models
-# !!! must have `interval_files` and `patttern`
+# !!! must have `interval_files` and `pattern`
 known_models <- list("echam"=list(interval_files="monthly",
                                   pattern="_<year>12.01"),
                      "jsbach"=list(interval_files="monthly",
@@ -348,9 +348,8 @@ for (i in seq_along(models)) {
 
     } else if (length(outfiles) == 0) { # no files found
         message("--> no files found --> skip to next model")
+        next # model i
     }
-
-    if (is.null(outfiles)) next # model i
     
     # remove any duplicated
     outfiles <- unique(outfiles)

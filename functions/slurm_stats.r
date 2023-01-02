@@ -9,7 +9,7 @@ rm(list=ls()); graphics.off()
 #   * batch  | batch             46.0
 # from slurm logfiles (string "* StepID | JobName      NodeHours" in logfile is used for node hours detection")
 
-# assumption: average energy transfer (or power) of node = 350 W
+# assumption: mean energy transfer (or power) of node = 350 W
 energy_transfer_node <- 350 # W; from hendryk per mail
 
 # for comparison
@@ -28,7 +28,10 @@ if (interactive()) {
     #args <- c("--exclude=1,2,3,18,44,45", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest/log/*_compute_*-*_*.log")
     #args <- c("/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl/scripts/esm-piControl_compute_31480101-31481231_34357868.log", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl/scripts/esm-piControl_compute_31490101-31491231_34359503.log")
     #args <- "*_awicm_compute_*"
-    args <- "*_compute_*-*_*.log"
+    #args <- "*_compute_*-*_*.log"
+    #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/log/*_compute_*-*_*.log"
+    #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/log/*_compute_*-*_(2100732|2100996).log"
+    args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/log/*_compute_*-*_*.log"
 
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
@@ -80,41 +83,39 @@ if (length(logs) == 0) { # no log files found
         quit()
     }
 } else {
-    message("provided ", length(logs), " logs/patterns:")
-    print(logs)
+    message("check provided ", length(logs), " logs/patterns ...")
+    head(logs, n=10)
+    message("...")
+    tail(logs, n=10)
 }
 
-# apply potential wildcards recursively 
-logs <- as.list(logs)
-for (li in seq_along(logs)) {
-    if (!dir.exists(dirname(logs[[li]]))) stop("directory ", dirname(logs[[li]]), " does not exist")
-    message("search for pattern ", li, "/", length(logs), ": \"", glob2rx(basename(logs[[li]])), "\" ...")
-    fs <- list.files(dirname(logs[[li]]), pattern=glob2rx(basename(logs[[li]])), full.names=T, recursive=F)
-    if (length(fs) == 0) stop("found zero files")
-    linkinds <- which(Sys.readlink(fs) != "")
-    if (length(linkinds) > 0) {
-        message("remove ", length(linkinds), " links:")
-        print(fs[linkinds])
-        fs <- fs[-linkinds]
+# apply potential wildcards
+if (interactive()) {
+    tmp <- list.files(dirname(logs), pattern=basename(logs), full.names=T)
+    if (length(tmp) == 0) {
+        tmp <- list.files(dirname(logs), pattern=glob2rx(basename(logs)), full.names=T)
+        if (length(tmp) == 0) {
+            stop("interactive found zero files")
+        }
     }
-    logs[[li]] <- fs
+    logs <- tmp
 }
-logs <- as.vector(unlist(logs))
+
+if (any(!file.exists(logs))) {
+    inds <- which(!file.exists(logs))
+    print(logs[inds])
+    stop("these ", length(inds), "/", length(logs), " provided logs do not exist")
+}
+logs <- normalizePath(logs) # clean path and dereference potential links
+logs <- unique(logs)
 dirs <- dirname(logs)
 logs <- basename(logs)
 
-# remove potential duplicates 
-dupinds <- which(duplicated(logs))
-if (length(dupinds) > 0) {
-    message("\nremove ", length(dupinds), " duplicated logs:")
-    print(logs[dupinds])
-    logs <- logs[-dupinds]
-    dirs <- dirs[-dupinds]
-}
-
 # finished loading logfiles
-message("\nwork on ", length(logs), " logs:")
-print(logs)
+message("\nwork on ", length(logs), " logs ...")
+head(logs, n=10)
+message("...")
+tail(logs, n=10)
 
 # ask user which substring in logfile is jobid
 nchars <- nchar(logs)
@@ -181,6 +182,10 @@ if (F) { # debug
 # try 1/2: `sacct`
 sacct_colnames <- c("jobid", "cluster", "partition", "account", "submit", "start", "end", "elapsed", "nnodes") 
 sacct_nchars <-   c(     20,        20,          20,        20,       20,      20,    20,        20,       10)
+if (T) {
+    sacct_colnames <- c(sacct_colnames, "NodeList")
+    sacct_nchars <-   c(sacct_nchars,           500)
+}
 cmd <- paste0("sacct ",
               "--noheader ",
               "--jobs=", paste(jobids, collapse=","), " ",
@@ -198,7 +203,6 @@ df <- read.fwf(sacct, widths=sacct_nchars+1, header=F, col.names=sacct_colnames,
 #       1392153.batch              levante                                    ba1103  2022-08-08T02:35:12  2022-08-08T02:35:12  2022-08-08T04:54:54             02:19:42          1 
 #      1392153.extern              levante                                    ba1103  2022-08-08T02:35:12  2022-08-08T02:35:12  2022-08-08T04:54:54             02:19:42         10 
 #           1392153.0              levante                                    ba1103  2022-08-08T02:35:15  2022-08-08T02:35:15  2022-08-08T04:53:11             02:17:56         10
-
 if (nrow(df) > 0) { # slurm job info found from at least one job via sacct
     df <- data.frame(apply(df, 2, function(x) gsub("\\s+", "", x)))
     #     jobid            cluster   partition account  submit                start                 end                   elapsed    nnodes
@@ -219,7 +223,7 @@ if (nrow(df) != length(jobids)) { # not all slurm job infos were found via sacct
     # 2: job is too old and not in sacct database anymore --> sacct returns nothing
     
     missing_jobid_inds <- which(is.na(match(jobids, df$jobid)))
-    message("\ntry 2/2: slurm jobinfos of ", length(missing_jobid_inds), 
+    message("\nsome jobids were not found in sacct database or not completed yet --> try 2/2: slurm jobinfos of ", length(missing_jobid_inds), 
             " jobs not found in sacct database --> check if there is a dkrz job summary for these jobs via pattern:\n   \"",
             dkrz_grep_pattern, "\" ...")
     for (jobi in seq_along(missing_jobid_inds)) {
@@ -284,7 +288,6 @@ if (length(nainds) > 0) {
     jobids <- jobids[-nainds]
 }
 
-
 ## finish
 
 # sort along jobid
@@ -321,6 +324,38 @@ for (logi in seq_along(queue)) {
 # calc energy assuming a constant energy transfer per node
 energy_kWh <- energy_transfer_node * node_hours / 1e3 # W * h / 1e3 = kWh
 
+# clean node lists
+nodes <- df$NodeList
+nodes <- gsub("l\\[", "", nodes)
+nodes <- gsub("\\]", "", nodes)
+nodes <- strsplit(nodes, ",")
+for (ni in seq_along(nodes)) {
+    tmp <- vector("list", l=length(nodes[[ni]]))
+    for (nj in seq_along(tmp)) {
+        tmp2 <- as.integer(strsplit(nodes[[ni]][[nj]], "-")[[1]]) # e.g. 30156-30157
+        if (length(tmp2) == 1) {
+            tmp[[nj]] <- tmp2
+        } else if (length(tmp2) == 2) {
+            tmp[[nj]] <- seq(tmp2[1], tmp2[2], b=1L)
+        } else {
+            stop("should not happen")
+        }
+    } # for nj
+    nodes[[ni]] <- unlist(tmp) # sort not necessary; sacct returnes nodelist already sorted
+} # for ni
+nodes_unique <- unique(unlist(nodes)) 
+nodes_cumulative_hode_hours <- nodes_cumulative_njobs <- nodes_cumulative_jobids <- rep(0, t=length(nodes_unique))
+for (ni in seq_along(nodes_unique)) {
+    inds <- which(sapply(nodes, function(x) any(x == nodes_unique[ni])))
+    if (length(inds) > 0) {
+        nodes_cumulative_hode_hours[ni] <- nodes_cumulative_hode_hours[ni] + sum(node_hours[inds])
+        nodes_cumulative_njobs[ni] <- nodes_cumulative_njobs[ni] + length(inds)
+        nodes_cumulative_jobids[ni] <- nodes_cumulative_jobids[ni] + sum(as.integer(jobids[inds])) # proxy for point of experiment
+    }
+} # for ni
+nodes_cumulative_hode_hours_mean <- nodes_cumulative_hode_hours/nodes_cumulative_njobs
+nodes_cumulative_jobids_mean <- nodes_cumulative_jobids/nodes_cumulative_njobs
+
 # print result
 message("\n****************************************************************\n",
         "results of ", length(jobids), " jobids (check if you want to rerun with `--exclude=1,2,...`):\n")
@@ -332,17 +367,20 @@ options(width=oo$width)
 # print elapsed stats without queue time
 message("\nelapsed stats (in hours) without queue time:")
 print(summary(elapsed_hour))
-elapsed_per_run_hour <- mean(elapsed_hour, na.rm=T)
-message("\nmean elapsed per run without queue time: ", round(elapsed_per_run_hour, 2), " hours")
-message("--> throughput per day without queue time = 24 hours/day / ", round(elapsed_per_run_hour, 2), " hours/run = ", 
-        round(24/elapsed_per_run_hour, 2), " ~ ", 
-        floor(24/elapsed_per_run_hour), " runs/day")
+elapsed_per_run_hour_mean <- mean(elapsed_hour, na.rm=T)
+elapsed_per_run_hour_median <- median(elapsed_hour, na.rm=T)
+message("\nmean (median) elapsed per run without queue time: ", round(elapsed_per_run_hour_mean, 2), 
+        " (", round(elapsed_per_run_hour_median, 2), ") hours")
+message("--> mean (median) throughput per day without queue time = 24 hours/day / ", round(elapsed_per_run_hour_mean, 2), 
+        " (", round(elapsed_per_run_hour_median, 2), ") hours/run = ", 
+        round(24/elapsed_per_run_hour_mean, 2), " (", round(24/elapsed_per_run_hour_median, 2), ") ~ ", 
+        floor(24/elapsed_per_run_hour_mean), " (", floor(24/elapsed_per_run_hour_median), ") runs/day")
 facs <- c(10, 30, 50, 100, 150, 165, 200, 250, seq(300, 1000, b=100))
 message(paste(paste0("--> ", facs, " runs need ", 
-                     round(facs*elapsed_per_run_hour, 2), " hours = ",
-                     round(facs*elapsed_per_run_hour/24, 2), " days = ",
-                     round(facs*elapsed_per_run_hour/24/7, 2), " weeks = ",
-                     round(facs*elapsed_per_run_hour/24/30.5, 2), " months"),
+                     round(facs*elapsed_per_run_hour_mean, 2), " (", round(facs*elapsed_per_run_hour_median, 2), ") hours = ",
+                     round(facs*elapsed_per_run_hour_mean/24, 2), " (", round(facs*elapsed_per_run_hour_median/24, 2), ") days = ",
+                     round(facs*elapsed_per_run_hour_mean/24/7, 2), " (", round(facs*elapsed_per_run_hour_median/24/7, 2), ") weeks = ",
+                     round(facs*elapsed_per_run_hour_mean/24/30.5, 2), " (", round(facs*elapsed_per_run_hour_median/24/30.5, 2), ") months"),
               collapse="\n"))
 
 # print queue stats
@@ -354,16 +392,19 @@ message("\nqueue stats in hours:")
 print(summary(queue_hour))
 
 # print elapsed stats with queue time
-elapsed_per_run_hour_with_queue <- elapsed_per_run_hour + mean(queue_hour, na.rm=T)
-message("\nmean elapsed per run including average queue time: ", round(elapsed_per_run_hour_with_queue, 2), " hours")
-message("--> throughput per day including average queue time = 24 hours/day / ", round(elapsed_per_run_hour_with_queue, 2), " hours/run = ", 
-        round(24/elapsed_per_run_hour_with_queue, 2), " ~ ", 
-        floor(24/elapsed_per_run_hour_with_queue), " runs/day")
+elapsed_per_run_hour_mean_with_queue <- elapsed_per_run_hour_mean + mean(queue_hour, na.rm=T)
+elapsed_per_run_hour_median_with_queue <- elapsed_per_run_hour_median + median(queue_hour, na.rm=T)
+message("\nmean (median) elapsed per run including mean (median) queue time: ", round(elapsed_per_run_hour_mean_with_queue, 2), 
+        " (", round(elapsed_per_run_hour_median_with_queue, 2), ") hours")
+message("--> throughput per day including mean (median) queue time = 24 hours/day / ", round(elapsed_per_run_hour_mean_with_queue, 2), 
+        " (", round(elapsed_per_run_hour_median_with_queue, 2), ") hours/run = ", 
+        round(24/elapsed_per_run_hour_mean_with_queue, 2), " (", round(24/elapsed_per_run_hour_median_with_queue, 2), ") ~ ", 
+        floor(24/elapsed_per_run_hour_mean_with_queue), " (", floor(24/elapsed_per_run_hour_median_with_queue), ") runs/day")
 message(paste(paste0("--> ", facs, " runs need ", 
-                     round(facs*elapsed_per_run_hour_with_queue, 2), " hours = ",
-                     round(facs*elapsed_per_run_hour_with_queue/24, 2), " days = ",
-                     round(facs*elapsed_per_run_hour_with_queue/24/7, 2), " weeks = ",
-                     round(facs*elapsed_per_run_hour_with_queue/24/30.5, 2), " months"),
+                     round(facs*elapsed_per_run_hour_mean_with_queue, 2), " (", round(facs*elapsed_per_run_hour_median_with_queue, 2), ") hours = ",
+                     round(facs*elapsed_per_run_hour_mean_with_queue/24, 2), " (", round(facs*elapsed_per_run_hour_median_with_queue/24, 2), ") days = ",
+                     round(facs*elapsed_per_run_hour_mean_with_queue/24/7, 2), " (", round(facs*elapsed_per_run_hour_median_with_queue/24/7, 2), ") weeks = ",
+                     round(facs*elapsed_per_run_hour_mean_with_queue/24/30.5, 2), " (", round(facs*elapsed_per_run_hour_median_with_queue/24/30.5, 2), ") months"),
               collapse="\n"))
 
 # print nnodes stats
@@ -418,6 +459,18 @@ axis(2, at=pretty(y, n=10), las=2)
 points(start, y)
 lines(start, y)
 invisible(dev.off())
+
+if (F) { # scatter
+    plot(nodes_unique, nodes_cumulative_hode_hours_mean, t="n",
+         xlab="node", ylab="mean node hours", xaxt="n", yaxt="n")
+    axis(1, pretty(nodes_unique, n=10))
+    axis(2, pretty(nodes_cumulative_hode_hours_mean, n=20), las=2)
+    mtext("blue/red ~ start/end of experiment", 3)
+    cols <- rev(RColorBrewer::brewer.pal(10, "Spectral"))
+    colvec <- seq(min(nodes_cumulative_jobids_mean), max(nodes_cumulative_jobids_mean), l=10)
+    colvec <- findInterval(nodes_cumulative_jobids_mean, colvec, all.inside=T)
+    points(nodes_unique, nodes_cumulative_hode_hours_mean, pch=16, col=cols[colvec])
+}
 
 options(oo) # restore value from before
 message()

@@ -150,11 +150,31 @@ else
             find -name "*$1*" 2>/dev/null | sort 
         fi
     }
+    myfindi(){
+        if [ $# -eq 0 ]; then
+            echo "Usage: myfind search_pattern"
+            return 1
+        else
+            find -iname "*$1*" 2>/dev/null 
+        fi
+    }
+    myfindis(){
+        if [ $# -eq 0 ]; then
+            echo "Usage: myfind search_pattern"
+            return 1
+        else
+            find -iname "*$1*" 2>/dev/null | sort 
+        fi
+    }
     psme(){
         ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
     }
     topme(){
         top -u $(whoami)
+    }
+    mount_check(){
+        echo "mount -l -t fuse.sshfs"
+        mount -l -t fuse.sshfs
     }
     archhelp(){
         echo "debug"
@@ -191,13 +211,13 @@ else
         echo "find / -iname openssl.pc 2>/dev/null \# locate alternative"
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
         echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
-        echo "wget url -P destination"
-        echo "wget -r -no-parent -e robots=off url"
-        echo "wget -r --spider --no-parent --no-remove-listing <url> 2>>listing.txt"
         echo "while read -r f; do mv '\$f' '\${f//:/_}'; done <files.txt"
         echo "arr=(\$(ls -F historical2_185012* | grep -v codes))"
         echo "printf '%s\\n' '\${arr[@]}'"
         echo "for f in \${arr[@]}; do echo \$f; cdo ntime \$f; done"
+    }
+    scphelp(){
+        echo "scp -O -r dir/ user@host:/path # -O legacy mode to prevent 'path canonicalization failed' error"
     }
     vpnhelp(){
         echo "sudo openconnect -v --background --certificate=cert --csd-wrapper=script --timestamp --printcookie -u <name> <server>"
@@ -278,7 +298,7 @@ else
         echo "git branch -d old_branch # delete old branch locally"
         echo "git push origin --delete old_branch # delete old branch remote"
         echo "@other pc: git remote prune origin # to delete the old branch in the 'git branch -av' list"
-    }
+    } # githelp
     llg(){
         repofiles="$(git ls-tree --full-tree --name-only -r HEAD)"
         if [ $? -ne 0 ]; then
@@ -306,7 +326,7 @@ else
         printf '%s\n' "${dus[@]}"
         printf '%s' "--> $nrepofiles tracked files in repo; total size of ${repopath//$homeprefix/$repl_pat_home}: "
         du -hcs $repopath | tail -1
-    }
+    } # llg
     gp(){
         if git rev-parse --git-dir > /dev/null 2>&1; then
             if [ -f ~/.myprofile ]; then
@@ -357,7 +377,7 @@ else
         echo "cdo sub fin -timmean fin anom_fin # calc anomaly"
         echo "cdo eof,40 anom_fin eigen_val eigen_vec" 
         echo "cdo eofcoeff eigen_vec anom_fin obase"
-    }
+    } # cdohelp
     # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
     #/bin/echo "$(printf "%*s" 131072 ".")" > /dev/null --> too long
@@ -400,7 +420,15 @@ else
         echo "jupyter lab --no-browser --port=9999"
     }
     texhelp(){
-        echo "latexdiff -t CFONT old.tex new.tex > changes.tex # '-t UNDERLINE' (default) does not work; set link colors to black"
+        echo "latexdiff -t CFONT old.tex new.tex > changes.tex # -t UNDERLINE; -t CFONT; set link colors to black"
+        # minimal example:
+        echo "\documentclass{article}"
+        echo "\usepackage[margin=0.7in]{geometry}"
+        echo "\usepackage[parfill]{parskip}"
+        echo "\usepackage[utf8]{inputenc}"
+        echo "\usepackage{amsmath,amssymb,amsfonts,amsthm}"
+        echo "\begin{document}"
+        echo "\end{document}"
     }
     inkscapehelp(){
         echo "clip/mask: draw rectangle over area you want to clip. select both. objects -> clip -> set"
@@ -453,22 +481,42 @@ else
         echo "url='ftp://my.cmems-du.eu/Core/OCEANCOLOUR_GLO_BGC_L4_MY_009_104/cmems_obs-oc_glo_bgc-pp_my_l4-multi-4km_P1M /'"
         echo "url='ftp://my.cmems-du.eu/Core/GLOBAL_MULTIYEAR_BGC_001_029/cmems_mod_glo_bgc_my_0.25_P1M-m/'"
         url='ftp://my.cmems-du.eu/Core/GLOBAL_MULTIYEAR_BGC_001_029/cmems_mod_glo_bgc_my_0.25_P1M-m/'
-        echo "# get file names"
-        echo "curl -l $url --user '$user':'$pw' # enter user and pw directly"
-        echo "curl --netrc-file ~/.netrc -l $url # use user and pw from .netrc"
-        echo "# download in background (-bqc):"
-        echo "nohup wget -r -bqc --no-directories --user='$user' --password='$pw' $url > dl.log 2>&1 & # this will show pw in top"
+        echo "# password issue"
         echo "cat ~/.wgetrc"
         echo "user=$user"
         echo "password=$pw"
-        echo "nohup wget -r -bqc --no-directories $url > dl.log 2>&1 & # will look for ~/.wgetrc"
+        echo "# get file names wget; does not work"
+        echo "wget -r -np --spider -R "index.html*" -e robots=off <url> \# ignore all index.html; does not work, also not with --no-remove-listing"
+        echo "# get file names curl; does not work recursively"
+        echo "curl -l $url --user '$user':'$pw' # enter user and pw directly"
+        echo "curl --netrc-file ~/.netrc -l $url # use user and pw from .netrc"
+        echo "# get file names lftp"
+        echo "lftp <url> # and"
+        echo "du -a > fnames.txt # 'lftp -e \"du -a\" <url> > fnames.txt' does not work"
+        echo "# download in background (-bqc):"
+        echo "nohup wget -r -bqc --no-directories --user='$user' --password='$pw' $url > dl.log 2>&1 & # this will show pw in top"
+        echo "nohup wget -r -bqc --no-directories $url > dl.log 2>&1 & # will look for ~/.wgetrc; -P /path/to/destination"
+    } # wgethelp
+    cmakehelp(){
+        echo "cmake -LAH"
+        echo "add to cmakelists.txt:"
+        echo "execute_process(COMMAND \"\${CMAKE_COMMAND}\" \"-E\" \"environment\")"
+        echo "add to cmakelists.txt:"
+        echo "get_cmake_property(_variableNames VARIABLES)"
+        echo "list (SORT _variableNames)"
+        echo "foreach (_variableName \${_variableNames})"
+        echo "    message(STATUS \"\${_variableName}=\${\${_variableName}}\")"
+        echo "endforeach()"
+        echo "add to cmakelists.txt:"
+        echo "set(foo \$ENV{NETCDF_CXX_INCLUDE_DIRECTORIES})"
+        echo "message(STATUS \"bar \${too}\")"
     }
 
     # aliase
     # check aliase with 'type alias'
+    alias ls='ls --color=auto -F' # default from /etc/skel/.bashrc: ls='ls --color=auto'
     alias ll='ls --color=auto -lFh'
     alias la='ls --color=auto -alFh'
-    alias ls='ls --color=auto -F' # default: ls='ls --color=auto'
     # ls only files excluding .dotfiles
     alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls'
     # ls only files including .dotfiles
@@ -850,10 +898,14 @@ else
     # load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
         printf '%*s' "$ncol" | tr ' ' "-"
-        printf " ~/.myprofile "
+        printf " ~/.myprofile start"
         printf '%*s' "$ncol" | tr ' ' "-"
         echo ""
         source ~/.myprofile
+        printf '%*s' "$ncol" | tr ' ' "-"
+        printf " ~/.myprofile finish"
+        printf '%*s' "$ncol" | tr ' ' "-"
+        echo ""
     fi
     
     # replace prompt with liquidprompt if git is available (thats why do it after .myprofile)

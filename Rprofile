@@ -68,6 +68,14 @@
 #     r: time, lon, lat; Chunking: [1,1440,720]
 # --> ncdf4 reverses variable dims
 # --> ncdump -h header does NOT display the dim order
+# get dims of var:
+#vardimids <- nc$var[[varname]]$dimids
+#dimids <- sapply(nc$dim, "[[", "id")
+#dimlengths <- sapply(nc$dim, "[[", "len")
+#vardimlengths <- dimlengths[match(vardimids, dimids)]
+#inds <- which(vardimlengths != 1)
+#attributes(data)$dimname <- names(vardimlengths)[inds]
+#########
 #ncvars <- vector("list", l=length(clim))
 #names(ncvars) <- names(clim)
 #for (vi in seq_along(ncvars)) {

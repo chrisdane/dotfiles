@@ -530,7 +530,6 @@ else
         alias vim='vimx'
     fi
     alias less="less -i -R" # ignore case; escape colors
-    alias more="less -i -R"
 
     # own variables
     export VISUAL=vim

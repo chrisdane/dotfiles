@@ -9,4 +9,4 @@ LP_ENABLE_BATT=0 # display status of battery
 LP_ENABLE_JOBS=0 # display number of running and sleeping jobs
 LP_ENABLE_TEMP=0 # display highest sys temp; needs `sensors` or `acpi`
 LP_ENABLE_DETACHED_SESSIONS=0 # display number of detached multiplexer sessions; needs `screen` or `tmux`
-
+LP_ENABLE_MODULES=0 # do not display loaded modules

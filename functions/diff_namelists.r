@@ -29,6 +29,7 @@ if (!interactive()) {
 # check
 if (!file.exists(args[1])) stop("file ", args[1], " does not exist")
 if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
+args <- normalizePath(args)
 
 options(width=3000) # increase length per print line from default 80
 

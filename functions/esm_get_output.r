@@ -46,21 +46,22 @@ if (interactive()) {
     #expidpath <- "/work/ab1095/a270094/AWIESM/SR_output"
     #year <- 2000
     #outname <- "~/awicm1-recom_piControl_og_chunk1_output.ods"
-    #expidpath <- "/work/ba1103/a270094/AWIESM/test"
-    #year <- 2030
+    expidpath <- "/work/ba1103/a270094/AWIESM/test"
+    year <- 2030
     #outname <- "~/awicm1-recom_piControl_og_chunk2_output.ods"
+    outname <- "/work/ab1095/a270073/awicm1-recom_piControl_og_chunk2_output.ods"
     #expidpath <- "/work/ab0246/a270073/out/awicm3-v3.1/test_mon"
     #year <- 2000
     #outname <- "~/awicm3_output.ods"
-    expidpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-hist"
-    year <- 1850
-    outname <- "~/awicm1-recom_production.ods"
+    #expidpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-hist"
+    #year <- 1850
+    #outname <- "~/awicm1-recom_production.ods"
 
     #models <- c("echam", "jsbach", "fesom", "recom") # recom and fesom double
     #models <- c("echam", "jsbach", "fesom")
     #models <- "echam"
     #models <- "fesom"
-    #models <- "jsbach"
+    models <- "jsbach"
     #models <- "recom"
     #models <- c("echam", "jsbach")
     #models <- c("fesom", "recom")
@@ -126,12 +127,19 @@ known_models <- list("echam"=list(interval_files="monthly",
                                   pattern="_<year>0101"),
                      "oifs"=list(interval_files="monthly",
                                  pattern="_<year>-<year+1>.nc_<year>0131-<year+1>0131")) # known models so far
+if (F) { # adjust manually depending on output
+    message("\nspecial: adjust echam+jsbach fpatterns\n")
+    known_models$echam$interval_files="annual"
+    known_models$echam$pattern="_<year>01"
+    known_models$jsbach$interval_files="annual"
+    known_models$jsbach$pattern="_<year>01"
+}
 known_stream_models <- c("echam", "jsbach")
 
 # known variables to throw out
 known_rm_vars <- vector("list", l=length(known_models))
 names(known_rm_vars) <- names(known_models)
-known_rm_vars[["echam"]] <- c("hyai", "hyam", "hybi", "hybm")
+known_rm_vars[["echam"]] <- c("hyai", "hyam", "hybi", "hybm", "time_bnds")
 known_rm_vars[["jsbach"]] <- known_rm_vars[["echam"]] # same as echam
 known_rm_vars[["oifs"]] <- c("time_instant", "time_instant_bounds", 
                              "time_centered", "time_centered_bounds", 
@@ -348,6 +356,7 @@ for (i in seq_along(models)) {
 
     } else if (length(outfiles) == 0) { # no files found
         message("--> no files found --> skip to next model")
+        stop("asd")
         next # model i
     }
     
@@ -356,9 +365,7 @@ for (i in seq_along(models)) {
 
     # files summary
     message("\n--> found ", length(outfiles), " files")
-    print(head(outfiles, n=30))
-    print("...")
-    print(tail(outfiles, n=30))
+    print(outfiles)
     dirnames <- dirname(outfiles)
     outfiles <- basename(outfiles)
 
@@ -527,20 +534,19 @@ for (i in seq_along(models)) {
                 }
             }
             
-            # apply conversion
-            cmd <- paste0(cmd, "-f nc copy ", path, "/", file, " ", 
-                          outpath, "/", file, ".nc")
-            
-            # run final cdo conversion command
-            message("\nconvert ", 
-                    utils:::format.object_size(file.info(paste0(path, "/", file))$size, "Mb"), 
+            # run grb->cdo conversion
+            fout <- paste0(outpath, "/", file, ".nc")
+            cmd <- paste0(cmd, "-f nc copy ", path, "/", file, " ", fout)
+            message("\nconvert ", utils:::format.object_size(file.info(paste0(path, "/", file))$size, "Mb"), 
                     " file to nc ...")
             message("run `", cmd, "` ...")
             if (grepl("mlogin", Sys.info()["nodename"])) {
                 stop("cannot run conversion command on mlogin. switch to mistralpp and rerun the script")
             }
-            system(cmd)
-            
+            check <- system(cmd)
+            if (!file.exists(fout)) stop("converted nc file ", fout, " does not exist but should")
+            if (check != 0) stop("grb->nc conversion failed --> result ", fout, " not correct")
+
             # new file and path names for current file
             file <- paste0(file, ".nc")
             path <- outpath

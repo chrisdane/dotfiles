@@ -28,7 +28,8 @@ usage <- paste0("\nUsage:\n $ ", me,
                 "           griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_elements.nc\n",
                 "\n",
                 " runs `cdo [remapycon,global_1] -setgrid,<fesom1_griddes.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`\n",
-                " input must either be 2D or, if 3D, levelwise\n")
+                " input must either be 2D or, if 3D, levelwise\n\n",
+                " if <in_irreg_2D_or_levelwise> already has a proper griddes, e.g. cmorized data, `setgrid` is not necessary\n")
 
 # check
 if (length(args) < 3) { # griddes, outdir, file1
@@ -84,7 +85,7 @@ if (any(grepl("^regrid=", args))) {
     regrid <- sub("regrid=", "", args[ind])
     args <- args[-ind]
 }
-if (!is.null(regrid)) message("regrid = ", regrid)
+if (!is.null(regrid)) message("regrid = \"", regrid, "\"")
 
 cmd_before_regrid <- NULL # default
 if (any(grepl("^cmd_before_regrid=", args))) {
@@ -92,7 +93,7 @@ if (any(grepl("^cmd_before_regrid=", args))) {
     cmd_before_regrid <- sub("cmd_before_regrid=", "", args[ind])
     args <- args[-ind]
 }
-if (!is.null(cmd_before_regrid)) message("cmd_before_regrid = ", cmd_before_regrid)
+if (!is.null(cmd_before_regrid)) message("cmd_before_regrid = \"", cmd_before_regrid, "\"")
 
 if (length(args) == 0) {
     message(usage)
@@ -122,19 +123,29 @@ for (fi in seq_along(files)) {
     cmd <- paste0(cmd, " -setgrid,", griddes)
     if (!is.null(cmd_before_regrid)) {
         cmd <- paste0(cmd, " ", cmd_before_regrid)
-        fout <- paste0(fout, "_", gsub("[[:punct:]]", "_", cmd_before_regrid))
+        fout <- paste0(fout, "_", sub("__", "_", gsub("[[:punct:]]", "_", gsub("\\s+", "", cmd_before_regrid))))
     }
     fout <- paste0(fout, ifelse(tools::file_ext(fin) == "", "", "."), tools::file_ext(fin))
     fout <- gsub("\\_+", "_", fout) # replace repeated underscores by one underscore
-    if (file.exists(fout)) stop("fout ", fout, " already exists")
-    cmd <- paste0(cmd, " ", fin, " ", fout)
-    message("\nfile ", fi, "/", length(files), ": run `", cmd, "` ...")
-    elapsed[fi] <- system.time(system(cmd))[3]
+    if (file.exists(fout)) {
+        message("fout ", fout, " already exists. skip to next file")
+    } else {
+        cmd <- paste0(cmd, " ", fin, " ", fout)
+        message("\nfile ", fi, "/", length(files), ": run `", cmd, "` ...")
+        tic <- Sys.time()
+        check <- system(cmd)
+        if (check != 0) stop("cmd failed")
+        toc <- Sys.time()
+        elapsed[fi] <- toc - tic
+    }
 
 } # for fi
 
-message("\n--> took ", round(sum(elapsed)), " sec = ", round(sum(elapsed)/60), " min\n",
-        "--> ", round(mean(elapsed)), " sec = ", round(mean(elapsed)/60), " min per file")
+okinds <- which(!is.na(elapsed))
+if (length(okinds) > 0) {
+    message("\n--> took ", round(sum(elapsed[okinds])), " sec = ", round(sum(elapsed[okinds])/60), " min\n",
+            "--> ", round(mean(elapsed[okinds])), " sec = ", round(mean(elapsed[okinds])/60), " min per file")
+}
 
 message("\nfinished\n")
 

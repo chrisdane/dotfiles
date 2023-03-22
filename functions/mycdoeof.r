@@ -268,6 +268,11 @@ for (vi in seq_along(varnames)) {
             tic <- Sys.time()
             system(cmd)
             toc <- Sys.time()
+            
+            if (!file.exists(paste0(outdir, "/", fout_eigval))) {
+                stop("result \"", outdir, "/", fout_eigval, "\" does not exist but should")
+            }
+
             elapsed <- toc - tic
             elapsed <- paste0("\n--> `cdo ", method, "` call took ", round(elapsed), " ", attr(elapsed, "units"))
             message(elapsed)

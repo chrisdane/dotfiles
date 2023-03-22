@@ -1,8 +1,8 @@
-## R
+# r
 
-# https://csgillespie.github.io/efficientR/3-3-r-startup.html#r-startup
-# image white lines: http://cran.stat.auckland.ac.nz/doc/FAQ/R-FAQ.html#Why-are-there-unwanted-borders
-## usefull commands
+# 0/1 = 0
+# 1/0 = Inf; -1/0 = -Inf
+# 0/0 = NaN
 #options(warn=2) # stop on warnings
 #options(warn=0) # back to default
 # options(warn=-1) # turn off
@@ -31,11 +31,13 @@
 #file_sizes_pretty <- sapply(file_sizes_byte, utils:::format.object_size, "auto")
 # strsplit(x, "\\s+")[[1]] arbitrary number of spaces blanks
 # getAnywhere(objectname)
+# check <- system(cmd)
+# if (check != 0) stop("cmd failed")
 # legend("topleft", "abc", col=1, lty=1, pch=22, pt.bg=col2rgba("gray", 0.3), pt.lwd=0, pt.cex=4, bty="n", cex=2)
 # # system.file("extdata", "2012.csv", package = "testdat")
 # options(menu.graphics=FALSE) #graphics dialogs always seem to crash R
 # inds <- matrix(inds, nrow=1) # multi dim index
-# sort(x, index.return=T)$ix
+# sort(x, index.return=T)$ix !!! pay attention to NA
 # pdf.options(useDingbats = TRUE) https://yihui.name/knitr/demo/graphics/
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
 # list.files(pattern = glob2rx('*.tif'))
@@ -69,12 +71,11 @@
 # --> ncdf4 reverses variable dims
 # --> ncdump -h header does NOT display the dim order
 # get dims of var:
-#vardimids <- nc$var[[varname]]$dimids
-#dimids <- sapply(nc$dim, "[[", "id")
-#dimlengths <- sapply(nc$dim, "[[", "len")
-#vardimlengths <- dimlengths[match(vardimids, dimids)]
-#inds <- which(vardimlengths != 1)
-#attributes(data)$dimname <- names(vardimlengths)[inds]
+#dimids_nc <- sapply(nc$dim, "[[", "id")
+#dimids_var <- nc$var[[varname]]$dimids # e.g. 2 3 0 = i j time
+#dimids_var_nc_inds <- match(dimids_var, dimids_nc) # e.g. 3 4 1 = i j time
+#dimnames_var <- names(dimids_nc)[dimids_var_nc_inds]
+#names(dimids_var) <- names(dimids_var_nc_inds) <- dimnames_var
 #########
 #ncvars <- vector("list", l=length(clim))
 #names(ncvars) <- names(clim)
@@ -89,6 +90,9 @@
 #time <- as.POSIXlt(strsplit(trimws(system(paste0("cdo -s showdate ", nc$file), intern=T)), "  ")[[1]], tz="UTC")
 #axis(4, pretty(diff(temp2), n=10), las=2, col=2, col.ticks=2, col.axis=2)
 #mtext("annual temp change [C]", side=4, line=3, col=2)
+# decrease space between labels and ticks:
+#axis(2, at=yat, labels=F, tck=-0.03, las=2, cex.axis=0.9) # ticks only
+#axis(2, at=yat, line=-0.5, lwd=0, las=2, cex.axis=0.9) # add labels
 
 if (T) { # set F for blank .Rprofile
 

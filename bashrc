@@ -176,6 +176,9 @@ else
         echo "mount -l -t fuse.sshfs"
         mount -l -t fuse.sshfs
     }
+    linuxhelp(){
+        echo "chmod -R go+r \${HOME}"
+    }
     archhelp(){
         echo "debug"
         echo "journalctl --follow # or -f"
@@ -404,6 +407,7 @@ else
     pyhelp(){
         echo "%run scriptname"
         echo "ipynb2py: jupyter nbconvert --to script 'file.ipynb'"
+        echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
     }
     condahelp(){
         echo "conda create -y -p /path <env>"
@@ -447,6 +451,7 @@ else
         echo "1: insert -> field -> more fields"
         echo "2: insert formula -> formula = page+1"
         echo "libreoffice --convert-to \"pdf\" file.txt"
+        echo "copy pic from googledoc: 1: double-click pic, 2: shift+right-click on pic"
     }
     octavehelp(){
         echo "yay -S octave-netcdf"
@@ -820,6 +825,7 @@ else
         checkall check_nc_integrity.r 
         myfinger myfinger.r finduser.r 
         get_timestep.r get_dir_sizes.sh 
+        ping_wait
         slurm_wait slurm_check.r slurm_stats.r slurm_get_npes.r
         esm_check_yaml.r esm_check_err.r esm_check_paths.r esm_get_output.r
         esm_get_esm_version_exp esm_get_esm_version_home

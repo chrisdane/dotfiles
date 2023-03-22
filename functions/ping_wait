@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    url="example.com"
+else
+    url="$1"
+fi
+        
+while sleep 1; do 
+    echo "$(date): 'ping ${url}' ..."
+    if ping -c 1 ${url} &> /dev/null; then
+        msg="ping to url ${url} works!"
+        if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
+            echo "run zenity ..."
+            zenity --info --text="$msg"
+        else # inform just in terminal
+            echo "program zenity not found"
+            echo $msg
+        fi
+        echo "stopping ping_wait"
+        exit
+    fi # if job is running or not
+done # while 
+

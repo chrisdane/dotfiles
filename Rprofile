@@ -58,8 +58,40 @@
 #abline(a=0, b=1) 1:1 line
 #ls("package:seacarb") # list all functions of package alphabetical
 #base::getRversion() > "4.1.2"
-# variable dims nc versus r:
-#1
+# keep NULL as list element: 
+# li[length(list)+1] <- list(NULL) # i.e. not `[[` in rhs!
+# names(li)[lenght(li)] <- "myname"
+# nc <- RNetCDF::open.nc(fname)
+# RNetCDF::print.nc(nc)
+# str(RNetCDF::file.inq.nc(nc))
+#List of 6
+# $ ndims     : int 6
+# $ nvars     : int 11
+# $ ngatts    : int 46
+# $ unlimdimid: int 0
+# $ format    : chr "classic4"
+# $ libvers   : chr "4.8.1 of Feb 16 2022 20:56:37 $"# variable dims nc versus r:
+#str(RNetCDF::att.inq.nc(nc, "NC_GLOBAL", 0)) # to 45
+#List of 4
+# $ id    : int 0
+# $ name  : chr "Conventions"
+# $ type  : chr "NC_CHAR"
+# $ length: num 256
+#str(RNetCDF::dim.inq.nc(nc, 0)) # to 5
+#List of 4
+# $ id    : int 0
+# $ name  : chr "time"
+# $ length: num 420
+# $ unlim : logi TRUE
+#str(RNetCDF::var.inq.nc(nc, 0)) # to 10
+#List of 6
+# $ id    : int 0
+# $ name  : chr "time"
+# $ type  : chr "NC_DOUBLE"
+# $ ndims : int 1
+# $ dimids: int 0
+# $ natts : int 6
+ #1
 #ncdump: time, lat, lon
 #     r: lon , lat, time; Chunking: [1440,720,1]
 #2

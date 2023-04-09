@@ -53,7 +53,7 @@ else
 
     # Source global definitions
     if [ -f /etc/bashrc ]; then
-        source /etc/bashrc # todo: difference `.` and `source # todo: difference `.` and `source``
+        source /etc/bashrc # todo: difference `.` and `source`
     fi
     
     export HISTCONTROL=ignoreboth # ignore commands with leading space and duplicates
@@ -175,9 +175,6 @@ else
     mount_check(){
         echo "mount -l -t fuse.sshfs"
         mount -l -t fuse.sshfs
-    }
-    linuxhelp(){
-        echo "chmod -R go+r \${HOME}"
     }
     archhelp(){
         echo "debug"
@@ -353,6 +350,9 @@ else
         fi
         history -d $((HISTCMD)) # remove last command from bash history: the actual `gp`-call
     } # gp
+    svnhelp(){
+        echo "colored diff: svn diff | vi -R - # or vim"
+    }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
         echo "cdo --operators"

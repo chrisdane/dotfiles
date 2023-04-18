@@ -9,10 +9,13 @@ if (interactive()) { # test
         args <- c("--fin=/work/ba1103/a270073/data/gregor_and_fay_2021/data/v2021.04/SeaFlux_v2021.04_spco2_SOCOM_unfilled_1982-2019.nc",
                   "--fout=/work/ba1103/a270073/data/gregor_and_fay_2021/post/v2021.04/SeaFlux_v2021.04_spco2_SOCOM_unfilled_lm_<varname>_as_time_1982-2019.nc"
                   , "--from_year=2009")
-    } else if (T) {
+    } else if (F) {
         args <- c("--fin=/work/ba1103/a270073/post/CanESM5-CanOE/select/mlotst/CanESM5-CanOE_historical_and_ssp126_r1i1p2f1_CanESM5-CanOE_select_mlotst_global_Jan-Dec_1970-2019.nc",
                   "--fout=/work/ba1103/a270073/post/CanESM5-CanOE/select/mlotst/test_lm_<varname>_as_time.nc"
                   , "--spatialdimnames=i,j")
+    } else if (T) {
+        args <- c("--fin=/work/ba1103/a270073/post/EN.4.2.2/select/rho/EN.4.2.2.f.analysis.g10.202111_rho.nc",
+                  "--fout=/work/ba1103/a270073/post/EN4.2.2/select/lm_rho_as_time/EN.4.2.2.f.analysis.g10.202111_<varname>.nc")
     }
 } else {
     args <- commandArgs(trailingOnly=F) # get args
@@ -29,10 +32,11 @@ help <- paste0("\nUsage:\n",
                "[--lm_method=stats::lm] ",
                "[--auto_rechunk=true] ",
                "--fin=[/path/to/]input.nc ",
-               "--fout=[/path/to/]output_<varname>.nc ",
+               "--fout=\"[/path/to/]output_<varname>.nc\" ",
                "\n\n",
                "e.g. ", me, " --fin=~/test.nc --fout=~/test_lm_<varname>_as_time.nc\n", 
-               "     ", me, " --timedimname=Time --spatialdimnames=nodes_2d --from_year=2000 --fin=~/test.nc --fout=~/test_lm_<varname>_as_time.nc\n")
+               "     ", me, " --timedimname=Time --spatialdimnames=nodes_2d --from_year=2000 --fin=~/test.nc --fout=\"~/test_lm_<varname>_as_time.nc\"\n\n",
+               "Dependencies: `nccopy` if --auto_rechunk=true and rechunking is necessary\n")
 
 # check args 
 if (length(args) < 2 || length(args) > 7) {
@@ -84,7 +88,7 @@ if (any(grepl("--from_year", args))) {
     message("provided `from_year` = ", from_year)
 } else {
     from_year <- NULL
-    message("`--from_year=<tom_year>` not provided --> use default: complete time series")
+    message("`--from_year=<from_year>` not provided --> use default: complete time series")
 }
 if (any(grepl("--to_year", args))) {
     to_year <- sub("--to_year=", "", args[grep("--to_year=", args)])
@@ -198,7 +202,7 @@ for (vari in seq_along(varnames)) {
             if (!is.character(chunksizes)) { # variable is not chunked
                 msg <- paste0("variable ", varname, " of this file is not chunked:\n  `ncdump -hs ", 
                               fin, " | grep ", varname, ":_ChunkSizes`\nreturns nothing\n")
-            } else { # if file is chunked
+            } else { # if variable is chunked
                 # e.g. "\t\tmlotst:_ChunkSizes = 1, 291, 360 ;"
                 chunksizes <- sub(paste0("\t\t", varname, ":_ChunkSizes = "), "", chunksizes) # "1, 291, 360 ;"
                 chunksizes <- sub(" ;", "", chunksizes) # 1, 291, 360
@@ -293,15 +297,21 @@ for (vari in seq_along(varnames)) {
         message("variable has ", length(time_vari), " timepoints from ", min(posixct_vari), " to ", max(posixct_vari))
         from_ind <- min(time_vari_inds_in_all)
         if (!is.null(from_year)) {
-            from_ind <- min(which(posixlt_vari$year+1900L == from_year))
-            message("--> provided `from_year` = ", from_year, " --> continue with time points from position ", from_ind)
+            message("--> provided `from_year` = ", from_year)
+            from_ind <- which(posixlt_vari$year+1900L == from_year)
+            if (length(from_ind) == 0) stop("did not find this year in years of input")
+            from_ind <- min(from_ind)
+            message("--> continue with time points from position ", from_ind)
         } else {
             message("--> `from_year` not provided --> continue with time points from position ", from_ind)
         }
         to_ind <- max(time_vari_inds_in_all)
         if (!is.null(to_year)) {
-            to_ind <- max(which(posixlt_vari$year+1900L == to_year))
-            message("--> provided `to_year` = ", to_year, " --> continue with time points until position ", to_ind)
+            message("--> provided `to_year` = ", to_year)
+            to_ind <- which(posixlt_vari$year+1900L == to_year)
+            if (length(to_ind) == 0) stop("did not find this year in years of input")
+            to_ind <- max(to_ind)
+            message(" --> continue with time points until position ", to_ind)
         } else {
             message("--> `to_year` not provided --> continue with time points until position ", to_ind)
         }

@@ -701,11 +701,13 @@ else
         else
             vimx_return=1 # no vimx
         fi
-        if [[ $vim_return == 1 ]] && [[ $vimx_return == 1 ]]; then
-            if check_existance vim; then
+        if check_existance vim; then
+            if [[ $vim_return == 1 ]]; then
                 echo warning: vim exists but with -clipboard and -xterm_clipboard
             fi
-            if check_existance vimx; then
+        fi
+        if check_existance vimx; then
+            if [[ $vimx_return == 1 ]]; then
                 echo warning: vimx exists but with -clipboard and -xterm_clipboard
             fi
         fi

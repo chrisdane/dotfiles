@@ -529,11 +529,9 @@ else
     alias R='R --quiet'
     alias R0='unalias R 2>/dev/null; R --no-init-file'
     alias vi='vim'
-    if false; then
-        if check_existance vimx; then
-            alias vi='vimx' # for +clipboard
-            alias vim='vimx'
-        fi
+    if check_existance vimx; then
+        alias vi='vimx' # for +clipboard
+        alias vim='vimx'
     fi
     alias less="less -i -R" # ignore case; escape colors
 

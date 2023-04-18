@@ -13,9 +13,13 @@ if (interactive()) { # test
         args <- c("--fin=/work/ba1103/a270073/post/CanESM5-CanOE/select/mlotst/CanESM5-CanOE_historical_and_ssp126_r1i1p2f1_CanESM5-CanOE_select_mlotst_global_Jan-Dec_1970-2019.nc",
                   "--fout=/work/ba1103/a270073/post/CanESM5-CanOE/select/mlotst/test_lm_<varname>_as_time.nc"
                   , "--spatialdimnames=i,j")
-    } else if (T) {
+    } else if (F) {
         args <- c("--fin=/work/ba1103/a270073/post/EN.4.2.2/select/rho/EN.4.2.2.f.analysis.g10.202111_rho.nc",
                   "--fout=/work/ba1103/a270073/post/EN4.2.2/select/lm_rho_as_time/EN.4.2.2.f.analysis.g10.202111_<varname>.nc")
+    } else if (T) {
+        args <- c("--spatialdimnames=rgrid",
+                  "--fin=~/test/era5_sf00_1M_era5_select_WS10_global_Jan-Dec_1970-1970.nc",
+                  "--fout=~/test/fu_<varname>.nc")
     }
 } else {
     args <- commandArgs(trailingOnly=F) # get args
@@ -140,12 +144,12 @@ message("--> file has ", length(varnames), " variables: ", paste(varnames, colla
 
 # open file
 message("open ", fin, " ...")
+nc <- ncdf4::nc_open(fin)
 
 # get complete time dim of file
-nc <- ncdf4::nc_open(fin)
 if (!any(names(nc$dim) == timedimname)) stop("not any dim of this file has a dim named \"", timedimname, "\". rerun with `--timedimname=<time dim name>`")
 time_all <- nc$dim[[timedimname]]$vals
-if (length(time_all) <= 3) stop("time dim of this file is of length ", length(time_all), " <= 3 --> too short for linear regression")
+if (length(time_all) <= 3) stop("time dim \"", timedimname, "\" of this file is of length ", length(time_all), " <= 3 --> too short for linear regression")
 timedimid_nc <- nc$dim[[timedimname]]$id
 posixct_all <- as.POSIXct(strsplit(trimws(system(paste0("cdo -s showdate ", fin), intern=T)), "  ")[[1]], tz="UTC")
 dimids_nc <- sapply(nc$dim, "[[", "id")
@@ -191,88 +195,74 @@ for (vari in seq_along(varnames)) {
         ntot <- prod(nspatial_vals)
         
         # check chunks of current variable
-        #chunksizes <- nc$var[[varname]]$chunksizes # this sometimes returns NA although file is chunked!
-        ncdump <- Sys.which("ncdump")
-        if (ncdump == "") {
-            messag("\ncould not find ncdump -> cannot check if variable is chunked")
-        } else {
-            cmd <- paste0(ncdump, " -hs ", fin, " | grep ", varname, ":_ChunkSizes") 
-            chunksizes <- suppressWarnings(system(cmd, intern=T))
-            msg <- NULL
-            if (!is.character(chunksizes)) { # variable is not chunked
-                msg <- paste0("variable ", varname, " of this file is not chunked:\n  `ncdump -hs ", 
-                              fin, " | grep ", varname, ":_ChunkSizes`\nreturns nothing\n")
-            } else { # if variable is chunked
-                # e.g. "\t\tmlotst:_ChunkSizes = 1, 291, 360 ;"
-                chunksizes <- sub(paste0("\t\t", varname, ":_ChunkSizes = "), "", chunksizes) # "1, 291, 360 ;"
-                chunksizes <- sub(" ;", "", chunksizes) # 1, 291, 360
-                chunksizes <- strsplit(chunksizes, ", ")[[1]] # "1"   "291" "360"
-                options(warn=2); chunksizes <- as.integer(chunksizes); options(warn=warn)
-                if (length(chunksizes) != length(dimnames_var)) stop("never happened")
-                names(chunksizes) <- dimnames_var
-                # does the time dim chunk length equal the complete time dim length?
-                if (chunksizes[which(dimnames_var == timedimname)] != nc$dim[[timedimname]]$len) {
-                    msg <- paste0("variable ", varname, " is chunked (", 
-                                  paste(paste0(names(chunksizes), "=", chunksizes), collapse=","), ")\n")
-                }
+        chunksizes <- nc$var[[varname]]$chunksizes # for old ncdf4 < 1.19 versions this may return NA although variable is chunked
+        msg <- NULL
+        if (all(is.na(chunksizes))) { # variable is not chunked
+            msg <- paste0("variable ", varname, " of this file is not chunked")
+        } else { # variable is chunked
+            names(chunksizes) <- dimnames_var
+            # does the time dim chunk length equal the complete time dim length?
+            if (chunksizes[which(dimnames_var == timedimname)] != nc$dim[[timedimname]]$len) {
+                msg <- paste0("variable ", varname, " is chunked (", 
+                              paste(paste0(names(chunksizes), "=", chunksizes), collapse=","), ")\n")
             }
-            if (!is.null(msg)) {
-                msg_dims <- rep(1, t=nspatialdims)
-                if (nspatialdims == 1) {
-                    msg_dims[1] <- spatial_dims[[1]]$len
-                } else if (nspatialdims == 2) {
-                    # tested so far: chunk the longest of all spatial dims, e.g. (366,1,1440) and not (366,720,1)
-                    msg_dims[which.max(nspatial_vals)] <- nspatial_vals[which.max(nspatial_vals)]
+        }
+        if (!is.null(msg)) { # variable is not chunked or does not contain complete time dim
+            msg_dims <- rep(1, t=nspatialdims)
+            if (nspatialdims == 1) {
+                msg_dims[1] <- spatial_dims[[1]]$len
+            } else if (nspatialdims == 2) {
+                # tested so far: chunk the longest of all spatial dims, e.g. (366,1,1440) and not (366,720,1)
+                msg_dims[which.max(nspatial_vals)] <- nspatial_vals[which.max(nspatial_vals)]
+            } else {
+                stop(nspatialdims, "-dim case ", paste(spatialdimnames, collapse=","), " not defined")
+            }
+            msg <- paste0(msg, 
+                          "--> this is inefficient for reading time series\n",
+                          "--> rechunk data with `nccopy -u -w -c time/", nc$dim[[timedimname]]$len, ",",
+                          paste(paste0(spatialdimnames, "/", msg_dims), collapse=","), " in out` and rerun script")
+            message("\n", msg)
+            if (auto_rechunk) {
+                message("--> `auto_rechunk` = true --> rechunk variable ", varname, " ...")
+                nccopy <- Sys.which("nccopy")
+                if (nccopy == "") {
+                    message("--> did not find program `nccopy` --> cannot rechunk input data --> continue with original fin ...")
                 } else {
-                    stop(nspatialdims, "-dim case ", paste(spatialdimnames, collapse=","), " not defined")
-                }
-                msg <- paste0(msg, 
-                              "--> this is inefficient for reading time series\n",
-                              "--> rechunk data with `nccopy -u -w -c time/", nc$dim[[timedimname]]$len, ",",
-                              paste(paste0(spatialdimnames, "/", msg_dims), collapse=","), " in out` and rerun script")
-                message("\n", msg)
-                if (auto_rechunk) {
-                    message("--> `auto_rechunk` = true --> rechunk variable ", varname, " ...")
-                    nccopy <- Sys.which("nccopy")
-                    if (nccopy == "") {
-                        message("--> did not find program `nccopy` --> cannot rechunk input data --> continue with original fin ...")
+                    # rechunk with nccopy
+                    fin_rechunk <- paste0(outpath, "/tmp_rechunk_pid", Sys.getpid(), "_", basename(fin))
+                    if (file.exists(fin_rechunk)) {
+                        message("tmp rechunked ", varname, " file already exists --> skip nccopy cmd ...")
                     } else {
-                        # rechunk with nccopy
+                        # cmd 1: select variable
+                        cmd_rechunk <- paste0(cdo, " -select,name=", varname, " ", fin, " ", fin_rechunk)
+                        message("1: select ", varname, ": run `", cmd_rechunk, "` ...")
+                        check <- system(cmd_rechunk)
+                        if (check != 0) stop("cmd failed")
+                        # cmd 2: rechunk
                         # -w: rechunk file completely in memory --> this is faster but needs large memory --> if OOM, run wout -w
-                        fin_rechunk <- paste0(outpath, "/tmp_rechunk_pid", Sys.getpid(), "_", basename(fin))
-                        if (file.exists(fin_rechunk)) {
-                            message("tmp rechunked ", varname, " file already exists --> skip nccopy cmd ...")
-                        } else {
-                            # cmd 1: select variable
-                            cmd_rechunk <- paste0(cdo, " -select,name=", varname, " ", fin, " ", fin_rechunk)
-                            message("1 select: run `", cmd_rechunk, "` ...")
-                            check <- system(cmd_rechunk)
-                            if (check != 0) stop("cmd failed")
-                            # cmd 2: rechunk
-                            cmd_rechunk <- paste0(nccopy, " -u -w -c ", timedimname, "/", nc$dim[[timedimname]]$len, ",",
-                                                  paste(paste0(spatialdimnames, "/", msg_dims), collapse=","), " ", fin, " ", fin_rechunk)
-                            message("2 rechunk: run `", cmd_rechunk, "` ...")
-                            check <- system(cmd_rechunk)
-                            if (check != 0) stop("cmd failed")
-                        }
-                        # update fin
-                        message("read rechunked data ", fin_rechunk, " ...")
-                        ncdf4::nc_close(nc) # un- or wrongly chunked original fin
-                        nc <- ncdf4::nc_open(fin_rechunk)
-                        cmd <- paste0(ncdump, " -hs ", fin, " | grep ", varname, ":_ChunkSizes") 
-                        chunksizes <- suppressWarnings(system(cmd, intern=T))
-                        chunksizes <- sub(paste0("\t\t", varname, ":_ChunkSizes = "), "", chunksizes) # "1, 291, 360 ;"
-                        chunksizes <- sub(" ;", "", chunksizes) # 1, 291, 360
-                        chunksizes <- strsplit(chunksizes, ", ")[[1]] # "1"   "291" "360"
-                        options(warn=2); chunksizes <- as.integer(chunksizes); options(warn=warn)
+                        cmd_rechunk <- paste0(nccopy, " -u -w -c ", timedimname, "/", nc$dim[[timedimname]]$len, ",",
+                                              paste(paste0(spatialdimnames, "/", msg_dims), collapse=","), " ", fin, " ", fin_rechunk)
+                        message("2: rechunk ", varname, ": run `", cmd_rechunk, "` ...")
+                        check <- system(cmd_rechunk)
+                        if (check != 0) stop("cmd failed")
+                    }
+                    # update fin
+                    message("read rechunked data ", fin_rechunk, " ...")
+                    ncdf4::nc_close(nc) # un- or wrongly chunked original fin
+                    nc <- ncdf4::nc_open(fin_rechunk)
+                    chunksizes <- nc$var[[varname]]$chunksizes
+                    if (all(is.na(chunksizes))) {
+                        message("chunksizes of variable ", varname, " are still NA. this should not happen (ncdf4 package version ", 
+                            utils::packageDescription("ncdf4")$Version, " should be >= 1.19). continue with unchunked/wrongly chunked variable ...")
+                    } else {
                         names(chunksizes) <- dimnames_var
                         message("--> chunksizes = (", paste(paste0(names(chunksizes), "=", chunksizes), collapse=","), ")")
-                    } # if nccopy is available
-                } else {
-                    message("--> or rerun script with `--auto_rechunk=true`")
-                } # if auto_rechunk
-            } # is msg is not null
-        } # if ncdump is available or not
+                    }
+                } # if nccopy is available
+            } else { # if auto_rechunk is false
+                message("--> or rerun script with `--auto_rechunk=true`")
+            } # if auto_rechunk
+        } # is msg is not null
 
         # make spatial index mapping for looping through locations
         message("\nmake mapping (", nspatialdims, "-spatial-dims inds) <--> (1-spatial-dim inds) for looping through all locations of arbitrary number of spatial dims ...")

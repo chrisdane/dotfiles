@@ -517,8 +517,7 @@ else
         echo "message(STATUS \"bar \${too}\")"
     }
 
-    # aliase
-    # check aliase with 'type alias'
+    # aliase (check with 'type alias')
     alias ls='ls --color=auto -F' # default from /etc/skel/.bashrc: ls='ls --color=auto'
     alias ll='ls --color=auto -lFh'
     alias la='ls --color=auto -alFh'
@@ -530,9 +529,11 @@ else
     alias R='R --quiet'
     alias R0='unalias R 2>/dev/null; R --no-init-file'
     alias vi='vim'
-    if check_existance vimx; then
-        alias vi='vimx' # for +clipboard
-        alias vim='vimx'
+    if false; then
+        if check_existance vimx; then
+            alias vi='vimx' # for +clipboard
+            alias vim='vimx'
+        fi
     fi
     alias less="less -i -R" # ignore case; escape colors
 
@@ -549,10 +550,6 @@ else
     export crop2='convert -trim in.png out.png'
     # watch -n 0.1 ls
 
-    # hostname
-    printf "\$(hostname)@\$(hostname -d): "
-    echo "$(hostname)@$(hostname -d)"
-  
     # check cpus
     if check_existance lscpu; then
         printf "/proc/cpuinfo: "
@@ -784,13 +781,6 @@ else
         done
         echo
     fi # if systemctl exists
-
-    # run R stuff if available
-    if check_existance Rscript; then
-        if check_existance mytimes.r; then
-            mytimes.r
-        fi
-    fi
     
     # find module binary
     # $?: last command return value
@@ -815,6 +805,30 @@ else
         echo "loaded startup modules:"; module list
     else
         echo "module command is not set"
+    fi
+    
+    # hostname
+    printf "\$(hostname)@\$(hostname -d): "
+    echo "$(hostname)@$(hostname -d)"
+    
+    # external ip address
+    wget -q --spider ifconfig.me
+    if [ $? -eq 0 ]; then # online
+        printf "public ip: "
+        ip=$(wget -qO- ifconfig.me)
+        #ip=$(curl ifconfig.me) # needs awk/cut
+        #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
+        printf "$ip ("
+        echo "nslookup: '$(nslookup $ip | head -1)')"
+    else
+        echo "offline"
+    fi 
+
+    # run R stuff if available
+    if check_existance Rscript; then
+        if check_existance mytimes.r; then
+            mytimes.r
+        fi
     fi
     
     # link dotfiles-repo functions to bin

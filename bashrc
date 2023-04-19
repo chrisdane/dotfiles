@@ -131,7 +131,7 @@ else
         printf "lfs getstripe --mdt-index $(readlink -f .): "
         lfs getstripe --mdt-index .
     }
-    ddiff(){
+    diff_color(){
         diff $1 $2 | vim -R -
     } # or `diff old new | colordiff`
     myfind(){
@@ -175,6 +175,23 @@ else
     mount_check(){
         echo "mount -l -t fuse.sshfs"
         mount -l -t fuse.sshfs
+    }
+    linuxhelp(){
+        echo compress
+        echo "  'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'"
+        echo cut
+        echo "  'gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'"
+        echo cat
+        echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
+        echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
+        echo "  'pdftk in1.pdf in2.pdf output out.pdf'"
+        echo crop
+        echo "  'pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'"
+        echo "  'convert -trim in.png out.png'"
+        echo diff
+        echo "  xxdiff"
+        echo watch
+        echo "  watch -n 0.1 ls"
     }
     archhelp(){
         echo "debug"
@@ -538,15 +555,6 @@ else
     # own variables
     export VISUAL=vim
     export EDITOR="$VISUAL" # also applies to git
-    # todo: need to convert these to functions:
-    export compress='gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'
-    export cut='gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'
-    export cat1='gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'
-    export cat2='pdftk in.pdf cat 1-12 14-end output out.pdf'
-    export cat3='pdftk in1.pdf in2.pdf output out.pdf'
-    export crop1='pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'
-    export crop2='convert -trim in.png out.png'
-    # watch -n 0.1 ls
 
     # check cpus
     if check_existance lscpu; then

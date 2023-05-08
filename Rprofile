@@ -155,57 +155,63 @@ if (T) { # set F for blank .Rprofile
         }
     }
     
-    # C compiler used to build this R 
+    # which compiler was used to build this R 
     if (T) { 
-        cmd <- "R CMD config CC"
-        if (interactive()) message("`", cmd, "`: ", appendLF=F)
-        Ccompiler <- system(cmd, intern=T)
-        # e.g.: "gcc"
-        #       "gcc -std=gnu99"
-        #       "x86_64-conda_cos6-linux-gnu-cc"
-        #       "gcc -m64 -std=gnu99"
-        Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
-        if (interactive()) message("\"", Ccompiler, "\"")
-        
-        # C compiler version used to build this R
-        # --> todo: no general solution found yet
-        #cmd <- paste0("objdump -s --section .comment ", Rexe)
-        #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
-        cmd <- paste0("strings -a ", Rexe, " | grep CC:")
-        #cmd <- paste0(elfinfo -l ", Rexe")
-        #cmd <- paste0("ldd ", Rexe)
-        if (F) { # --> all methods not reliable
-            if (interactive()) message("`", cmd, "`:")
-            Ccompiler_version <- system(cmd, intern=F, ignore.stdout=T) # check for error
-            if (Ccompiler_version == 1) { # cmd not successfull
-                if (interactive()) message("   no success")
-            } else if (Ccompiler_version == 0) { # cmd successfull
-                Ccompiler_version <- system(cmd, intern=T) # get return value
-                if (interactive()) {
-                    for (i in seq_along(Ccompiler_version)) message("   \"", Ccompiler_version[i], "\"")
-                }
-                Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
-                Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
-                # e.g. "4.8.5-16)"
-
-                # replace special symbols by dots
-                Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
-                
-                # only use version numbers up to 2 dots
-                Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
-                if (all(Ccompiler_version_dotinds == -1)) { # no dots there
-                    stop("case \"", Ccompiler_version, "\" not defined here")
-                } else {
-                    if (length(Ccompiler_version_dotinds) > 2) {
-                        Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+        if (base::getRversion() >= "4.3.0") { # new function base::R_compiled_by() from in R >= 4.3.0
+            compilers <- base::R_compiled_by()
+            if (interactive()) message("`base::R_compiled_by()`:\n",
+                                       paste(paste0("  ", names(compilers), ": ", compilers), collapse="\n"))
+        } else { # manual way
+            cmd <- "R CMD config CC"
+            if (interactive()) message("`", cmd, "`: ", appendLF=F)
+            Ccompiler <- system(cmd, intern=T)
+            # e.g.: "gcc"
+            #       "gcc -std=gnu99"
+            #       "x86_64-conda_cos6-linux-gnu-cc"
+            #       "gcc -m64 -std=gnu99"
+            Ccompiler <- strsplit(Ccompiler, " ")[[1]][1] # first word
+            if (interactive()) message("\"", Ccompiler, "\"")
+            
+            # C compiler version used to build this R
+            # --> todo: no general solution found yet
+            #cmd <- paste0("objdump -s --section .comment ", Rexe)
+            #cmd <- paste0("readelf -p .comment ", Rexe) # readelf -S: show all sections
+            cmd <- paste0("strings -a ", Rexe, " | grep CC:")
+            #cmd <- paste0(elfinfo -l ", Rexe")
+            #cmd <- paste0("ldd ", Rexe)
+            if (F) { # --> all methods not reliable
+                if (interactive()) message("`", cmd, "`:")
+                Ccompiler_version <- system(cmd, intern=F, ignore.stdout=T) # check for error
+                if (Ccompiler_version == 1) { # cmd not successfull
+                    if (interactive()) message("   no success")
+                } else if (Ccompiler_version == 0) { # cmd successfull
+                    Ccompiler_version <- system(cmd, intern=T) # get return value
+                    if (interactive()) {
+                        for (i in seq_along(Ccompiler_version)) message("   \"", Ccompiler_version[i], "\"")
                     }
-                }
-                if (interactive()) {
-                    message("--> C compiler: \"", Ccompiler, " ", Ccompiler_version, "\"")
-                }
-            } # cmd successfull or not
-        } # if F
-    } # which C compiler
+                    Ccompiler_version <- strsplit(Ccompiler_version[length(Ccompiler_version)], " ")[[1]]
+                    Ccompiler_version <- Ccompiler_version[length(Ccompiler_version)] # last entry the version number so far
+                    # e.g. "4.8.5-16)"
+
+                    # replace special symbols by dots
+                    Ccompiler_version <- gsub("[[:punct:]]", ".", Ccompiler_version)
+                    
+                    # only use version numbers up to 2 dots
+                    Ccompiler_version_dotinds <- gregexpr("\\.", Ccompiler_version)[[1]]
+                    if (all(Ccompiler_version_dotinds == -1)) { # no dots there
+                        stop("case \"", Ccompiler_version, "\" not defined here")
+                    } else {
+                        if (length(Ccompiler_version_dotinds) > 2) {
+                            Ccompiler_version <- substr(Ccompiler_version, 1, Ccompiler_version_dotinds[3] - 1)
+                        }
+                    }
+                    if (interactive()) {
+                        message("--> C compiler: \"", Ccompiler, " ", Ccompiler_version, "\"")
+                    }
+                } # cmd successfull or not
+            } # if F
+        } # R >= 4.3.0 or not
+    } # which compiler was used to build this R?
 
     # where should new packages be installed?
     # - default: `Sys.getenv("R_LIBS_USER")` = e.g. "~/R/x86_64-pc-linux-gnu-library/3.6"
@@ -508,7 +514,7 @@ if (T) { # set F for blank .Rprofile
                 ) # setHook
     } # F
 
-    # clean work space
+    # clear work space
     rm(list=ls())
 
 } # if T

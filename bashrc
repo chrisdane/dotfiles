@@ -188,7 +188,10 @@ else
         echo crop
         echo "  'pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'"
         echo "  'convert -trim in.png out.png'"
+        echo grep
+        echo "  git grep --no-index -e pattern1 --and -e pattern2 --and -e pattern3"
         echo diff
+        echo "  git diff --no-index f1 f2"
         echo "  xxdiff"
         echo watch
         echo "  watch -n 0.1 ls"
@@ -222,8 +225,6 @@ else
         echo "./script > script.log 2>&1 &"
         echo "nohup sh -c './script arg1 arg2' > script.log 2>&1 &"
         echo "ln -sfn path/to/file-name link-name"
-        echo "git diff --no-index f1 f2"
-        echo "git grep --no-index -e pattern1 --and -e pattern2 --and -e pattern3"
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
         echo "find / -iname openssl.pc 2>/dev/null \# locate alternative"
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
@@ -397,6 +398,21 @@ else
         echo "cdo sub fin -timmean fin anom_fin # calc anomaly"
         echo "cdo eof,40 anom_fin eigen_val eigen_vec" 
         echo "cdo eofcoeff eigen_vec anom_fin obase"
+        echo "Interpolate remapcon        First order conservative remapping"
+        echo "Interpolate remapcon2       Second order conservative remapping"
+        echo "Interpolate remapbil        Bilinear interpolation"
+        echo "Interpolate remapbic        Bicubic interpolation"
+        echo "Interpolate remapdis        Distance-weighted averaging"
+        echo "Interpolate remapnn         Nearest neighbor remapping"
+        echo "Interpolate remaplaf        Largest area fraction remapping"
+        echo "Genweights  gencon          Generate first order conservative remap"
+        echo "Genweights  gencon2         Generate second order conservative remap"
+        echo "Genweights  genbil          Generate bilinear interpolation weights"
+        echo "Genweights  genbic          Generate bicubic interpolation weights"
+        echo "Genweights  gendis          Generate distance-weighted averaging weights"
+        echo "Genweights  gennn           Generate nearest neighbor weights"
+        echo "Genweights  genlaf          Generate largest area fraction weights"
+        echo "Remap       remap           SCRIP grid remapping"
     } # cdohelp
     # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
@@ -586,6 +602,9 @@ else
     fi
     if [ ! $XDG_CURRENT_DESKTOP == "" ]; then
         echo "\$XDG_CURRENT_DESKTOP = $XDG_CURRENT_DESKTOP"
+    fi
+    if [ ! $XDG_SESSION_TYPE == "" ]; then
+        echo "\$XDG_SESSION_TYPE = $XDG_SESSION_TYPE"
     fi
     if [ ! $GDMSESSION == "" ]; then
         echo "\$GDMSESSION = $GDMSESSION"
@@ -817,20 +836,24 @@ else
     
     # hostname
     printf "\$(hostname)@\$(hostname -d): "
-    echo "$(hostname)@$(hostname -d)"
+    printf "$(hostname)@"
+    domain=$(hostname -d) # todo: can be slow if domain is "(none)"; `dnsdomainname`?
+    echo "$domain"
     
     # external ip address
-    wget -q --spider ifconfig.me
-    if [ $? -eq 0 ]; then # online
-        printf "public ip: "
-        ip=$(wget -qO- ifconfig.me)
-        #ip=$(curl ifconfig.me) # needs awk/cut
-        #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
-        printf "$ip ("
-        echo "nslookup: '$(nslookup $ip | head -1)')"
-    else
-        echo "offline"
-    fi 
+    #if [ ! "$domain" == "(none)" ]; then
+        wget -q --spider ifconfig.me
+        if [ $? -eq 0 ]; then # online
+            printf "  public ip ('wget -qO- ifconfig.me'): "
+            ip=$(wget -qO- ifconfig.me)
+            #ip=$(curl ifconfig.me) # needs awk/cut
+            #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
+            echo "$ip"
+            echo "  nslookup $ip: '$(nslookup $ip | head -1)'"
+        else
+            echo "  no internet connection or ifconfig.me is offline"
+        fi 
+    #fi
 
     # run R stuff if available
     if check_existance Rscript; then

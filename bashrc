@@ -95,6 +95,8 @@ else
         PS1='\[\033[0;34m\]\h:$(show_temp)°C:$(pwd)/>\[\033[0m\] '
     fi
 
+    # todo: battery: /sys/class/power_supply
+    
     # enable make autocomplete:
     # https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
     complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
@@ -131,9 +133,13 @@ else
         printf "lfs getstripe --mdt-index $(readlink -f .): "
         lfs getstripe --mdt-index .
     }
-    diff_color(){
+    diffc1(){ # colored diff
         diff $1 $2 | vim -R -
-    } # or `diff old new | colordiff`
+        #diff $1 $2 | colordiff # needs program colordiff
+    }
+    diffc2(){ # colored diff
+        git diff --no-index $1 $2
+    }
     myfind(){
         if [ $# -eq 0 ]; then
             echo "Usage: myfind search_pattern"
@@ -171,6 +177,9 @@ else
     }
     topme(){
         top -u $(whoami)
+    }
+    pgrepme(){
+        pgrep -u $(whoami) -ai $1
     }
     mount_check(){
         echo "mount -l -t fuse.sshfs"
@@ -388,6 +397,7 @@ else
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "setgrid,global_1 in out --> lon from 0"
         echo "setgrid,r360x180 in out --> lon from -180"
+        echo "cdo setmissval,nan"
         echo "cdo daymean: 1,2,miss,3 --> (1+2+3)/3      = 6/3    = 2"
         echo "cdo dayavg:  1,2,miss,3 --> (1+2+miss+3)/4 = miss/4 = miss"
         echo "cdo -r copy in out"
@@ -405,13 +415,6 @@ else
         echo "Interpolate remapdis        Distance-weighted averaging"
         echo "Interpolate remapnn         Nearest neighbor remapping"
         echo "Interpolate remaplaf        Largest area fraction remapping"
-        echo "Genweights  gencon          Generate first order conservative remap"
-        echo "Genweights  gencon2         Generate second order conservative remap"
-        echo "Genweights  genbil          Generate bilinear interpolation weights"
-        echo "Genweights  genbic          Generate bicubic interpolation weights"
-        echo "Genweights  gendis          Generate distance-weighted averaging weights"
-        echo "Genweights  gennn           Generate nearest neighbor weights"
-        echo "Genweights  genlaf          Generate largest area fraction weights"
         echo "Remap       remap           SCRIP grid remapping"
     } # cdohelp
     # argument list too long

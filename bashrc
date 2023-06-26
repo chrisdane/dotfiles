@@ -501,6 +501,7 @@ else
     swifthelp(){
         echo "module load py-python-swiftclient"
         echo "swift list"
+        echo "swift list container/subdir -p pattern1"
         echo "swift upload container/subdir f1 [f2]"
     }
     qgishelp(){
@@ -871,6 +872,7 @@ else
         cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall check_nc_integrity.r 
+        myquota.r 
         myfinger myfinger.r finduser.r 
         get_timestep.r get_dir_sizes.sh 
         ping_wait
@@ -923,7 +925,7 @@ else
             echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
             squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" ; }
     fi
     if check_existance scontrol; then
         smee() {

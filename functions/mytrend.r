@@ -2,6 +2,10 @@
 
 # calc linear regression (stats::lm) save temporal trend and its std. error and p value
 
+# dependencies: 
+# - cdo: showname, showtimestamp, select, setgrid
+# - nccopy (if rechunking is wanted and necessary)
+
 if (interactive()) { # test
     rm(list=ls())
     me <- "mytrend.r"
@@ -29,6 +33,7 @@ if (interactive()) { # test
 
 help <- paste0("\nUsage:\n",
                " $ ", me, " ",
+               "[--varnames=varname1[,varname2,...]] ",
                "[--timedimname=time] ",
                "[--spatialdimnames=lon,lat] ",
                "[--from_year=from_year] ",
@@ -38,12 +43,13 @@ help <- paste0("\nUsage:\n",
                "--fin=[/path/to/]input.nc ",
                "--fout=\"[/path/to/]output_<varname>.nc\" ",
                "\n\n",
-               "e.g. ", me, " --fin=~/test.nc --fout=~/test_lm_<varname>_as_time.nc\n", 
+               "e.g. ", me, " --fin=~/test.nc --fout=\"~/test_lm_<varname>_as_time.nc\"\n", 
                "     ", me, " --timedimname=Time --spatialdimnames=nodes_2d --from_year=2000 --fin=~/test.nc --fout=\"~/test_lm_<varname>_as_time.nc\"\n\n",
-               "Dependencies: `nccopy` if --auto_rechunk=true and rechunking is necessary\n")
+               "Dependencies: `cdo: showname, showtimestamp, select, setgrid`\n",
+               "              `nccopy` if --auto_rechunk=true and rechunking is necessary\n")
 
 # check args 
-if (length(args) < 2 || length(args) > 7) {
+if (length(args) < 2 || length(args) > 9) {
     if (interactive()) {
         stop(help)
     } else {
@@ -51,26 +57,7 @@ if (length(args) < 2 || length(args) > 7) {
         quit()
     }
 }
-if (any(grepl("--fin", args))) {
-    fin <- sub("--fin=", "", args[grep("--fin=", args)])
-    message("provided `fin` = ", fin)
-} else {
-    stop("provide `--fin=[/path/to/]fin.nc`")
-}
-if (file.access(fin, mode=0) == -1) stop("input file \"", fin, "\" does not exist")
-if (file.access(fin, mode=4) == -1) stop("input file \"", fin, "\" not readable")
-fin <- normalizePath(fin)
-if (any(grepl("--fout", args))) {
-    fout <- sub("--fout=", "", args[grep("--fout=", args)])
-    message("provided `fout` = ", fout)
-} else {
-    stop("provide `--fout=[/path/to/]fout_<varname>.nc`")
-}
-if (!grepl("<varname>", fout)) stop("provide \"<varname>\" at wanted position in `fout` = ", fout)
-outpath <- dirname(fout)
-dir.create(outpath, recursive=T, showWarnings=F)
-if (!dir.exists(outpath)) stop("could not create `outpath` = \"", outpath, "\"")
-outpath <- normalizePath(outpath)
+
 if (any(grepl("--timedimname", args))) {
     timedimname <- sub("--timedimname=", "", args[grep("--timedimname=", args)])
     message("provided `timedimname` = ", timedimname)
@@ -78,6 +65,7 @@ if (any(grepl("--timedimname", args))) {
     timedimname <- "time"
     message("`--timedimname=<timedimname>` not provided --> use default: ", timedimname)
 }
+
 if (any(grepl("--spatialdimnames", args))) {
     spatialdimnames <- sub("--spatialdimnames=", "", args[grep("--spatialdimnames=", args)])
     spatialdimnames <- strsplit(spatialdimnames, ",")[[1]]
@@ -87,6 +75,7 @@ if (any(grepl("--spatialdimnames", args))) {
     message("`--spatialdimnames=<spatialdimnames>` not provided --> use default: \"", paste(spatialdimnames, collapse="\", \""), "\"")
 }
 nspatialdims <- length(spatialdimnames)
+
 if (any(grepl("--from_year", args))) {
     from_year <- sub("--from_year=", "", args[grep("--from_year=", args)])
     message("provided `from_year` = ", from_year)
@@ -94,6 +83,7 @@ if (any(grepl("--from_year", args))) {
     from_year <- NULL
     message("`--from_year=<from_year>` not provided --> use default: complete time series")
 }
+
 if (any(grepl("--to_year", args))) {
     to_year <- sub("--to_year=", "", args[grep("--to_year=", args)])
     message("provided `to_year` = ", to_year)
@@ -101,6 +91,7 @@ if (any(grepl("--to_year", args))) {
     to_year <- NULL
     message("`--to_year=<to_year>` not provided --> use default: complete time series")
 }
+
 if (any(grepl("--lm_method", args))) {
     lm_method <- sub("--lm_method=", "", args[grep("--lm_method=", args)])
     message("provided `lm_method` = ", lm_method)
@@ -111,6 +102,7 @@ if (any(grepl("--lm_method", args))) {
 if (!any(lm_method == c("stats::lm"))) {
     stop("`lm_method` = ", lm_method, " not implemented")
 }
+
 if (any(grepl("--auto_rechunk", args))) {
     auto_rechunk <- sub("--auto_rechunk=", "", args[grep("--auto_rechunk=", args)])
     message("provided `auto_rechunk` = ", auto_rechunk)
@@ -126,21 +118,49 @@ if (auto_rechunk == "true") {
     stop("provided `auto_rechunk` = \"", auto_rechunk, "\" not provided. must be \"true\" or \"false\"")
 }
 
-warn <- options()$warn
-message("\nload ncdf4 package ...")
-library(ncdf4)
+if (any(grepl("--fin", args))) {
+    fin <- sub("--fin=", "", args[grep("--fin=", args)])
+    message("provided `fin` = ", fin)
+} else {
+    stop("provide `--fin=[/path/to/]fin.nc`")
+}
+if (file.access(fin, mode=0) == -1) stop("input file \"", fin, "\" does not exist")
+if (file.access(fin, mode=4) == -1) stop("input file \"", fin, "\" not readable")
+fin <- normalizePath(fin)
 
-message("\nget cdo ... ", appendLF=F)
+if (any(grepl("--fout", args))) {
+    fout <- sub("--fout=", "", args[grep("--fout=", args)])
+    message("provided `fout` = ", fout)
+} else {
+    stop("provide `--fout=[/path/to/]fout_<varname>.nc`")
+}
+if (!grepl("<varname>", fout)) stop("provide \"<varname>\" at wanted position in `fout` = ", fout)
+outpath <- dirname(fout)
+dir.create(outpath, recursive=T, showWarnings=F)
+if (!dir.exists(outpath)) stop("could not create `outpath` = \"", outpath, "\"")
+outpath <- normalizePath(outpath)
+
+message("get cdo ... ", appendLF=F)
 cdo <- Sys.which("cdo")
 if (cdo == "") stop("could not find cdo")
 message(cdo)
 
-# get varnames of fin
-cmd <- paste0(cdo, " -s showname ", fin)
-message("run `", cmd, "` ...")
-varnames <- strsplit(trimws(system(cmd, intern=T)), " ")[[1]]
-if (length(varnames) == 0) stop("file has zero variables")
-message("--> file has ", length(varnames), " variables: ", paste(varnames, collapse=", "))
+if (any(grepl("--varnames", args))) {
+    varnames <- sub("--varnames=", "", args[grep("--varnames=", args)])
+    varnames <- strsplit(varnames, ",")[[1]]
+    message("provided `varnames` = \"", paste(varnames, collapse="\", \""), "\"")
+} else {
+    message("`--varnames=<varnames>` not provided --> use default")
+    cmd <- paste0(cdo, " -s showname ", fin) # get varnames of fin
+    message("run `", cmd, "` ...")
+    varnames <- strsplit(trimws(system(cmd, intern=T)), " ")[[1]]
+    if (length(varnames) == 0) stop("file has zero variables")
+    message("--> file has ", length(varnames), " variables: ", paste(varnames, collapse=", "))
+}
+
+warn <- options()$warn
+message("\nload ncdf4 package ...")
+library(ncdf4)
 
 # open file
 message("open ", fin, " ...")
@@ -151,7 +171,7 @@ if (!any(names(nc$dim) == timedimname)) stop("not any dim of this file has a dim
 time_all <- nc$dim[[timedimname]]$vals
 if (length(time_all) <= 3) stop("time dim \"", timedimname, "\" of this file is of length ", length(time_all), " <= 3 --> too short for linear regression")
 timedimid_nc <- nc$dim[[timedimname]]$id
-posixct_all <- as.POSIXct(strsplit(trimws(system(paste0("cdo -s showdate ", fin), intern=T)), "  ")[[1]], tz="UTC")
+posixct_all <- as.POSIXct(strsplit(trimws(system(paste0("cdo -s showtimestamp ", fin), intern=T)), "  ")[[1]], tz="UTC")
 dimids_nc <- sapply(nc$dim, "[[", "id")
 # e.g.    time     bnds        i        j vertices 
 #            0        1        2        3        4
@@ -159,8 +179,7 @@ dimids_nc <- sapply(nc$dim, "[[", "id")
 # calc lm for all variables
 for (vari in seq_along(varnames)) {
     varname <- varnames[vari]
-    message("\n**********************************************\n",
-            "work on variable ", vari, "/", length(varnames), ": \"", varname, "\"")
+    message("calc trend of variable ", vari, "/", length(varnames), ": \"", varname, "\" ...")
     
     # check if trend of current variable already exists
     fouti <- sub("<varname>", varname, fout)
@@ -301,7 +320,7 @@ for (vari in seq_along(varnames)) {
             to_ind <- which(posixlt_vari$year+1900L == to_year)
             if (length(to_ind) == 0) stop("did not find this year in years of input")
             to_ind <- max(to_ind)
-            message(" --> continue with time points until position ", to_ind)
+            message("--> continue with time points until position ", to_ind)
         } else {
             message("--> `to_year` not provided --> continue with time points until position ", to_ind)
         }
@@ -314,8 +333,8 @@ for (vari in seq_along(varnames)) {
             time_vari_sec <- as.numeric(posixct_vari)
             from_to <- posixlt_vari[range(timeinds)]
             nyears <- diff(from_to$year)+1
-            message("\ncalc temporal trends over ", nyears, " years from ", 
-                    from_to[1], " to ", from_to[2], " (are those dates correct?) at ", nloc, " locations from (",
+            message("\ncalc temporal trends over ", length(timeinds), " timepoints from ", 
+                    from_to[1], " to ", from_to[2], " (", nyears, " years; are those dates correct?) at ", nloc, " locations from (",
                     paste(paste0(names(mapping_df), "=", mapping_df[1,]), collapse=","), ") to (", 
                     paste(paste0(names(mapping_df), "=", mapping_df[nloc,]), collapse=","), ") ...")
 
@@ -512,12 +531,13 @@ for (vari in seq_along(varnames)) {
 
             } # if any trend is non-NA
         } # if current var has more than 3 timepoints
-    } # if trend result of current variable already exists
+        
+        if (file.exists(fin_rechunk)) {
+            message("remove tmp rechunked ", varname, " file ", fin_rechunk, " ...")
+            invisible(file.remove(fin_rechunk))
+        }
 
-    if (auto_rechunk) {
-        message("remove tmp rechunked ", varname, " file ", fin_rechunk, " ...")
-        invisible(file.remove(fin_rechunk))
-    }
+    } # if trend result of current variable already exists
 
 } # for vari
 message("\nfinished")

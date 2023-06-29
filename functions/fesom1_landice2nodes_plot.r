@@ -19,7 +19,7 @@ usage <- paste0("\nUsage:\n $ ", me,
                 "           landice_nodes=/work/ba1103/a270073/forcing/FESOM1/lgmf_0.2/landice_nodes_in_region_1.out\n")
 
 # check
-if (length(args) != 2) { # griddes, outdir, file1
+if (length(args) != 2) { # nod2d.out, landice_nodes
     message(usage)
     quit()
 }

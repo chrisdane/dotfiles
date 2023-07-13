@@ -10,9 +10,10 @@ rm(list=ls()); graphics.off()
 #           - due to the global correction, this method yields values != 0 everywhere
 #           - those values != 0 can also be of unwanted sign, e.g. negative for a concentration
 method <- "default" # "default" or "R14"
-fin <- c("wfo"="/work/ba1103/a270073/forcing/input4MIPs/wfo_input4MIPs_surfaceFluxes_FAFMIP_NCAS-2-1-0_gn.nc")
+#fin <- c("wfo"="/work/ba1103/a270073/forcing/input4MIPs/wfo_input4MIPs_surfaceFluxes_FAFMIP_NCAS-2-1-0_gn.nc")
 #fin <- c("lime_mask"="/work/ba1103/a270120/alkalinization_masks/lime_mask_cao_2040-high.nc")
 #fin <- c("lime_mask"="/work/ba1103/a270073/forcing/FESOM1/core/lime_mask_cao_2040-high.nc_timestep_1030-1032")
+fin <- c("FWFGRNL"="/work/ab0246/a270073/data/bamber_etal_12/data/PalMod_GrnlHosing_5kmGrid.nc")
 target_griddes <- c("fesom1_core"="/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc")
 cdo <- Sys.which("cdo")
 cdo <- "/sw/spack-levante/cdo-2.0.6-jkuh4i/bin/cdo" # cdo 2.0.5 on levante broken?
@@ -32,6 +33,9 @@ if (method == "R14") {
 }
 if (length(fin) != 1) stop("`fin` must be of length 1")
 if (is.null(names(fin))) stop("`fin` must be a named vector with the name indicating the variable that shall be remapped") 
+if (file.info(fin)$isdir) stop("`fin` ", fin, " is directory and not a file")
+if (!file.exists(fin)) stop("`fin` ", fin, " does not exist")
+if (file.access(fin, mode=4) == -1) stop("fin ", fin, " is not readable")
 if (is.null(names(target_griddes))) stop("`target_griddes` must be a named vector with the name of fesom mesh; used for output filenames")
 message("load ncdf4 package ...")
 library(ncdf4)

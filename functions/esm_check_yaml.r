@@ -2,7 +2,8 @@
 
 if (interactive()) {
     #file <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp585/config/ssp585_finished_config.yaml_20150101-20151231"
-    file <- "output_finished_config.yaml"
+    file <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/fwf_01/run_18700101-18701231/config/fwf_01_finished_config.yaml"
+    #file <- "output_finished_config.yaml"
 } else {
     args <- commandArgs(trailingOnly=T) # user args only
     if (length(args) != 1) {
@@ -30,10 +31,29 @@ yaml <- yaml::read_yaml(file)
 # $ oasis3mct :List of 86
 # $ recom     :List of 85
 
-include <- c("additional_files", "adj_input_dir", "bin_sources", "config_sources", "dataset", 
-             "forcing_dir", "forcing_sources", "greenhouse_dir", "input_dir", 
-             "input_sources", "pool_dir", "restart_in_sources",
-             "runtime_environment_changes")
+# order of appearance
+include <- c("esm_function_dir",
+             "esm_namelist_dir",
+             "esm_runscript_dir",
+             "use_venv",
+             "install_esm_tools_branch",
+             "couplings",
+             "model_dir",
+             "bin_sources", 
+             "config_sources", 
+             "mesh_dir",
+             "pool_dir", 
+             "lresume",
+             "restart_in_sources",
+             "dataset", 
+             "input_dir", 
+             "input_sources", 
+             "adj_input_dir", 
+             "additional_files", 
+             "forcing_dir", "forcing_sources", 
+             "greenhouse_dir", 
+             "runtime_environment_changes"
+             )
 
 # read yaml
 for (i in seq_along(yaml)) {
@@ -48,10 +68,10 @@ for (i in seq_along(yaml)) {
             vals <- sapply(yaml[[i]][[keys[j]]], "[")
             if (class(vals) == "list") {
                 try(cat(capture.output(str(vals, vec.len=1000)), sep="\n"), silent=T)
-            } else if (class(vals) == "character") { # default, e.g. a path
-                try(cat(paste(paste0("        ", nams, ": ", vals), collapse="\n"), "\n"), silent=T) 
             } else {
-                stop("class ", paste(class(vals), collapse=", "), " of vals not known")
+                try(cat(paste(paste0("        ", nams, ": ", vals), collapse="\n"), "\n"), silent=T) 
+            #} else if (class(vals) == "character") { # default, e.g. a path
+            #} else if (class(vals) == "logical") {
             }
         } # for j
     } # if any of wanted keys exist

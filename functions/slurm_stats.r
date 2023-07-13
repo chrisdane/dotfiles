@@ -46,7 +46,8 @@ if (interactive()) {
     #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/log/*_compute_*-*_(2100732|2100996).log"
     #args <- c("--exclude=24-26,29,31,35,43", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl2/log/*_compute_*-*_*.log")
     #args <- c("--exclude=115,166", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-hist/log/*_compute_*-*_*.log")
-
+    args <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/ant_01sv/log/*_compute_*-*_*.log"
+    
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -487,7 +488,7 @@ for (i in seq_along(usage)) {
 
 # plot queue time
 jobname <- logs[1]
-plotname <- paste0(normalizePath("~"), "/queue_time_", jobname, ".png")
+plotname <- paste0(normalizePath("~"), "/queue_time_", jobname, "_", length(jobids), "_jobs.png")
 message("\nplot queue stats: ", plotname, " ...")
 
 # todo: automatic selection of most informative date labels? 
@@ -508,37 +509,38 @@ names(yat)[c(1, length(yat))] <- c("min", "max")
 inds <- which(yat >= 1) # >= 1 hour
 if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds], digits=3), "h")
 inds <- which(yat < 1) # < 1 hour --> minutes
-if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds]*60, digits=0), "min")
+if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds]*60, digits=1), "min")
 inds <- which(yat < 1/60) # < 1min --> seconds
 if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds]*60*60, digits=0), "sec")
 ylab <- paste0(names(yat), ": ", ylab)
 
 # linearly interpolate actual queue times to irregular y-axis levels
 n_interp <- 20
-yat_plot <- seq(1, b=n_interp, l=length(yat))
-y_plot <- rep(NA, t=length(y))
+yat_plot <- seq(1, b=n_interp, l=length(yat)) # hours
+y_plot <- rep(NA, t=length(y)) # hours
 for (yi in seq_len(length(yat)-1)) {
     if (yi == length(yat)-1) { # last
         inds <- which(y >= yat[yi] & y <= yat[yi+1])
-        ytmp <- seq(yat[yi], yat[yi+1], l=n_interp+1) # linearly interpolate between two wanted y-levels
-    } else {
+        ytmp <- seq(yat[yi], yat[yi+1], l=n_interp+1) # linearly interpolate hours between two wanted y-levels
+    } else { # all others
         inds <- which(y >= yat[yi] & y < yat[yi+1])
-        ytmp <- seq(yat[yi], yat[yi+1], l=n_interp) # linearly interpolate between two wanted y-levels
+        ytmp <- seq(yat[yi], yat[yi+1], l=n_interp) # linearly interpolate hours between two wanted y-levels
     }
-    if (length(inds) == 0) stop("this should not happen")
-    for (yj in seq_along(inds)) {
-        y_plot[inds[yj]] <- which.min(abs(y[inds[yj]] - ytmp)) + (yi-1)*n_interp
-    } # for yj
+    if (length(inds) != 0) {
+        for (yj in seq_along(inds)) {
+            y_plot[inds[yj]] <- which.min(abs(y[inds[yj]] - ytmp)) + (yi-1)*n_interp
+        } # for yj
+    }
 } # for yi
 
 # plot
 png(plotname, width=4/3*1500, height=1500, res=200, family="Droid Sans")
-par(mar=c(7.1, 7.1, 2.1, 3.1))
+par(mar=c(7.1, 7.1, 2.1, 4.1))
 plot(start, y_plot, t="n",
      xaxt="n", yaxt="n",
      xlab="", ylab="",
      main=jobname)
-mtext(paste0("queue time quantiles (n=", length(jobids), ")"), side=2, line=6)
+mtext(paste0("queue time quantiles (nlogs=", length(jobids), ")"), side=2, line=6)
 axis(1, at=xat, labels=F)
 text(x=xat, y=yat_plot[1] - 0.66*yat_plot[2], labels=xlab, adj=1, srt=90, xpd=T)
 axis(2, at=yat_plot, labels=ylab, las=2)
@@ -560,7 +562,7 @@ if (max(ycumsum) < 1) { # total queue < 1 min --> seconds
 par(new=T)
 plot(start, ycumsum, t="l", col=2, axes=F, xlab="", ylab="")
 axis(4, pretty(ycumsum, n=20), las=2, col=2, col.ticks=2, col.axis=2)
-mtext(paste0("cumulative queue time [", ycumsum_unit, "]"), side=4, line=2, col=2)
+mtext(paste0("cumulative queue time [", ycumsum_unit, "]"), side=4, line=3, col=2)
 
 # add mean queue
 queue_mean <- mean(y, na.rm=T)

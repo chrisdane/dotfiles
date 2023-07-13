@@ -524,6 +524,7 @@ else
     swifthelp(){
         echo "module load py-python-swiftclient"
         echo "swift list"
+        echo "swift list container/subdir -p pattern1"
         echo "swift upload container/subdir f1 [f2]"
     }
     qgishelp(){
@@ -894,6 +895,7 @@ else
         cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
         checkall check_nc_integrity.r 
+        myquota.r 
         myfinger myfinger.r finduser.r 
         get_timestep.r get_dir_sizes.sh 
         ping_wait
@@ -903,7 +905,8 @@ else
         esm_tools_helpers.sh
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         jsbach_pft_wrt_box.r jsbach_tile2pft.r jsbach_plot_pft.r 
-        fesom1_get_meshinfo.r fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r fesom1_landice2nodes.r
+        fesom1_get_meshinfo.r fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r 
+        fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
         esgf_get_variables.r esgf_json_tree.sh
         mymergegrid.r 
@@ -913,7 +916,7 @@ else
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r
         myeof.r plotmyeof.r
         myncrcat.r
-        rechunk.r
+        rechunk.r remap_quasi_conservative.r
         convert_lon_360_to_180.r wind.r inertial.r
         takahashi_etal_2002.r
         when.r kelv feet dom
@@ -946,7 +949,7 @@ else
             echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
             squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.9P %.8j %.7a %.8u %.2t %.10M %.6D %R" ; } # add account %a
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" ; }
     fi
     if check_existance scontrol; then
         smee() {

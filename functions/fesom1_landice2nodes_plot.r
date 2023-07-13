@@ -19,7 +19,7 @@ usage <- paste0("\nUsage:\n $ ", me,
                 "           landice_nodes=/work/ba1103/a270073/forcing/FESOM1/lgmf_0.2/landice_nodes_in_region_1.out\n")
 
 # check
-if (length(args) != 2) { # griddes, outdir, file1
+if (length(args) != 2) { # nod2d.out, landice_nodes
     message(usage)
     quit()
 }
@@ -73,13 +73,24 @@ inds <- base::scan(landice_nodes, skip=1, quiet=T)
 
 plotname <- paste0("~/dotfiles/functions/landice2nodes_", basename(dirname(landice_nodes)), ".png")
 message("plot ", nfw, " freshwater locations on ", n2, " surface nodes: ", plotname, " ...")
-png(plotname, width=1500, height=1500, res=200)
+if (!interactive()) png(plotname, width=1500, height=1500, res=200)
 plot(nod2d[,"lon"], nod2d[,"lat"], pch=".", 
      xlab="lon", ylab="lat", yaxt="n",
      main=paste0("landice_nodes ", basename(dirname(landice_nodes))))
 axis(2, las=2)
 points(nod2d[inds,"lon"], nod2d[inds,"lat"], col=2)
-dev.off()
+if (!interactive()) dev.off()
+
+if (F) {
+    inds <- which(nod2d[,"coast"] == 1 &
+                  nod2d[,"lat"] < -60)
+    points(nod2d[inds,"lon"], nod2d[inds,"lat"], col=3)
+    fout <- paste0("landice_", c("nodes", "yearly"), "_sofia_antwater_0.1_Sv_3155.76_Gt_yr-1.out")
+    write(length(inds), file=fout[1])
+    write(inds, file=fout[1], ncolumns=1, append=T)
+    write(1, file=fout[2])
+    write(3155.76, file=fout[2], append=T) # 0.1 Sv = 3155.76 Gt freshwater year-1 with 365.25 days per year
+}
 
 message("\nfinished\n")
 

@@ -80,23 +80,34 @@ else
     if [ -d ~/.local/bin ]; then
         export PATH=~/.local/bin:$PATH
     fi
+    
+    # get battery percentage if available
+    get_current_battery(){ 
+        if [ -f /sys/class/power_supply/BAT0/capacity ]; then
+            batt=$(cat /sys/class/power_supply/BAT0/capacity)
+            echo "$batt%"
+        else
+            echo ""
+        fi
+    }
 
-    # default prompt
-    PS1='[\u@\h \W]\$ '
+    # get cpu temperature if available
+    get_current_temp(){
+        if [ -x "$(command -v sensors)" ]; then
+            temp=$(sensors 2> /dev/null | grep -oP 'Package id 0.*?\+\K[0-9.]+') # dont show potential errors
+            echo "$temp°"
+        else
+            echo ""
+        fi
+    }
 
-    # my prompt
-    PS1='\[\033[0;34m\]\h:$(pwd)/>\[\033[0m\] '
-
-    # attach cpu temp to prompt if available
-    if [ -x "$(command -v sensors)" ]; then
-        show_temp(){
-            sensors 2> /dev/null | grep -oP 'Package id 0.*?\+\K[0-9.]+' # dont show potential errors
-        }
-        PS1='\[\033[0;34m\]\h:$(show_temp)°C:$(pwd)/>\[\033[0m\] '
+    # prompt
+    PS1='[\u@\h \W]\$ ' # default
+    if true; then # my prompt; use `\$` to evaulate on every new line (i.e. when pressing enter)
+        #PS1='\[\033[0;34m\]\h:$(pwd)/>\[\033[0m\] ' 
+        PS1='\[\033[0;34m\]\h:\$(get_current_battery)\$(get_current_temp):$(pwd)/>\[\033[0m\] '
     fi
 
-    # todo: battery: /sys/class/power_supply
-    
     # enable make autocomplete:
     # https://stackoverflow.com/questions/4188324/bash-completion-of-makefile-target
     complete -W "\`grep -oE '^[a-zA-Z0-9_.-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_.-]*$//'\`" make
@@ -194,6 +205,7 @@ else
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
         echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
         echo "  'pdftk in1.pdf in2.pdf output out.pdf'"
+        echo "  'convert Screenshot* slides.pdf'"
         echo crop
         echo "  'pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'"
         echo "  'convert -trim in.png out.png'"
@@ -432,10 +444,11 @@ else
     ncohelp(){
         echo "ncatted -O -h -a history,global,d,, mesh_core_deriv_3d_geo.nc # remove history"
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
-        echo "ncpdq -a time,depth in out"
+        echo "ncwa -a lev in.nc out.nc # remove dim"
+        echo "ncrename -d record,time out.nc # rename dim"
+        echo "ncpdq -a time,depth in out # switch dims"
         echo "ncap2 -v -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
         echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
-        echo "ncrename -d record,time out.nc"
     }
     ncviewhelp() {
         echo "ncview -minmax all Sample.nc"
@@ -470,6 +483,16 @@ else
         echo "\begin{document}"
         echo "\end{document}"
     }
+    texclear(){( # `(` necessary for -e
+        set -e
+        if [ "$#" -ne 1 ]; then
+            echo "provide basename of file to clean"
+            exit
+        fi
+        files=($1.{aux,bbl,blg,log,out,pdf})
+        echo "rm ${files[*]} ..."
+        rm $1.{aux,bbl,blg,log,out,pdf}
+    )}
     inkscapehelp(){
         echo "clip/mask: draw rectangle over area you want to clip. select both. objects -> clip -> set"
         echo "crop white space: select -> edit -> resize page to selection"
@@ -845,14 +868,14 @@ else
     
     # external ip address
     #if [ ! "$domain" == "(none)" ]; then
+        printf "  get public ip: 'wget -qO- ifconfig.me' ... "
         wget -q --spider ifconfig.me
         if [ $? -eq 0 ]; then # online
-            printf "  public ip ('wget -qO- ifconfig.me'): "
             ip=$(wget -qO- ifconfig.me)
             #ip=$(curl ifconfig.me) # needs awk/cut
             #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
             echo "$ip"
-            echo "  nslookup $ip: '$(nslookup $ip | head -1)'"
+            echo "  --> 'nslookup $ip': '$(nslookup $ip | head -1)'"
         else
             echo "  no internet connection or ifconfig.me is offline"
         fi 
@@ -965,9 +988,7 @@ else
     # replace prompt with liquidprompt if git is available (thats why do it after .myprofile)
     if true; then
         if [ -x "$(command -v liquidprompt)" ]; then 
-            if [ -n "$(LC_ALL=C type -t show_temp)" ] && [ "$(LC_ALL=C type -t show_temp)" = function ]; then 
-                LP_PS1_PREFIX="$(show_temp)°C " # add my cpu temp to liquidprompt
-            fi
+            LP_PS1_PREFIX="\$(get_current_battery)\$(get_current_temp)"
             source liquidprompt # check ~/.liquidpromptrc
         else 
             echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"

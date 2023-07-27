@@ -106,7 +106,7 @@ else
     PS1='[\u@\h \W]\$ ' # default
     if true; then # my prompt; use `\$` to evaulate on every new line (i.e. when pressing enter)
         #PS1='\[\033[0;34m\]\h:$(pwd)/>\[\033[0m\] ' 
-        PS1='\[\033[0;34m\]\h:\$(get_current_battery)\$(get_current_temp):$(pwd)/>\[\033[0m\] '
+        PS1='\[\033[0;34m\]\h:$(get_current_battery)$(get_current_temp):$(pwd)/>\[\033[0m\] '
     fi
 
     # enable make autocomplete:
@@ -562,6 +562,7 @@ else
         echo "# download in background (-bqc):"
         echo "nohup wget -r -bqc --no-directories --user='$user' --password='$pw' $url > dl.log 2>&1 & # this will show pw in top"
         echo "nohup wget -r -bqc --no-directories $url > dl.log 2>&1 & # will look for ~/.wgetrc; -P /path/to/destination"
+        echo "if [[ \$(wget -S --spider \$url 2>&1 | grep 'HTTP/1.1 200 OK') ]]; then echo \"true\"; fi"
     } # wgethelp
     cmakehelp(){
         echo "cmake -LAH"
@@ -856,7 +857,6 @@ else
                 module avail -t 2>&1 | grep -i $1 | sort
             fi
         }
-        echo "defined modulegrep()"
         echo "loaded startup modules:"; module list
     else
         echo "module command is not set"
@@ -877,7 +877,8 @@ else
             #ip=$(curl ifconfig.me) # needs awk/cut
             #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
             echo "$ip"
-            echo "  --> 'nslookup $ip': '$(nslookup $ip | head -1)'"
+            printf '%s' "  --> 'nslookup $ip': "
+            echo "'$(nslookup $ip | head -1)'"
         else
             echo "  no internet connection or ifconfig.me is offline"
         fi 

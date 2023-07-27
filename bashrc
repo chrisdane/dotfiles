@@ -919,9 +919,9 @@ else
         myeof.r plotmyeof.r
         myncrcat.r
         rechunk.r remap_quasi_conservative.r
-        convert_lon_360_to_180.r wind.r inertial.r
+        nominal_resolution.r convert_lon_360_to_180.r 
         takahashi_etal_2002.r
-        when.r kelv feet dom
+        when.r kelv feet dom wind.r inertial.r
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do

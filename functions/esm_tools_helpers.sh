@@ -24,7 +24,13 @@ esm_tools_info() {
         return 1
     fi
 } # esm_tools_info
-   
+
+esm_tools_help() {
+
+    echo "scripts/disturb_years.dat"
+
+} # esm_tools_help
+
 recomp_fesom() {
     if command -v esm_tools > /dev/null 2>&1; then
         if [[ ! -z "$@" && -d $"$@" ]]; then # provided dir is not empty and found

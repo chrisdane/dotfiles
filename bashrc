@@ -95,6 +95,7 @@ else
     get_current_temp(){
         if [ -x "$(command -v sensors)" ]; then
             temp=$(sensors 2> /dev/null | grep -oP 'Package id 0.*?\+\K[0-9.]+') # dont show potential errors
+            temp=$(echo $temp | xargs printf "%.*f\n" "0") # round to full decimal
             echo "$temp°"
         else
             echo ""
@@ -144,12 +145,12 @@ else
         printf "lfs getstripe --mdt-index $(readlink -f .): "
         lfs getstripe --mdt-index .
     }
-    diffc1(){ # colored diff
+    diffc(){ # colored diff with git
+        git diff --no-index $1 $2
+    }
+    diffc2(){ # colored diff with vi
         diff $1 $2 | vim -R -
         #diff $1 $2 | colordiff # needs program colordiff
-    }
-    diffc2(){ # colored diff
-        git diff --no-index $1 $2
     }
     myfind(){
         if [ $# -eq 0 ]; then

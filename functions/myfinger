@@ -1,6 +1,13 @@
 #!/bin/bash
 
 # finger gets full user name from passwd's GECOS entry (man 5 passwd)
+
+if [ $# -eq 0 ]; then # no args
+    echo; echo "Usage: e.g. 'myfinger \$(\\ls -1)'"; echo
+    echo "  Dependency: getent"; echo
+    exit 1
+fi
+
 #echo "input: $@"
 names=( $@ )
 for namei in "${names[@]}"; do

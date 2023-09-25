@@ -911,7 +911,7 @@ else
         fesom1_plot_2d.r fesom1_nod2d_to_nc.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
         esgf_get_variables.r esgf_json_tree.sh
-        mymergegrid.r 
+        select_winter_summer.r
         mycdoseasmean.r mycdoseassum.r 
         mycdosplitlevel.r
         mytrend.r mycdotrend.r mycdoeof.r

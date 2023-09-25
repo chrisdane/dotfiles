@@ -20,10 +20,13 @@ if (interactive()) { # test
     } else if (F) {
         args <- c("--fin=/work/ba1103/a270073/post/EN.4.2.2/select/rho/EN.4.2.2.f.analysis.g10.202111_rho.nc",
                   "--fout=/work/ba1103/a270073/post/EN4.2.2/select/lm_rho_as_time/EN.4.2.2.f.analysis.g10.202111_<varname>.nc")
-    } else if (T) {
+    } else if (F) {
         args <- c("--spatialdimnames=rgrid",
                   "--fin=~/test/era5_sf00_1M_era5_select_WS10_global_Jan-Dec_1970-1970.nc",
                   "--fout=~/test/fu_<varname>.nc")
+    } else if (T) {
+        args <- c("--fin=/work/ba1103/a270073/post/GFDL-ESM4/select/mldepthdensp030_m/GFDL-ESM4_historical_r1i1p1f1_GFDL-ESM4_select_mldepthdensp030_m_global_annual_1970-2014.nc",
+                  "--fout=/work/ba1103/a270073/post/GFDL-ESM4/select/lm_mldepthdensp030_m/GFDL-ESM4_historical_r1i1p1f1_GFDL-ESM4_select_lm_<varname>_as_time_global_annual_1970-2014.nc")
     }
 } else {
     args <- commandArgs(trailingOnly=F) # get args
@@ -57,6 +60,9 @@ if (length(args) < 2 || length(args) > 9) {
         quit()
     }
 }
+
+warn <- options()$warn
+options(warn=2) # error on warning
 
 if (any(grepl("--timedimname", args))) {
     timedimname <- sub("--timedimname=", "", args[grep("--timedimname=", args)])
@@ -157,8 +163,6 @@ if (any(grepl("--varnames", args))) {
     if (length(varnames) == 0) stop("file has zero variables")
     message("--> file has ", length(varnames), " variables: ", paste(varnames, collapse=", "))
 }
-
-warn <- options()$warn
 message("\nload ncdf4 package ...")
 library(ncdf4)
 
@@ -368,17 +372,23 @@ for (vari in seq_along(varnames)) {
                 if (ninds > 3) {
                     if (lm_method == "stats::lm") {
                         lm <- stats::lm(ts[inds] ~ time_vari_sec[inds])
-                        lms <- summary(lm)
-                        if (!is.na(lms$coefficients[2,4])) { # if lm was successfull
-                            ok <- T
-                            dt_day <- as.numeric(difftime(posixct_vari[inds[ninds]], posixct_vari[inds[1]], units="days"))
-                            slope_day_a <- lm$coefficients[2]*dt_day*86400
-                            #slope_day_b <- lm$fitted.values[ninds] - lm$fitted.values[1]
-                            # diff(a,b) = slope_day_a - slope_day_b ~ O(1e-13)
-                            slope_day <- slope_day_a
-                            slope_day_err <- lms$coefficients[2,"Std. Error"]*dt_day*86400
-                            t_val <- lms$coefficients[2,"t value"]
-                            p_val <- lms$coefficients[2,"Pr(>|t|)"]
+                        # catch potential warnings/errors
+                        # --> e.g. constant time series
+                        lms <- base::tryCatch(summary.lm(lm), error=function(e) e, warning=function(w) w) 
+                        if (methods::is(lms, "error")) {
+                        } else if (methods::is(lms, "warning")) {
+                        } else {
+                            if (!is.na(lms$coefficients[2,4])) { # if lm was successfull
+                                ok <- T
+                                dt_day <- as.numeric(difftime(posixct_vari[inds[ninds]], posixct_vari[inds[1]], units="days"))
+                                slope_day_a <- lm$coefficients[2]*dt_day*86400
+                                #slope_day_b <- lm$fitted.values[ninds] - lm$fitted.values[1]
+                                # diff(a,b) = slope_day_a - slope_day_b ~ O(1e-13)
+                                slope_day <- slope_day_a
+                                slope_day_err <- lms$coefficients[2,"Std. Error"]*dt_day*86400
+                                t_val <- lms$coefficients[2,"t value"]
+                                p_val <- lms$coefficients[2,"Pr(>|t|)"]
+                            }
                         }
                     } else {
                         stop("`lm_method` = ", lm_method, " not implemented")
@@ -540,5 +550,8 @@ for (vari in seq_along(varnames)) {
     } # if trend result of current variable already exists
 
 } # for vari
+
+options(warn=warn) # restore default
+
 message("\nfinished")
 

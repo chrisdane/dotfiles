@@ -2,8 +2,8 @@
 
 args <- commandArgs(trailingOnly=T) 
 if (length(args) != 3) {
-    cat("Usage: esm_paths.r computer.pool_directories.pool dataset resolution\n",
-        "  e.g. esm_paths.r /pool/data r0008 T63\n", sep="")
+    cat("Usage: esm_check_paths.r computer.pool_directories.pool dataset resolution\n",
+        "  e.g. esm_check_paths.r /pool/data r0008 T63\n", sep="")
     quit()
 }
 

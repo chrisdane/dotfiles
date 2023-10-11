@@ -98,7 +98,7 @@ for (i in seq_len(2)) { # for input and output tz
             }
             inds_tzdata <- grep(pattern, tzdata)
             if (length(inds_tzdata) == 0) {
-                stop("did not find pattern \"", pattern, "\" in file ", tzdata_file, "\n", usage)
+                stop("did not find pattern \"", trimws(pattern), "\" in file ", tzdata_file, "\n", usage)
             } else {
                 zones <- rep(NA, t=length(inds_tzdata))
                 for (j in seq_along(inds_tzdata)) {

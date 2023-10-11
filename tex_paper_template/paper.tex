@@ -17,7 +17,7 @@
 % overwrite \thead for nicer vertical orientation in multi-line table headers:
 \newcommand*{\mythead}[1]{\multicolumn{1}{c}{\bfseries\begin{tabular}{@{}c@{}}#1\end{tabular}}}
 \newcommand*{\mytheadl}[1]{\multicolumn{1}{l}{\bfseries\begin{tabular}{@{}c@{}}#1\end{tabular}}}
-\usepackage{caption} % \captionsetup
+\usepackage{caption} % for \captionsetup and appendix Fig/Tab cross-referencing
 \usepackage[pdfpagelabels,plainpages=false,hypertexnames=false]{hyperref}
 \hypersetup{
     colorlinks = true,
@@ -84,6 +84,8 @@ Fig. \ref{fig:b} is the B-figure \citep{einstein}.
 \caption{Example B-figure.}
 \label{fig:b}
 \end{figure}
+
+Here is a reference to appendix Fig. \ref{fig:appendix1}.
 
 \subsection{This is a section title with an equation in it; namely \texorpdfstring{$\delta^{18}$}{d}O}
 

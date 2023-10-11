@@ -198,23 +198,25 @@ else
         mount -l -t fuse.sshfs
     }
     linuxhelp(){
-        echo compress
-        echo "  'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'"
-        echo cut
-        echo "  'gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'"
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
         echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
         echo "  'pdftk in1.pdf in2.pdf output out.pdf'"
         echo "  'convert Screenshot* slides.pdf'"
+        echo compress
+        echo "  'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'"
+        echo cut
+        echo "  'gs -dBATCH -sOutputFile= -dFirstPage= -dLastPage= -sDEVICE=pdfwrite infile'"
         echo crop
         echo "  'pdfcrop --xetex --resolution 72 diffusion_vs_res.pdf diffusion_vs_res.pdf'"
         echo "  'convert -trim in.png out.png'"
-        echo grep
-        echo "  git grep --no-index -e pattern1 --and -e pattern2 --and -e pattern3"
         echo diff
         echo "  git diff --no-index f1 f2"
         echo "  xxdiff"
+        echo grep
+        echo "  git grep --no-index -e pattern1 --and -e pattern2 --and -e pattern3"
+        echo sudo
+        echo "sudoedit # not 'sudo vi'"
         echo watch
         echo "  watch -n 0.1 ls"
     }
@@ -255,6 +257,8 @@ else
         echo "arr=(\$(ls -F historical2_185012* | grep -v codes))"
         echo "printf '%s\\n' '\${arr[@]}'"
         echo "for f in \${arr[@]}; do echo \$f; cdo ntime \$f; done"
+        echo "remove carets: sed -i -e 's/\\r$//'"
+        echo "lsof +D /path \# list open files"
     }
     scphelp(){
         echo "scp -O -r dir/ user@host:/path # -O legacy mode to prevent 'path canonicalization failed' error"
@@ -370,15 +374,28 @@ else
     gp(){
         if git rev-parse --git-dir > /dev/null 2>&1; then
             if [ -f ~/.myprofile ]; then
-                token=$(grep ghtoken ~/.myprofile | cut -d ' ' -f1)
-                token=${token:1}
-                url=$(git config --get remote.origin.url) # https://[<user>]@github.com/<user_or_group>/<repo>.git
-                usergroup=$(basename $(dirname $url))
+                if [ -z "$1" ]; then
+                    echo "must provide one argument; one of: github.com, git.smhi.se"
+                    return 1
+                fi
+                token=$(grep "pat "${1} ~/.myprofile | cut -d ' ' -f1 | cut -c2-) # remove everything after space and first char
+                if [ "$token" == "" ]; then
+                    echo "did not found pat with domain pattern $1"
+                    return 1
+                fi
+                url=$(git config --get remote.origin.url)         # https://[<user>]@github.com/<user_or_group>/<repo>.git
                 repo=$(basename $(git rev-parse --show-toplevel))
-                cmd="git push https://${token}@github.com/${usergroup}/${repo}.git"
-                #cmd="git push https://oauth2:${token}@github.com/${usergroup}/${repo}.git"
+                usergroup=$(basename $(dirname $url))
+                domain=$(basename $(dirname $(dirname $url)))     # usergroup@github.com or github.com
+                domain=${domain/${usergroup}@/""}                 # github.com    
+                cmd="git push https://<token>@${domain}/${usergroup}/${repo}.git"
+                echo "run '$cmd' ..."
+                cmd="git push https://${token}@${domain}/${usergroup}/${repo}.git"
+                #cmd="git push https://oauth2:${token}@${domain}/${usergroup}/${repo}.git"
                 #echo "run '$cmd'"
                 eval $cmd
+                history -d $((HISTCMD)) # remove last command from bash history
+                unset $token
                 git fetch # change `ahead by 1 commit` to `up-to-date`; not needed for default `git push`
             else
                 echo "could not find ~/.myprofile"
@@ -388,7 +405,6 @@ else
             echo "current dir $(pwd) is not a repo dir"
             return 1
         fi
-        history -d $((HISTCMD)) # remove last command from bash history: the actual `gp`-call
     } # gp
     svnhelp(){
         echo "colored diff: svn diff | vi -R - # or vim"
@@ -408,6 +424,7 @@ else
         echo "cdo chname,var1,var2 in.nc out.nc"
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
+        echo "nohup sh -c 'for y in {2081..2100}; do ...; done' > test.log 2>&1 &"
         echo "setgrid,global_1 in out --> lon from 0"
         echo "setgrid,r360x180 in out --> lon from -180"
         echo "cdo setmissval,nan"
@@ -443,12 +460,13 @@ else
     # --> it seems multiple spaces count as single spaces
     # --> it seems to be independet of the number of input files provided (29355 in this example)
     ncohelp(){
-        echo "ncatted -O -h -a history,global,d,, mesh_core_deriv_3d_geo.nc # remove history"
+        echo "ncap2 -s 'time=time-1999;' in.nc foo.nc"
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
+        echo "ncap2 -v -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
+        echo "ncatted -O -h -a history,global,d,, mesh_core_deriv_3d_geo.nc # remove history"
         echo "ncwa -a lev in.nc out.nc # remove dim"
         echo "ncrename -d record,time out.nc # rename dim"
         echo "ncpdq -a time,depth in out # switch dims"
-        echo "ncap2 -v -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
         echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
     }
     ncviewhelp() {
@@ -460,7 +478,8 @@ else
         echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
     }
     condahelp(){
-        echo "conda create -y -p /path <env>"
+        echo "conda create -n myname"
+        echo "conda create -p /path <env>"
         echo "source activate <env>"
         echo "source deactivate"
         echo "conda env list"
@@ -501,6 +520,7 @@ else
     slurmhelp(){
         echo "scontrol show jobid -dd jobid"
         echo "scancel {1000..1050}"
+        echo "scontrol show partition <name>"
     }
     officehelp(){
         echo "enter line before TOC:"
@@ -559,6 +579,7 @@ else
         echo "# get file names lftp"
         echo "lftp <url> # and"
         echo "du -a > fnames.txt # 'lftp -e \"du -a\" <url> > fnames.txt' does not work"
+        echo "lftp -e 'find;quit' ftp://ftp.example.com/ > listing.txt # seems to work"
         echo "# download in background (-bqc):"
         echo "nohup wget -r -bqc --no-directories --user='$user' --password='$pw' $url > dl.log 2>&1 & # this will show pw in top"
         echo "nohup wget -r -bqc --no-directories $url > dl.log 2>&1 & # will look for ~/.wgetrc; -P /path/to/destination"
@@ -869,20 +890,22 @@ else
     echo "$domain"
     
     # external ip address
-    #if [ ! "$domain" == "(none)" ]; then
-        printf "  get public ip: 'wget -qO- ifconfig.me' ... "
-        wget -q --spider ifconfig.me
-        if [ $? -eq 0 ]; then # online
-            ip=$(wget -qO- ifconfig.me)
-            #ip=$(curl ifconfig.me) # needs awk/cut
-            #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
-            echo "$ip"
-            printf '%s' "  --> 'nslookup $ip': "
-            echo "'$(nslookup $ip | head -1)'"
-        else
-            echo "  no internet connection or ifconfig.me is offline"
-        fi 
-    #fi
+    if false; then
+        #if [ ! "$domain" == "(none)" ]; then
+            printf "  get public ip: 'wget -qO- ifconfig.me' ... "
+            wget -q --spider ifconfig.me
+            if [ $? -eq 0 ]; then # online
+                ip=$(wget -qO- ifconfig.me)
+                #ip=$(curl ifconfig.me) # needs awk/cut
+                #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
+                echo "$ip"
+                printf '%s' "  --> 'nslookup $ip': "
+                echo "'$(nslookup $ip | head -1)'"
+            else
+                echo "  no internet connection or ifconfig.me is offline"
+            fi 
+        #fi
+    fi
 
     # run R stuff if available
     if check_existance Rscript; then

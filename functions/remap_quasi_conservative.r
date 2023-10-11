@@ -4,22 +4,28 @@
 
 rm(list=ls()); graphics.off()
 
-# which method
+# methods
 # default:  - normalize interpolated values locally: divide interpolated field by its fldsum and multiply by fldsum of input field
 # R14:      - as in section 2.4.3 "Residual flux redistribution" in Rackow 2014 (https://media.suub.uni-bremen.de/handle/elib/829) 
 #           - due to the global correction, this method yields values != 0 everywhere
 #           - those values != 0 can also be of unwanted sign, e.g. negative for a concentration
 method <- "default" # "default" or "R14"
-#fin <- c("wfo"="/work/ba1103/a270073/forcing/input4MIPs/wfo_input4MIPs_surfaceFluxes_FAFMIP_NCAS-2-1-0_gn.nc")
-#fin <- c("lime_mask"="/work/ba1103/a270120/alkalinization_masks/lime_mask_cao_2040-high.nc")
-#fin <- c("lime_mask"="/work/ba1103/a270073/forcing/FESOM1/core/lime_mask_cao_2040-high.nc_timestep_1030-1032")
-fin <- c("FWFGRNL"="/work/ab0246/a270073/data/bamber_etal_12/data/PalMod_GrnlHosing_5kmGrid.nc")
-target_griddes <- c("fesom1_core"="/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc")
 cdo <- Sys.which("cdo")
 cdo <- "/sw/spack-levante/cdo-2.0.6-jkuh4i/bin/cdo" # cdo 2.0.5 on levante broken?
 cdo_remap <- "remapycon"
-outdir <- "/work/ba1103/a270073/forcing/FESOM1/core"
 clean <- T
+
+if (F) {
+    #fin <- c("wfo"="/work/ba1103/a270073/forcing/input4MIPs/wfo_input4MIPs_surfaceFluxes_FAFMIP_NCAS-2-1-0_gn.nc")
+    #fin <- c("lime_mask"="/work/ba1103/a270120/alkalinization_masks/lime_mask_cao_2040-high.nc")
+    #fin <- c("lime_mask"="/work/ba1103/a270073/forcing/FESOM1/core/lime_mask_cao_2040-high.nc_timestep_1030-1032")
+    target_griddes <- c("fesom1_core"="/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc")
+    outdir <- "/work/ba1103/a270073/forcing/FESOM1/core"
+} else if (F) {
+    fin <- c("FWFGRNL"="/work/ab0246/a270073/data/bamber_etal_12/data/PalMod_GrnlHosing_5kmGrid.nc")
+    target_griddes <- c("fesom1_core"="/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc")
+    outdir <- "/work/ba1103/a270073/forcing/FESOM1/core"
+}
 
 ####################################################################
 

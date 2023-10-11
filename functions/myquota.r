@@ -3,7 +3,8 @@
 # dependencies: myfunctions.r:size2byte()
 if (!interactive()) source("~/scripts/r/functions/myfunctions.r")
 
-known_quotas <- c("levante"="/sw/bin/lfsquota.sh")
+known_quotas <- c("levante"="/sw/bin/lfsquota.sh",
+                  "albedo"="/albedo/soft/bin/info.sh")
 
 ##########################################################################
 
@@ -40,6 +41,16 @@ for (qi in seq_along(known_quotas)) {
                 df$free_G <- free_byte/1024^3
                 df$free_T <- free_byte/1024^4
                 print(df, width=200, row.names=F)
+            } # for ci
+        } else if (known_quotas[qi] == "/albedo/soft/bin/info.sh") { 
+            args <- c("-q")
+            cmd <- known_quotas[qi]
+            if (any(args != "")) cmd <- paste0(cmd, " ", args)
+            for (ci in seq_along(cmd)) {
+                res <- base::pipe(cmd[ci])
+                df <- utils::read.fwf(res, widths=c(42, 4, 8, 6, 8, 1, 8, 12), header=F, skip=1, stringsAsFactors=F)
+                res <- system(cmd[ci], intern=T)
+                stop("asd")
             } # for ci
         } # which machine
     }

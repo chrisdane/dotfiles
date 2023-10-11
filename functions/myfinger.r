@@ -11,8 +11,10 @@ if (interactive()) {
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     help <- paste0("\nUsage:\n $ ", me, " from [to]\n",
-                    "   e.g. ", me, " a270000 # the usual `finger` command\n",
-                    "        ", me, " a270000 a270099 # finger users from a270000 to a270099\n")
+                    "   e.g. ", me, " a270000\n",
+                    "        ", me, " a270000 a270099\n\n",
+                    "  Dependency: `finger`\n")
+
     args <- commandArgs(trailingOnly=T)
 }
 

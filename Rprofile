@@ -246,10 +246,8 @@ if (T) { # set F for blank .Rprofile
         # LC_CTYPE: character type
 		if (T && regexpr("en", Sys.getlocale("LC_MESSAGES")) == -1) {
 			oldlocale <- Sys.getlocale("LC_MESSAGES")
+			message("Set message language from \"", oldlocale, "\" to \"C\": `Sys.setlocale(\"LC_MESSAGES\", \"C\")`")
 			Sys.setlocale("LC_MESSAGES", "C")
-			newlocale <- Sys.getlocale("LC_MESSAGES")
-			message("   Set message language from \"", oldlocale, "\" to \"", newlocale, "\" ...")
-			message("      Sys.setlocale(\"LC_MESSAGES\", \"C\")")
         }
 
         # add my functions to an environment so that they do not get removed on rm()

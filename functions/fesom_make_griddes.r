@@ -5,7 +5,8 @@ rm(list=ls()); graphics.off()
 #remotes::install_github("FESOM/spheRlab")
 #library(spheRlab, lib="/global/AWIsoft/R/4.1.0/lib/R/library") # 1.1.5
 library(spheRlab, lib="/home/ollie/cdanek/scripts/r/packages/bin/r_4.1") # 1.1.5
-message("\nloaded sheRlab ", packageVersion("spheRlab"), " from ", attr(packageDescription("spheRlab"), "file"))
+message("\nloaded spheRlab version ", packageVersion("spheRlab"), 
+        " from path ", attr(packageDescription("spheRlab"), "file"))
 
 if (F) { # my CbSCL mesh
     griddir <- "/work/ollie/cdanek/mesh/fesom/CbSCL"

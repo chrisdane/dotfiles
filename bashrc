@@ -473,6 +473,7 @@ else
         echo "ncview -minmax all Sample.nc"
     }
     pyhelp(){
+        echo "python -c 'import sys; print(sys.path)'" 
         echo "%run scriptname"
         echo "ipynb2py: jupyter nbconvert --to script 'file.ipynb'"
         echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
@@ -930,8 +931,9 @@ else
         esm_tools_helpers.sh
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         jsbach_pft_wrt_box.r jsbach_tile2pft.r jsbach_plot_pft.r 
-        fesom1_get_meshinfo.r fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r 
-        fesom1_plot_2d.r fesom1_nod2d_to_nc.r fesom1_landice2nodes_plot.r
+        fesom_make_griddes.r fesom1_get_meshinfo.r 
+        fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r 
+        fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
         esgf_get_variables.r esgf_json_tree.sh
         select_winter_summer.r

@@ -197,6 +197,20 @@ else
         echo "mount -l -t fuse.sshfs"
         mount -l -t fuse.sshfs
     }
+    update_chmod(){
+        echo "run 'find ./ -type f -exec chmod go+r -- {} +' ..."
+        find ./ -type f -exec chmod go+r -- {} + # group & others get +r on all files
+        echo "run 'find ./ -type d -exec chmod go+rx -- {} +' ..."
+        find ./ -type d -exec chmod go+rx -- {} + # group & others get +rx on all dirs (+x necessary to `cd` into dir) 
+        # before:
+        # -rw-r----- 1 f1
+        # drwxr-x--- 2 dir1/
+        # -rwxr-x--- 1 script1*
+        # after:
+        # -rw-r--r-- 1 f1
+        # drwxr-xr-x 2 dir1/
+        # -rwxr-xr-- 1 script1* 
+    }
     linuxhelp(){
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
@@ -219,6 +233,9 @@ else
         echo "sudoedit # not 'sudo vi'"
         echo watch
         echo "  watch -n 0.1 ls"
+        echo wifi
+        echo "  sudo cat /etc/NetworkManager/system-connections/*"
+        echo "  nmcli device wifi show-password"
     }
     archhelp(){
         echo "debug"
@@ -263,6 +280,15 @@ else
     scphelp(){
         echo "scp -O -r dir/ user@host:/path # -O legacy mode to prevent 'path canonicalization failed' error"
     }
+    ftphelp(){
+        echo "lftp url"
+        echo "!ls"
+        echo "get fremote [-o flocal]"
+        echo "put flocal [-o fremote]"
+        echo "mirror [-P nfiles_in_parallel] dirremote dirlocal"
+        echo "mirror -R [-P nfiles_in_parallel] dirlocal dirremote # -R for reverse"
+        echo "lftp -c 'open ftp://ouruser:ourpassword@ftp.remotehost.com; mirror ...' # non-interactive mode"
+    }
     vpnhelp(){
         echo "sudo openconnect -v --background --certificate=cert --csd-wrapper=script --timestamp --printcookie -u <name> <server>"
         echo "certificate: deutsche-telekom-root-ca-2.pem"
@@ -270,6 +296,35 @@ else
     }
     vimhelp(){
         echo "find missing bracket: 1) cursor on open or close bracket 2) %"
+        echo ". # repeats last operation"
+        echo "operations ~ verbs:"
+        echo ""
+        echo "d # delete"
+        echo "c # change (= delete + enter insert mode)"
+        echo "> # indent"
+        echo "v # visually select (V for whole line)"
+        echo "y # yank = copy"
+        echo "f, F # find (F go backwards)"
+        echo "t, T # find (T go backwards)"
+        echo "/ # find"
+        echo ""
+        echo "motions ~ nouns:"
+        echo "w # forward by word "
+        echo "b # back by word"
+        echo "2j # down 2 lines"
+        echo "iw # inner word"
+        echo "it # inner tag"
+        echo "i # inner quotes"
+        echo "ip # inner paragraph"
+        echo "as # as sentence"
+        echo ""
+        echo "combine verb with noun:"
+        echo "dw # delete word"
+        echo "fac # find next a and change"
+        echo "c6j # change following 6 lines"
+        echo "ds\" # delete surrounding quotes"
+        echo "cs\"' # change surroundnig \" to '"
+        echo "ys\" # add surrounding \""
     }
     fortranhelp() {
         echo "line length!!!!!!!!!!!!!!"
@@ -446,6 +501,7 @@ else
         echo "Interpolate remapnn         Nearest neighbor remapping"
         echo "Interpolate remaplaf        Largest area fraction remapping"
         echo "Remap       remap           SCRIP grid remapping"
+        echo "-setattribute,precip@long_name='Precipitation' in out"
     } # cdohelp
     # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
@@ -1005,12 +1061,12 @@ else
     # load private stuff at the end to overwrite defaults (and conda) from above
     if [ -f ~/.myprofile ]; then
         printf '%*s' "$ncol" | tr ' ' "-"
-        printf " ~/.myprofile start"
+        printf " ~/.myprofile start "
         printf '%*s' "$ncol" | tr ' ' "-"
         echo ""
         source ~/.myprofile
         printf '%*s' "$ncol" | tr ' ' "-"
-        printf " ~/.myprofile finish"
+        printf " ~/.myprofile finish "
         printf '%*s' "$ncol" | tr ' ' "-"
         echo ""
     fi

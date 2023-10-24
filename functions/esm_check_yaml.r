@@ -4,7 +4,8 @@ if (interactive()) {
     #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp585/config/ssp585_finished_config.yaml_20150101-20151231"
     #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/fwf_01/run_18700101-18701231/config/fwf_01_finished_config.yaml"
     #args <- "/scratch/de2d/out/awicm3-v3.1/test/run_20000101-20000103/config/test_finished_config.yaml"
-    args <- c("general", "/scratch/de2d/out/awicm3-v3.1/test/run_20000101-20000103/config/test_finished_config.yaml")
+    #args <- c("general", "/scratch/de2d/out/awicm3-v3.1/test/run_20000101-20000103/config/test_finished_config.yaml")
+    args <- c("openifs", "/perm/de2d/out/awicm3-v3.1.1/test/run_20000101-20000103/config/test_finished_config.yaml")
     #args <- "output_finished_config.yaml"
 } else {
     args <- commandArgs(trailingOnly=T) # user args only
@@ -44,8 +45,8 @@ if (!is.null(user_sections)) {
     inds <- match(user_sections, names(yaml))
     if (anyNA(inds)) {
         nainds <- which(is.na(inds))
-        stop("the ", length(nainds), "/", length(user_section), " provided user sections ", 
-             paste(user_sections[nainds], collapse=", "), " are not in this yaml file (",
+        stop("the ", length(nainds), "/", length(user_sections), " provided user sections \"",
+             paste(user_sections[nainds], collapse="\", \""), "\" are not in this yaml file (choose any of ",
              paste(names(yaml), collapse=", "), ")")
     }
     yaml <- yaml[inds]

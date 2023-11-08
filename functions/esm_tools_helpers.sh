@@ -46,7 +46,7 @@ recomp_fesom() {
             fi
             fesom_branch=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} branch| sed -n -e 's/^\* \(.*\)/\1/p')
             fesom_hash=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} rev-parse --short HEAD)
-            echo; echo "compile fesom on branch ${fesom_branch} (${fesom_hash}) with esm_tools"
+            echo; echo "compile fesom on branch '${fesom_branch}' (${fesom_hash}) with esm_tools"
             esm_tools_info
             if command -v host &> /dev/null; then
                 hostname=$(host $(hostname))
@@ -112,7 +112,7 @@ recomp_recom() {
             recom_hash=$(git --git-dir=${recom_path}/.git --work-tree=${recom_path} rev-parse --short HEAD)
             fesom_branch=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} branch| sed -n -e 's/^\* \(.*\)/\1/p')
             fesom_hash=$(git --git-dir=${fesom_path}/.git --work-tree=${fesom_path} rev-parse --short HEAD)
-            echo; echo "compile 1) recom on branch ${recom_branch} (${recom_hash}) and then 2) fesom on branch ${fesom_branch} (${fesom_hash}) with esm_tools"
+            echo; echo "compile 1) recom on branch '${recom_branch}' (${recom_hash}) and then 2) fesom on branch '${fesom_branch}' (${fesom_hash}) with esm_tools"
             esm_tools_info
             if command -v host &> /dev/null; then
                 hostname=$(host $(hostname))

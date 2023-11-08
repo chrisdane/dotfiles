@@ -17,6 +17,7 @@ if (interactive()) {
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
     #fesom1_setgrid_regrid.r griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/levelwise/wgrid /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/levelwise/*.nc > setgrid_ssp126.log 2>&1 &
+    #fesom1_setgrid_regrid.r griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc outdir=. *_levelwise_0-5900m.nc > setgri.log 2>&1 &
 }
 
 usage <- paste0("\nUsage:\n $ ", me, 

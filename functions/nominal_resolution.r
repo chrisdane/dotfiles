@@ -22,9 +22,9 @@ if (interactive()) {
 
 usage <- paste0("\nUsage:\n",
                 " $ ", me, " /path/to/nc/file/with/griddes/not/generic/and/not/unstructued\n",
-                "   ", paste(rep(" ", t=nchar(me)), collapse=""), " varname=/path/to/nc/file/with/griddes/not/generic/and/not/unstructued\n",
-                "   ", paste(rep(" ", t=nchar(me)), collapse=""), " f1 f2 ...\n",
-                "   ", paste(rep(" ", t=nchar(me)), collapse=""), " var1=f1 var2=f2 ...\n", 
+                "   ", me, " varname=/path/to/nc/file/with/griddes/not/generic/and/not/unstructued\n",
+                "   ", me, " f1 f2 ...\n",
+                "   ", me, " var1=f1 var2=f2 ...\n", 
                 "\n")
 
 # check
@@ -72,7 +72,7 @@ for (fi in seq_along(fs)) {
     cmd <- paste0(cdo, " -s -griddx ", select, " ", foutselect, " ", foutx)
     message("run `", cmd, "` ...")
     check <- system(cmd)
-    if (check != 0) { # cdo griddx no sucess (e.g. unstrucsured grid)
+    if (check != 0) { # cdo griddx no sucess (e.g. unstructured grid)
 
         # get gridarea in m2
         foutarea <- paste0("~/", basename(fs[fi]), "_area")
@@ -82,11 +82,11 @@ for (fi in seq_along(fs)) {
         check <- system(cmd)
         if (check != 0) stop("error")
 
-        # calc approximated dmax = sqrt(area)
+        # calc approximated dmax = sqrt(2*area_elem) --> Danilov 2022: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003177
         foutdmax <- paste0("~/", basename(fs[fi]), "_dmax")
         if (file.exists(foutdmax)) stop("foutdmax ", foutdmax, " already exists")
-        message("\napproximate nominal resolution dmax = sqrt(area) ...")
-        cmd <- paste0(cdo, " -s -setname,dmax -setunit,km -divc,1e3 -sqrt ", foutarea, " ", foutdmax)
+        message("\napproximate nominal resolution dmax = sqrt(2*area_elem) as recommended by Danilov 2022: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003177 ...")
+        cmd <- paste0(cdo, " -s -setunit,km -expr,'dmax=sqrt(2*cell_area)/1e3' ", foutarea, " ", foutdmax)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
@@ -167,4 +167,6 @@ for (fi in seq_along(fs)) {
     if (!is.null(foutarea)) invisible(file.remove(foutarea))
 
 } # for fi
+
+message("\nfinished\n")
 

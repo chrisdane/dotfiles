@@ -34,7 +34,7 @@ if (interactive()) {
     #args <- c("--exclude=466,491-494,662", "/work/ba1103/a270094/AWIESM/test/scripts")
     #args <- c("--exclude=316", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/scripts/*_compute_*-*_*.log")
     #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/scripts/*_compute_*-*_*.log"
-    args <- c("--exclude=140", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/log/*_compute_*-*_*.log")
+    #args <- c("--exclude=140", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/log/*_compute_*-*_*.log")
     #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp585/scripts/*_compute_*-*_*.log"
     #args <- c("--exclude=30,87,88", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp585/scripts/*_compute_*-*_*.log")
     #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl/scripts/*_compute_*-*_*.log"
@@ -46,8 +46,9 @@ if (interactive()) {
     #args <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/log/*_compute_*-*_(2100732|2100996).log"
     #args <- c("--exclude=24-26,29,31,35,43", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl2/log/*_compute_*-*_*.log")
     #args <- c("--exclude=115,166", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-hist/log/*_compute_*-*_*.log")
-    args <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/ant_01sv/log/*_compute_*-*_*.log"
-    
+    #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/ant_01sv/log/*_compute_*-*_*.log"
+    args <- c("--exclude=60-72,200,367,778,826,1239", "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_nobio_spinup/log/*_compute_*-*_*.log")
+
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -128,6 +129,8 @@ if (any(!file.exists(logs))) {
     print(logs[inds])
     stop("these ", length(inds), "/", length(logs), " provided logs above do not exist")
 }
+
+message("\nnormalize fnames of ", length(logs), " logs and dereference links if any ...")
 logs <- normalizePath(logs) # clean path and dereference potential links
 logs <- unique(logs)
 dirs <- dirname(logs)

@@ -189,6 +189,8 @@ else
     }
     topme(){
         top -u $(whoami)
+        #top -u $(whoami) -b -n 1 -c -w 512
+        #top -u $(whoami) -b -n 1 -c -o %CPU -w 512 | awk 'NR>6 { printf "%6s %-4s %-4s %-4s %s\n",$1,$2,$9,$10,$12}'
     }
     pgrepme(){
         pgrep -u $(whoami) -ai $1
@@ -987,7 +989,7 @@ else
         esm_tools_helpers.sh
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         jsbach_pft_wrt_box.r jsbach_tile2pft.r jsbach_plot_pft.r 
-        fesom_make_griddes.r fesom1_get_meshinfo.r 
+        fesom1_get_meshinfo.r 
         fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r 
         fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
@@ -1029,10 +1031,10 @@ else
     fi
     if check_existance squeue; then
         sme() { 
-            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
-            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
+            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R" ; }
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R" ; }
     fi
     if check_existance scontrol; then
         smee() {

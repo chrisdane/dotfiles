@@ -10,11 +10,18 @@ if (interactive()) {
     me <- "fesom1_nod3d_levelwise_fast.r"
     if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
-                  "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/levelwise",
+                  "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise",
                   #"shifttime=-1day",
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20130101.nc")
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/uo_fesom_20130101.nc")
     } else if (T) {
+        args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
+                  "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/post/fesom/levelwise",
+                  "shifttime=-1day",
+                  "timstat=monmean",
+                  #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/fesom/so_fesom_20200101.nc")
+                  "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/fesom/so_fesom_*")
+    } else if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/post/recom",
                   "shifttime=-1mon",
@@ -30,7 +37,7 @@ if (interactive()) {
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
-    #./fesom1_nod3d_levelwise_fast.r meshdir=/pool/data/AWICM/FESOM1/MESHES/core outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata shifttime=-1day /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20140101.nc > levelwise.log 2>&1 &
+    #./fesom1_nod3d_levelwise_fast.r meshdir=/pool/data/AWICM/FESOM1/MESHES/core outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise shifttime=-1day /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20140101.nc > levelwise.log 2>&1 &
 }
 
 usage <- paste0("\nUsage:\n $ ", me, 
@@ -40,8 +47,12 @@ usage <- paste0("\nUsage:\n $ ", me,
 
 # check
 if (length(args) < 3) { # meshdir, outdir, file1
-    message(usage)
-    quit()
+    if (interactive()) {
+        stop(usage)
+    } else {
+        message(usage)
+        quit()
+    }
 }
 
 if (any(grepl("^meshdir=", args))) {
@@ -96,6 +107,14 @@ if (any(grepl("^shifttime=", args))) {
 }
 if (!is.null(shifttime)) message("shifttime = ", shifttime)
 
+timstat <- NULL # default
+if (any(grepl("^timstat=", args))) {
+    ind <- which(grepl("^timstat=", args))
+    timstat <- sub("timstat=", "", args[ind])
+    args <- args[-ind]
+}
+if (!is.null(timstat)) message("timstat = ", timstat)
+
 sellevel <- NULL # default
 if (any(grepl("^sellevel=", args))) {
     ind <- which(grepl("^sellevel=", args))
@@ -105,11 +124,28 @@ if (any(grepl("^sellevel=", args))) {
 if (!is.null(sellevel)) message("sellevel = ", sellevel)
 
 if (length(args) == 0) {
-    message(usage)
-    quit()
+    if (interactive()) {
+        stop(usage)
+    } else {
+        message(usage)
+        quit()
+    }
 }
+
+# apply potential regex
 files <- args
-message("\n", length(files), " files:")
+message("\n", length(files), " input files:")
+options(width=1000)
+print(data.frame(file=files))
+options(width=80)
+message()
+files2 <- vector("list", l=length(files))
+for (fi in seq_along(files)) {
+    files2[[fi]] <- list.files(dirname(files[fi]), glob2rx(basename(files[fi])), full.names=T)
+}
+files2 <- unlist(files2)
+files <- files2
+message("\n--> will work on ", length(files), " files:")
 options(width=1000)
 print(data.frame(file=files))
 options(width=80)
@@ -123,8 +159,8 @@ ncks <- Sys.which("ncks")
 if (ncks == "") stop("could not find ncks")
 message("ok")
 cdo <- NULL
-if (!is.null(shifttime)) {
-    message("`shifttime` = \"", shifttime, "\" --> check cdo ... ", appendLF=F)
+if (!is.null(shifttime) || !is.null(timstat)) {
+    message("`shifttime` or `timstat` is wanted --> check cdo ... ", appendLF=F)
     cdo <- Sys.which("cdo")
     if (cdo == "") stop("could not find cdo")
     message("ok")
@@ -229,7 +265,7 @@ if (sellevel_method == "range") {
 sellevel_li <- as.list(sellevel)
 for (li in seq_along(sellevel)) {
     if (sellevel[li] < min(depth) || sellevel[li] > max(depth)) {
-        stop("wanted level ", li, "/", length(sellevel), ": ", sellevel[li], "m is not withing model depths")
+        stop("wanted level ", li, "/", length(sellevel), ": ", sellevel[li], "m is not within model depths")
     }
     ind <- which.min(abs(depth - sellevel[li]))[1]
     interp <- F # default
@@ -269,6 +305,7 @@ message("\nconvert ", length(files), " files from nod3d to levelwise ...\n")
 elapsed <- c()
 cnt <- 0
 n3dimname <- NULL
+if (!is.null(timstat)) tmp_files_timstat <- rep(NA, t=length(files))
 for (fi in seq_along(files)) {
     message("******************************************************\n",
             "file ", fi, "/", length(files), ": ", files[fi])
@@ -303,6 +340,19 @@ for (fi in seq_along(files)) {
                 n3dimname <- trimws(n3dimname) # "nodes_3d"
                 message(n3dimname)
             } # if is.null(n3dimname)
+
+            # apply timstat before
+            if (!is.null(timstat)) {
+                message("\n`timstat` = \"", timstat, "\"")
+                cmd <- paste0(cdo, " -", timstat)
+                if (!is.null(shifttime)) cmd <- paste0(cmd, " -shifttime,", shifttime)
+                tmp_files_timstat[fi] <- paste0(ofile, "_", timstat)
+                cmd <- paste0(cmd, " ", files[fi], " ", tmp_files_timstat[fi])
+                message("run `", cmd, "` ...")
+                check <- system(cmd)
+                if (check != 0) stop("cmd failed")
+                files[fi] <- tmp_files_timstat[fi] # continue with timstat file
+            } # if shifttime 
             
             # step 1: select nodes from current level; they are all non-NA and of different length per level
             message("\nstep 1: select data from ", nlev_needed, " levels ...")
@@ -418,24 +468,21 @@ for (fi in seq_along(files)) {
                     message("\nrm ", length(ofiles_lev_woutNA[nonNAinds]), " tmp files ...")
                     invisible(file.remove(ofiles_lev_woutNA[nonNAinds]))
                 }
+                if (T && !is.null(timstat)) {
+                    message("\nrm tmp timstat file ", tmp_files_timstat[fi])
+                    invisible(file.remove(tmp_files_timstat[fi]))
+                }
 
                 # apply vertical interpolation
-                if (sellevel_interp) {
-                    message("\napply vertical interpolation ...")
-                    cmd <- paste0(cdo, " intlevel,", paste(sellevel, collapse=","), " ", 
-                                  ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)
+                cmd <- cdo
+                if (!is.null(shifttime) && is.null(timstat)) cmd <- paste0(cmd, " -shifttime,", shifttime) # apply shifttime if not already done before
+                if (sellevel_interp) cmd <- paste0(cmd, " -intlevel,", paste(sellevel, collapse=",")) # apply vertical interpolation
+                if (cmd != cdo) {
+                    cmd <- paste0(cmd, " ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)
                     message("run `", cmd, "` ...")
                     check <- system(cmd)
                     if (check != 0) stop("cmd failed")
                 } # if vertical interpolation is necessary
-
-                if (!is.null(shifttime)) {
-                    message("\n`shifttime` = \"", shifttime, "\"")
-                    cmd <- paste0(cdo, " shifttime,", shifttime, " ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)
-                    message("run `", cmd, "` ...")
-                    check <- system(cmd)
-                    if (check != 0) stop("cmd failed")
-                } # if shifttime 
 
             } # if some non-NA data
         } # if fout already exists or not

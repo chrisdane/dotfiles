@@ -213,6 +213,9 @@ else
         # drwxr-xr-x 2 dir1/
         # -rwxr-xr-- 1 script1* 
     }
+    #mycbind(){
+    #    paste <all> | column -s $'\t' -t 
+    #}
     linuxhelp(){
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
@@ -352,41 +355,49 @@ else
         echo "</details>"
     }
     githelp(){
-        echo "get default brach of repo: cat .git/refs/remotes/origin/HEAD"
         echo "get hash: git rev-parse --short HEAD"
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
-        echo "dir=<distant_dir_to_check>"
-        echo "git --git-dir=\$dir/.git --work-tree=\$dir <any_git_cmd>"
-        echo diff
+        echo "# branch/tag"
+        echo "show list:        git {branch,tag} [-av]"
+        echo "default branch:   cat .git/refs/remotes/origin/HEAD"
+        echo "create local:     git branch -b test"
+        echo "delete local:     git branch -d test"
+        echo "create remote:    git push origin test"
+        echo "delete remote:    "
+        echo "git push origin --delete bname # delete remote"
+        echo "git < 2.23:"
+        echo "  if one remote:       git checkout test"
+        echo "  if multiple remotes: git checkout -b test {origin[/remote],tags}/test"
+        echo "git >= 2.23:"
+        echo "  if one remote:       git switch test"
+        echo "  if multiple remotes: git switch -c test {origin[/remote],tags}/test"
+        echo "check if a branch exists on server: git ls-remote --heads origin refs/heads/test"
+        echo "get latest tag: tag=\$(git describe --tags \$(git rev-list --tags --max-count=1))"
+        echo "compare: https://github.com/user/repo/compare"
+        echo " # commit"
+        echo "git reset --hard HEAD^ # remove last commit; also deletes unstaged changes!"
+        echo "git reset --hard HEAD~2 # remove last 2 commits; also deletes unstaged changes!"
+        echo "git push origin -f # update remote"
+        echo "# clone"
+        echo "git clone --branch=test url"
+        echo "# diff
         echo "git diff [from] to"
         echo "git diff --name-only"
         echo "git diff 6843db8 -- '*.functions'"
         echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
         echo "git diff --word-diff-regex=."
         echo "git diff --color-words=."
-        echo branch
-        echo "git branch -b bname # create local"
-        echo "git checkout bname # old"
-        echo "git switch -c bname origin/bname # new; copy and switch to remote branch"
-        echo "git branch -d bname # delete local"
-        echo "git push origin bname # create remote"
-        echo "git push origin --delete bname # delete remote"
-        echo "compare: https://github.com/user/repo/compare"
-        echo commit
-        echo "git reset --hard HEAD^ # remove last commit; also deletes unstaged changes!"
-        echo "git reset --hard HEAD~2 # remove last 2 commits; also deletes unstaged changes!"
-        echo "git push origin -f # update remote"
-        echo merge
+        echo "# merge"
         echo "git merge -s ours # --strategy"
-        echo stash
+        echo "# stash"
         echo "git stash list; stash show -p stash@{1}; stash apply stash@{n}; stash drop stash@{2}"
-        echo cherry-pick
+        echo "# cherry-pick"
         echo "git checkout commitx"
         echo "git cherry-pick commity [commitz1 commitz2]"
         echo "git cherry-pick --strategy=recursive -X theirs 7501f4d"
         echo "git cherry-pick -n commit # dont make a commit"
-        echo squash
+        echo "# squash"
         echo "git checkout branchname"
         echo "git rebase -i HEAD~n # combine latest n commits"
         echo "@editor: first line let \"pick\"; all other lines from \"pick\" --> \"squash\""
@@ -500,7 +511,7 @@ else
         echo "Interpolate remapbil        Bilinear interpolation"
         echo "Interpolate remapbic        Bicubic interpolation"
         echo "Interpolate remapdis        Distance-weighted averaging"
-        echo "Interpolate remapnn         Nearest neighbor remapping"
+        echo "Interpolate remapnn         Nearest neighbor remapping; remapnn,lon=108.12673/lat=52.787004"
         echo "Interpolate remaplaf        Largest area fraction remapping"
         echo "Remap       remap           SCRIP grid remapping"
         echo "-setattribute,precip@long_name='Precipitation' in out"
@@ -532,6 +543,7 @@ else
     }
     pyhelp(){
         echo "python -c 'import sys; print(sys.path)'" 
+        echo "exec(open('script.py').read())"
         echo "%run scriptname"
         echo "ipynb2py: jupyter nbconvert --to script 'file.ipynb'"
         echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
@@ -972,6 +984,11 @@ else
             mytimes.r
         fi
     fi
+   
+    # python config
+    if [ -f ~/.pythonrc.py ]; then
+        export PYTHONSTARTUP=~/.pythonrc.py
+    fi
     
     # link dotfiles-repo functions to bin
     fs=(
@@ -1094,6 +1111,22 @@ else
     if ! check_existance nc-config; then
         echo nc-config is missing!
     fi
+
+    # change default pip lib path from ~/.local and add to PATH:
+    if [ ! -z ${mywork+x} ]; then
+        echo "'mywork' = ${mywork}"
+        export PYTHONUSERBASE="${work}/sw/pip" # = pythons site.USER_SITE
+        echo "--> change pip default path from ~/.local to ${PYTHONUSERBASE} ..."
+        export PATH="${PYTHONUSERBASE}/bin:$PATH"
+        #PIP_TARGET='/albedo/work/user/cdanek/sw/pip/pkgs' # not needed?
+        if [ -x "$(command -v conda)" ]; then
+            # modify default conda location from ~/.conda
+            condapath="/albedo/work/user/cdanek/sw/conda"
+            echo "--> changchange default path from ~/.conda to ${condapath}/{pkgs,envs} ..."
+            conda config --prepend pkgs_dirs "${condapath}/pkgs" # this creates or
+            conda config --prepend envs_dirs "${condapath}/envs" # modifies ~/.condarc
+        fi
+    fi # if mywork is set
 
     # finish
     printf '%*s' "$ncol" | tr ' ' "*"

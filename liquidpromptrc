@@ -1,5 +1,11 @@
 # override liquidprompt defaults
 
+# └2 means:
+# Show the value of ``$SHLVL``, which is the number of nested shells. For
+# example, if one runs ``bash`` inside their shell, it will open a new shell
+# inside their current shell, and this will display "2".
+# --> $SHLVL > 1 may happen due to shell opened display manager
+
 LP_HOSTNAME_ALWAYS=1 # 0: show the hostname, except when locally connected; 1: always show the hostname; -1: never
 LP_COLOR_HOST="$BLUE" # color for hostname
 LP_ENABLE_PERM=0 # no write permission in currenct dir

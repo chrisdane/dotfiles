@@ -144,17 +144,13 @@ for (i in seq_len(2)) { # for input and output tz
                     dates_utc[[zi]] <- as.POSIXct(as.character(dateslt[[zi]]), tz="UTC")
                 }
                 ndifferent_zones <- length(unique(unlist(dates_utc)))
-                message("--> ", ifelse(length(zones) == 1, "this", "those"),
-                        " ", length(zones), " time zone", 
-                        ifelse(length(zones) == 1, " has", "s have"),
-                        " ", ndifferent_zones, " ",
-                        ifelse(ndifferent_zones == 1, "time",  
-                               paste0(ndifferent_zones, "different time")), appendLF=F)
                 if (ndifferent_zones != 1) {
                     message()
-                    stop("dont know which time zone to use. rerun with valid time zone.\n", usage)
+                    stop("--> those time zones have ", ndifferent_zones, 
+                         " different times. dont know which time zone to use. rerun with valid time zone.\n", usage)
                 } else if (ndifferent_zones == 1) {
-                    message(" --> continue with ", names(tz), " = \"", zones[1], "\"")
+                    message(" --> those time zones have an identical time --> continue with the first: ", 
+                            names(tz), " = \"", zones[1], "\"")
                     if (i == 1) tzin <- zones[1]
                     if (i == 2) tzout <- zones[1]
                 }

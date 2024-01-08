@@ -549,10 +549,16 @@ else
         echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
     }
     condahelp(){
+        echo "conda info"
+        echo "conda config --show-sources"
+        echo "conda config --describe"
+        echo "conda shell.bash activate"
+        echo "conda shell.bash deactivate"
+        echo "conda env list"
         echo "conda create -n myname"
         echo "conda create -p /path <env>"
-        echo "source activate <env>"
-        echo "source deactivate"
+        echo "conda activate <env>"
+        echo "conda deactivate"
         echo "conda env list"
         echo "conda list"
         echo "conda install -c <chan> <pkg>"
@@ -669,6 +675,9 @@ else
         echo "add to cmakelists.txt:"
         echo "set(foo \$ENV{NETCDF_CXX_INCLUDE_DIRECTORIES})"
         echo "message(STATUS \"bar \${too}\")"
+    }
+    configurehelp(){
+        echo "./configure CFLAGS=\"-I/usr/local/include\" LDFLAGS=\"-L/usr/local/lib\""
     }
 
     # aliase (check with 'type alias')
@@ -1077,7 +1086,7 @@ else
         source ~/bin/esm_tools_helpers.sh
     fi
 
-    # load private stuff at the end to overwrite defaults (and conda) from above
+    # load private stuff at the end to overwrite defaults from above
     if [ -f ~/.myprofile ]; then
         printf '%*s' "$ncol" | tr ' ' "-"
         printf " ~/.myprofile start "
@@ -1109,23 +1118,40 @@ else
 
     # run bash stuff if available
     if ! check_existance nc-config; then
-        echo nc-config is missing!
+        echo 'nc-config' is missing!
     fi
 
-    # change default pip lib path from ~/.local and add to PATH:
-    if [ ! -z ${mywork+x} ]; then
-        echo "'mywork' = ${mywork}"
-        export PYTHONUSERBASE="${work}/sw/pip" # = pythons site.USER_SITE
-        echo "--> change pip default path from ~/.local to ${PYTHONUSERBASE} ..."
+    # change default pip/conda paths
+    # xarray:   2.7G
+    # pyfesom2: 1.9G 4.6G
+    # pyint:    1.8G 6.4G
+    if [ ! -z ${mywork+x} ]; then # not empty
+        echo "mywork = ${mywork} is set"
+        export PYTHONUSERBASE="${mywork}/sw/pip" # = pythons site.USER_SITE
+        echo "--> change default pip path from ~/.local to PYTHONUSERBASE=${PYTHONUSERBASE} ..."
         export PATH="${PYTHONUSERBASE}/bin:$PATH"
-        #PIP_TARGET='/albedo/work/user/cdanek/sw/pip/pkgs' # not needed?
-        if [ -x "$(command -v conda)" ]; then
-            # modify default conda location from ~/.conda
-            condapath="/albedo/work/user/cdanek/sw/conda"
-            echo "--> changchange default path from ~/.conda to ${condapath}/{pkgs,envs} ..."
-            conda config --prepend pkgs_dirs "${condapath}/pkgs" # this creates or
-            conda config --prepend envs_dirs "${condapath}/envs" # modifies ~/.condarc
-        fi
+        #PIP_TARGET='${mywork}/sw/pip/pkgs' # not needed?
+        conda_prefix="${mywork}/sw/conda/envs"
+        conda_envs_dirs="${conda_prefix}"
+        conda_pkgs_dirs="${mywork}/sw/conda/pkgs"
+        mkdir -p ${conda_prefix} ${conda_envcs_dirs} ${conda_pkgs_dirs}
+        export CONDA_PREFIX="${conda_prefix}"
+        export CONDA_ENVS_DIRS="${conda_envs_dirs}"
+        export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
+        echo "--> change default conda path from ~/.conda to"
+        echo "       CONDA_PREFIX=${CONDA_PREFIX}"
+        echo "       CONDA_ENVS_DIRS=${CONDA_ENVS_DIRS}"
+        echo "       CONDA_PKGS_DIRS=${CONDA_PKGS_DIRS}"
+        conda_deactivate(){
+            echo "---------------- conda_deactivate() ----------------"
+            echo "run 'conda deactivate' ..."
+            conda deactivate
+            echo "run 'export CONDA_PREFIX=${conda_prefix}' ..."
+            export CONDA_PREFIX="${conda_prefix}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
+            echo "---------------- conda_deactivate() ----------------"
+        } # conda_deactivate
+    else 
+        echo "'mywork' is not set!"
     fi # if mywork is set
 
     # finish

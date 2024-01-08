@@ -477,7 +477,7 @@ for (fi in seq_along(files)) {
                 cmd <- cdo
                 if (!is.null(shifttime) && is.null(timstat)) cmd <- paste0(cmd, " -shifttime,", shifttime) # apply shifttime if not already done before
                 if (sellevel_interp) cmd <- paste0(cmd, " -intlevel,", paste(sellevel, collapse=",")) # apply vertical interpolation
-                if (cmd != cdo) {
+                if (!is.null(cmd)) {
                     cmd <- paste0(cmd, " ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)
                     message("run `", cmd, "` ...")
                     check <- system(cmd)

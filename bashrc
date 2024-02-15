@@ -1019,6 +1019,7 @@ else
         fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r 
         fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
+        oasis_get_B_grid.sh oasis_plot_mask.r
         esgf_get_variables.r esgf_json_tree.sh
         select_winter_summer.r
         mycdoseasmean.r mycdoseassum.r 
@@ -1084,6 +1085,12 @@ else
     # esm_tools stuff
     if [ -f ~/bin/esm_tools_helpers.sh ]; then
         source ~/bin/esm_tools_helpers.sh
+    fi
+    if [ -f ~/esm/awicm3-v3.1.1/oasis/util/lucia/lucia ]; then
+        alias lucia='~/esm/awicm3-v3.1.2/oasis/util/lucia/lucia'
+    fi
+    if [ -f ~/esm/awicm3-v3.1.2/oasis/util/lucia/lucia ]; then
+        alias lucia='~/esm/awicm3-v3.1.2/oasis/util/lucia/lucia'
     fi
 
     # load private stuff at the end to overwrite defaults from above

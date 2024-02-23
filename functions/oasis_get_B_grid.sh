@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# create B grid with oasis mask = 1 everywhere
+# create B grid with oasis mask = 0 everywhere
 
 set -e
 
 if [ "$#" -ne 2 ]; then
-    echo "provide 'gridin' and 'gridout', e.g. 'oasis_append_B_grid.sh A009 B009'"
+    echo "provide 'gridin' and 'gridout', e.g. 'oasis_get_B_grid.sh A009 B009'"
     exit
 fi
 gridin=$1; gridout=$2
@@ -38,14 +38,13 @@ if [ ! -f masks-$gridout.nc ]; then
     ncks -v $gridin.msk masks.nc masks-$gridout.nc
     ncrename -d x_$gridin,x_$gridout -d y_$gridin,y_$gridout -v $gridin.msk,$gridout.msk -v $gridin.lon,$gridout.lon -v $gridin.lat,$gridout.lat masks-$gridout.nc
     ncatted -a coordinates,$gridout.msk,o,c,"$gridout.lat $gridout.lon" masks-$gridout.nc
-    cdo -s -setrtoc,0,0,1 masks-$gridout.nc masks-$gridout.nc_tmp && mv masks-$gridout.nc_tmp masks-$gridout.nc # todo: dim renaming?
+    cdo -s -setrtoc,0,1,0 masks-$gridout.nc masks-$gridout.nc_tmp && mv masks-$gridout.nc_tmp masks-$gridout.nc # todo: dim renaming?
 else 
     echo "output file masks-$gridout.nc aleady exists. skip"
 fi
 
-echo "append $gridout grid with"
+echo "done. if you want, append $gridout grid with"
 echo "ncks -A areas-$gridout.nc areas.nc"
 echo "ncks -A grids-$gridout.nc grids.nc"
 echo "ncks -A masks-$gridout.nc masks.nc"
-echo "if wanted"
 

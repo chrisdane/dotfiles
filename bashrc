@@ -1132,34 +1132,36 @@ else
     # xarray:   2.7G
     # pyfesom2: 1.9G 4.6G
     # pyint:    1.8G 6.4G
-    if [ ! -z ${mywork+x} ]; then # not empty
-        echo "mywork = ${mywork} is set"
-        export PYTHONUSERBASE="${mywork}/sw/pip" # = pythons site.USER_SITE
-        echo "--> change default pip path from ~/.local to PYTHONUSERBASE=${PYTHONUSERBASE} ..."
-        export PATH="${PYTHONUSERBASE}/bin:$PATH"
-        #PIP_TARGET='${mywork}/sw/pip/pkgs' # not needed?
-        conda_prefix="${mywork}/sw/conda/envs"
-        conda_envs_dirs="${conda_prefix}"
-        conda_pkgs_dirs="${mywork}/sw/conda/pkgs"
-        mkdir -p ${conda_prefix} ${conda_envcs_dirs} ${conda_pkgs_dirs}
-        export CONDA_PREFIX="${conda_prefix}"
-        export CONDA_ENVS_DIRS="${conda_envs_dirs}"
-        export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
-        echo "--> change default conda path from ~/.conda to"
-        echo "       CONDA_PREFIX=${CONDA_PREFIX}"
-        echo "       CONDA_ENVS_DIRS=${CONDA_ENVS_DIRS}"
-        echo "       CONDA_PKGS_DIRS=${CONDA_PKGS_DIRS}"
-        conda_deactivate(){
-            echo "---------------- conda_deactivate() ----------------"
-            echo "run 'conda deactivate' ..."
-            conda deactivate
-            echo "run 'export CONDA_PREFIX=${conda_prefix}' ..."
-            export CONDA_PREFIX="${conda_prefix}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
-            echo "---------------- conda_deactivate() ----------------"
-        } # conda_deactivate
-    else 
-        echo "'mywork' is not set!"
-    fi # if mywork is set
+    if false; then
+        if [ ! -z ${mywork+x} ]; then # not empty
+            echo "mywork = ${mywork} is set"
+            export PYTHONUSERBASE="${mywork}/sw/pip" # = pythons site.USER_SITE
+            echo "--> change default pip path from ~/.local to PYTHONUSERBASE=${PYTHONUSERBASE} ..."
+            export PATH="${PYTHONUSERBASE}/bin:$PATH"
+            #PIP_TARGET='${mywork}/sw/pip/pkgs' # not needed?
+            conda_prefix="${mywork}/sw/conda/envs"
+            conda_envs_dirs="${conda_prefix}"
+            conda_pkgs_dirs="${mywork}/sw/conda/pkgs"
+            mkdir -p ${conda_prefix} ${conda_envcs_dirs} ${conda_pkgs_dirs}
+            export CONDA_PREFIX="${conda_prefix}"
+            export CONDA_ENVS_DIRS="${conda_envs_dirs}"
+            export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
+            echo "--> change default conda path from ~/.conda to"
+            echo "       CONDA_PREFIX=${CONDA_PREFIX}"
+            echo "       CONDA_ENVS_DIRS=${CONDA_ENVS_DIRS}"
+            echo "       CONDA_PKGS_DIRS=${CONDA_PKGS_DIRS}"
+            conda_deactivate(){
+                echo "---------------- conda_deactivate() ----------------"
+                echo "run 'conda deactivate' ..."
+                conda deactivate
+                echo "run 'export CONDA_PREFIX=${conda_prefix}' ..."
+                export CONDA_PREFIX="${conda_prefix}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
+                echo "---------------- conda_deactivate() ----------------"
+            } # conda_deactivate
+        else 
+            echo "'mywork' is not set!"
+        fi # if mywork is set
+    fi # if true/false
 
     # finish
     printf '%*s' "$ncol" | tr ' ' "*"

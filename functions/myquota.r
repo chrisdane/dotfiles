@@ -47,10 +47,23 @@ for (qi in seq_along(known_quotas)) {
             cmd <- known_quotas[qi]
             if (any(args != "")) cmd <- paste0(cmd, " ", args)
             for (ci in seq_along(cmd)) {
-                res <- base::pipe(cmd[ci])
-                df <- utils::read.fwf(res, widths=c(42, 4, 8, 6, 8, 1, 8, 12), header=F, skip=1, stringsAsFactors=F)
-                res <- system(cmd[ci], intern=T)
-                stop("asd")
+                res <- system(cmd[ci], ignore.stderr=T, intern=T)
+                inds <- which(grepl("^/", res))
+                if (length(inds) == 0) next # cmd
+                res <- res[inds]
+                res <- strsplit(res, "\\s+")
+                paths <- sapply(res, "[", 1)
+                blocks <- sapply(res, "[", 3)
+                quotas <- sapply(res, "[", 4)
+                nfiles <- sapply(res, "[", 7)
+                file_quotas <- lapply(res, "[", 8:10)
+                file_quotas <- sapply(file_quotas, function(x) paste(x, collapse=" "))
+                df <- data.frame(path=paths,
+                                 block=blocks,
+                                 quota=quotas,
+                                 nfiles=nfiles,
+                                 file_quota=file_quotas)
+                print(df)
             } # for ci
         } # which machine
     }

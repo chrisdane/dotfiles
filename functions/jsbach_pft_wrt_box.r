@@ -4,8 +4,7 @@
 # - simple cdo commands are not possible since mapping from `cover_type` to `cover_fract` is needed as indicated by the different `tilelev` and `pftlev` dimensions above (see reference at the end of script)
 # - the warning `cdo(2) mul (Warning): Input parameters have different levels!` can be ignored
 # - the lon,lat dims of jsbach variables `cover_fract` etc. refer to the binary land sea mask `slm` and not the fractional land sea mask `slf`
-#   --> in T63, `cover_fract` at panama strait (`cdo remapnn,lon=279.375/lat=8.393669`) has no values, i.e. no vegetation although slf != 0
-#   --> this is absolute bullshit and wrong
+#   --> this makes no sense since in T63 `cover_fract` at panama strait (`cdo remapnn,lon=279.375/lat=8.393669`) has no values, i.e. no vegetation although slf != 0
 ##########################################################################################
 
 options(warn=2) # stop on warnings    

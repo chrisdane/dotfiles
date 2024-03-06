@@ -40,10 +40,22 @@ if (interactive()) {
     #./fesom1_nod3d_levelwise_fast.r meshdir=/pool/data/AWICM/FESOM1/MESHES/core outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise shifttime=-1day /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20140101.nc > levelwise.log 2>&1 &
 }
 
-usage <- paste0("\nUsage:\n $ ", me, 
-                " meshdir=/path/to/mesh outdir=/path/to/save/result [shifttime=-1d] [sellevel=100 or 100,1337.8,1338 or 1000/1338] file1 [file2 filen]\n",
+usage <- paste0("\n",
+                "This function does the same as `spheRlab::sl.grid.FESOM3Ddata1Dto2D()`\n",
+                "from https://github.com/FESOM/spheRlab.git but faster.",
                 "\n",
-                "e.g. meshdir=/pool/data/AWICM/FESOM1/MESHES/core\n")
+                "\nUsage:\n", me,
+                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [shifttime=-1d] file1 [file2 filen]\n",
+                "\n",
+                " with e.g. (albedo) meshdir=/albedo/pool/FESOM/meshes_default/core\n",
+                "                    meshdir=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2\n",
+                "           (ecmwf) meshdir=/scratch/deu5912/pool/FESOM2/awicm3/core2\n",
+                "           (levante) meshdir=/pool/data/AWICM/FESOM1/MESHES/core\n",
+                "                     meshdir=/pool/data/AWICM/FESOM2/MESHES_FESOM2.1/core2\n",
+                "                     meshdir=/work/ab0246/a270073/mesh/fesom/LSea2\n",
+                "           (ollie) meshdir=/work/ollie/pool/FESOM/meshes_default/core\n",
+                "                   meshdir=/work/ollie/projects/clidyn/FESOM2/meshes/core2",
+                "\n")
 
 # check
 if (length(args) < 3) { # meshdir, outdir, file1
@@ -479,7 +491,7 @@ for (fi in seq_along(files)) {
                 if (sellevel_interp) cmd <- paste0(cmd, " -intlevel,", paste(sellevel, collapse=",")) # apply vertical interpolation
                 if (cmd != cdo) {
                     cmd <- paste0(cmd, " ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)
-                    message("run `", cmd, "` ...")
+                    message("\nrun `", cmd, "` ...")
                     check <- system(cmd)
                     if (check != 0) stop("cmd failed")
                 } # if vertical interpolation is necessary

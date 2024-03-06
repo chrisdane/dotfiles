@@ -5,8 +5,9 @@ if (interactive()) {
     #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/fwf_01/run_18700101-18701231/config/fwf_01_finished_config.yaml"
     #args <- "/scratch/de2d/out/awicm3-v3.1/test/run_20000101-20000103/config/test_finished_config.yaml"
     #args <- c("general", "/scratch/de2d/out/awicm3-v3.1/test/run_20000101-20000103/config/test_finished_config.yaml")
-    args <- c("openifs", "/perm/de2d/out/awicm3-v3.1.1/test/run_20000101-20000103/config/test_finished_config.yaml")
+    #args <- c("openifs", "/perm/de2d/out/awicm3-v3.1.1/test/run_20000101-20000103/config/test_finished_config.yaml")
     #args <- "output_finished_config.yaml"
+    args <- c("fesom", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/run_44280101-44281231/config/esm-piControl_wout_talk_rest2_finished_config.yaml")
 } else {
     args <- commandArgs(trailingOnly=T) # user args only
     if (length(args) == 0) {
@@ -64,6 +65,7 @@ include <- c("account",
              "model_dir",
              "bin_sources", 
              "branch",
+             "setup_name",
              "version",
              "execution_command",
              "comp_command",
@@ -124,6 +126,7 @@ for (i in seq_along(yaml)) {
             try(cat(paste0("    ", keys[j]), "\n"), silent=T)
             nams <- names(yaml[[i]][[keys[j]]])
             vals <- sapply(yaml[[i]][[keys[j]]], "[")
+            #if (keys[j] == "additional_files") stop("asd")
             if (typeof(vals) == "list") {
                 if (length(vals) > 0) { # exclude empty `named list()`s 
                     if (length(vals) == 1) { # special case

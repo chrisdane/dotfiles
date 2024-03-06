@@ -2,6 +2,8 @@
 
 # quasi-conservative (i.e. fldsums of input and remapped fields as equal as possible) remapping from source to target grid
 
+# todo: oasis: global, glbpos, gsspos, basbal, baspos, bsspos
+
 rm(list=ls()); graphics.off()
 
 # methods

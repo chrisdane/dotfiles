@@ -18,6 +18,7 @@ esm_tools_info() {
         echo "version = $esm_tools_version"
         echo "branch  = $esm_tools_branch"
         echo "hash    = $esm_tools_hash"
+        echo "bin     = $(dirname $esm_master_bin) ($(hostname))"
         echo "src     = $esm_tools_src_path ($(hostname))"
     else
         echo "could not find esm_tools"

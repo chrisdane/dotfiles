@@ -8,7 +8,7 @@ rm(list=ls())
 ################# input ####################
 
 f <- list()
-if (T) {
+if (F) {
     # namelist.config:&clockinit:
     f$timenew <- 0.0 
     f$daynew <- 1
@@ -18,7 +18,18 @@ if (T) {
     # fesom.clock:
     f$fesom.clock <- rbind(c(84600, 365, 2685), 
                            c(0.0,   1,   2686))
+} else if (T) {
+    # namelist.config:&clockinit:
+    f$timenew <- 0.0 
+    f$daynew <- 1
+    f$yearnew <- 1958
+    # namelist.config:&calendar:
+    f$include_fleapyear <- F 
+    # fesom.clock:
+    f$fesom.clock <- rbind(c(0.0, 1, 1958), 
+                           c(0.0, 1, 1958))
 }
+
 
 ################# input end ####################
 
@@ -133,7 +144,7 @@ ci <- clock_init(timenew=f$timenew,
                  yearnew=f$yearnew, 
                  include_fleapyear=f$include_fleapyear, 
                  fesom.clock=f$fesom.clock)
-cat("\nfinished clock_init(). result:\n")
+cat("\nfinished clock_init() result:\n")
 print(ci)
 
 cat("\nfinished\n")

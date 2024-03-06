@@ -3,9 +3,10 @@
 # 0/1 = 0
 # 1/0 = Inf; -1/0 = -Inf
 # 0/0 = NaN
-#options(warn=2) # stop on warnings
-#options(warn=0) # back to default
-# options(warn=-1) # turn off
+# options(warn=-1) # do not print warnings
+# options(warn=0) # print warnings at the end
+# options(warn=1) # print warnings as they occur
+# options(warn=2) # print warnings as they occur and stop, i.e. turn warning into error
 # options(error = recover)
 # options(error = NULL)
 # save output to file: sink("file.txt"); <do stuff>; sink()

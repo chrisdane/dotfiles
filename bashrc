@@ -577,7 +577,13 @@ else
         echo "ncpdq -a time,depth in out # switch dims"
         echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
     }
-    ncviewhelp() {
+    ncdumphelp() {
+        echo "ncdump -hs fin # show chunks"
+    }
+    nccopyhelp(){
+        echo "nccopy -u -w -c time/12,nodes_2d/126859 fin fout"
+    }
+    ncviewhelp(){
         echo "ncview -minmax all Sample.nc"
     }
     alias ncviewa="ncview -minmax all"
@@ -702,6 +708,8 @@ else
         echo "nohup wget -r -bqc --no-directories --user='$user' --password='$pw' $url > dl.log 2>&1 & # this will show pw in top"
         echo "nohup wget -r -bqc --no-directories $url > dl.log 2>&1 & # will look for ~/.wgetrc; -P /path/to/destination"
         echo "if [[ \$(wget -S --spider \$url 2>&1 | grep 'HTTP/1.1 200 OK') ]]; then echo \"true\"; fi"
+        echo "# fnames from file, ignore already existing and set destination"
+        echo "wget -N -i fnames.txt -P /path/to/out"
     } # wgethelp
     cmakehelp(){
         echo "cmake -LAH"
@@ -1103,11 +1111,11 @@ else
         fi
     fi
     if check_existance squeue; then
-        sme() { 
-            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
-            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
+        sme() {
+            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.30j %.7a %.8u %.2t %.7l %.10M %.6D %R\" # jobid partition jobname account user status time maxtime nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.30j %.7a %.8u %.2t %.10M %l %.6D %R"
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R" ; }
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.30j %.7a %.8u %.2t %.10M %l %.6D %R" ; }
     fi
     if check_existance scontrol; then
         smee() {

@@ -112,8 +112,7 @@ print(head(logs, n=10))
 message("...")
 print(tail(logs, n=10))
 
-# apply potential wildcards
-if (interactive()) {
+if (interactive()) { # apply potential wildcards
     tmp <- list.files(dirname(logs), pattern=basename(logs), full.names=T)
     if (length(tmp) == 0) {
         tmp <- list.files(dirname(logs), pattern=glob2rx(basename(logs)), full.names=T)

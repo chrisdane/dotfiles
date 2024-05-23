@@ -81,11 +81,35 @@ else
         export PATH=~/.local/bin:$PATH
     fi
     
-    # get battery percentage if available
-    get_current_battery(){ 
+    # get battery capacity percentage if available
+    get_battery_capacity(){ 
         if [ -f /sys/class/power_supply/BAT0/capacity ]; then
-            batt=$(cat /sys/class/power_supply/BAT0/capacity)
-            echo "$batt%"
+            capacity=$(cat /sys/class/power_supply/BAT0/capacity)
+            echo "$capacity%"
+        else
+            echo ""
+        fi
+    }
+    
+    # get battery status if available
+    get_battery_status(){ 
+        if [ -f /sys/class/power_supply/BAT0/status ]; then
+            stat=$(cat /sys/class/power_supply/BAT0/status)
+            if [ "${stat}" == "Charging" ]; then
+                #echo ""
+                #echo "C"
+                #echo "🗲"
+                echo "↑"
+            elif [ "${stat}" == "Discharging" ]; then
+                #echo "!"
+                echo "↓"
+            elif [ "${stat}" == "Full" ]; then
+                echo "F"
+            elif [ "${stat}" == "Not charging" ]; then # shortly after plugged in
+                echo ${stat}
+            else
+                echo ${stat}
+            fi
         else
             echo ""
         fi
@@ -106,7 +130,7 @@ else
     PS1='[\u@\h \W]\$ ' # default
     if true; then # my prompt; use `\$` to evaulate on every new line (i.e. when pressing enter)
         #PS1='\[\033[0;34m\]\h:$(pwd)/>\[\033[0m\] ' 
-        PS1='\[\033[0;34m\]\h:$(get_current_battery)$(get_current_temp):$(pwd)/>\[\033[0m\] '
+        PS1='\[\033[0;34m\]\h:$(get_battery_capacity)$(get_battery_status)$(get_current_temp):$(pwd)/>\[\033[0m\] '
     fi
 
     # enable make autocomplete:
@@ -216,12 +240,24 @@ else
     #mycbind(){
     #    paste <all> | column -s $'\t' -t 
     #}
+    mycrop(){
+        if [ $# -ne 6 ]; then
+            echo "Usage: mycrop left bottom right up fin fout"
+            return 1
+        fi
+        left=$1; bottom=$2; right=$3; top=$4; fin=$5; fout=$6
+        convert $fin -gravity West -chop ${left}x0 $fout
+        convert $fout -gravity South -chop 0x$bottom $fout
+        convert $fout -gravity East -chop ${right}x0 $fout
+        convert $fout -gravity North -chop 0x$top $fout
+    }
     linuxhelp(){
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
         echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
         echo "  'pdftk in1.pdf in2.pdf output out.pdf'"
         echo "  'convert Screenshot* slides.pdf'"
+        echo "  'convert *.png -auto-orient slides.pdf'"
         echo compress
         echo "  'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'"
         echo cut
@@ -241,6 +277,7 @@ else
         echo wifi
         echo "  sudo cat /etc/NetworkManager/system-connections/*"
         echo "  nmcli device wifi show-password"
+        echo "recursive soft link of directory structure: cp -Rs src dst"
     }
     archhelp(){
         echo "debug"
@@ -280,7 +317,9 @@ else
         echo "printf '%s\\n' '\${arr[@]}'"
         echo "for f in \${arr[@]}; do echo \$f; cdo ntime \$f; done"
         echo "remove carets: sed -i -e 's/\\r$//'"
+        echo "sed -i \"s|ResultPath.*|ResultPath='${out_dir}/'|g\" \"${out_dir}/namelist.config\""
         echo "lsof +D /path \# list open files"
+        echo "p_pa=$(seq -s, 100000 -5000 20000)"
     }
     scphelp(){
         echo "scp -O -r dir/ user@host:/path # -O legacy mode to prevent 'path canonicalization failed' error"
@@ -531,22 +570,30 @@ else
     ncohelp(){
         echo "ncap2 -s 'time=time-1999;' in.nc foo.nc"
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
-        echo "ncap2 -v -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
+        echo "ncap2 -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
         echo "ncatted -O -h -a history,global,d,, mesh_core_deriv_3d_geo.nc # remove history"
         echo "ncwa -a lev in.nc out.nc # remove dim"
         echo "ncrename -d record,time out.nc # rename dim"
         echo "ncpdq -a time,depth in out # switch dims"
         echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
     }
-    ncviewhelp() {
+    ncdumphelp() {
+        echo "ncdump -hs fin # show chunks"
+    }
+    nccopyhelp(){
+        echo "nccopy -u -w -c time/12,nodes_2d/126859 fin fout"
+    }
+    ncviewhelp(){
         echo "ncview -minmax all Sample.nc"
     }
+    alias ncviewa="ncview -minmax all"
     pyhelp(){
         echo "python -c 'import sys; print(sys.path)'" 
         echo "exec(open('script.py').read())"
         echo "%run scriptname"
         echo "ipynb2py: jupyter nbconvert --to script 'file.ipynb'"
         echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
+        echo "python -mpdb ~/.local/bin/esm_master # then: c for continue (h for help)"
     }
     condahelp(){
         echo "conda info"
@@ -661,6 +708,8 @@ else
         echo "nohup wget -r -bqc --no-directories --user='$user' --password='$pw' $url > dl.log 2>&1 & # this will show pw in top"
         echo "nohup wget -r -bqc --no-directories $url > dl.log 2>&1 & # will look for ~/.wgetrc; -P /path/to/destination"
         echo "if [[ \$(wget -S --spider \$url 2>&1 | grep 'HTTP/1.1 200 OK') ]]; then echo \"true\"; fi"
+        echo "# fnames from file, ignore already existing and set destination"
+        echo "wget -N -i fnames.txt -P /path/to/out"
     } # wgethelp
     cmakehelp(){
         echo "cmake -LAH"
@@ -966,10 +1015,15 @@ else
     # hostname
     printf "\$(hostname)@\$(hostname -d): "
     printf "$(hostname)@"
-    domain=$(hostname -d) # todo: can be slow if domain is "(none)"; `dnsdomainname`?
-    echo "$domain"
-    
+    domain=$(timeout 2 hostname -d) # todo: can be slow if domain is "(none)"; `dnsdomainname`?
+    if [ $? -eq 124 ]; then # timeout
+        echo "<forced timeout after 2 sec>"
+    else
+        echo "$domain"
+    fi
+
     # external ip address
+    # todo: dig +short myip.opendns.com @resolver4.opendns.com
     if false; then
         #if [ ! "$domain" == "(none)" ]; then
             printf "  get public ip: 'wget -qO- ifconfig.me' ... "
@@ -1058,11 +1112,11 @@ else
         fi
     fi
     if check_existance squeue; then
-        sme() { 
-            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R\" # jobid partition jobname account user status time nodes nodelist"
-            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R" # add account %a
+        sme() {
+            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.30j %.7a %.8u %.2t %.7l %.10M %.6D %R\" # jobid partition jobname account user status time maxtime nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.30j %.7a %.8u %.2t %.10M %l %.6D %R"
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.30j %.7a %.8u %.2t %.10M %.6D %R" ; }
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.30j %.7a %.8u %.2t %.10M %l %.6D %R" ; }
     fi
     if check_existance scontrol; then
         smee() {
@@ -1110,7 +1164,7 @@ else
     # replace prompt with liquidprompt if git is available (thats why do it after .myprofile)
     if true; then
         if [ -x "$(command -v liquidprompt)" ]; then 
-            LP_PS1_PREFIX="\$(get_current_battery)\$(get_current_temp)"
+            LP_PS1_PREFIX="\$(get_battery_capacity)\$(get_battery_status)\$(get_current_temp)"
             source liquidprompt # check ~/.liquidpromptrc
         else 
             echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"

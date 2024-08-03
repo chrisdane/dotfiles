@@ -15,8 +15,12 @@ if (interactive()) {
 
 usage <- paste0("\nUsage:\n", 
                 " $ ", me, " time/ntime,nodes_2d/126859 <outpath> <files>\n",
+                " $ ", me, " time/ntime,ncells/126859 <outpath> <files>\n",
+                " $ ", me, " time/ntime,depth/1,ncells/126859 <outpath> <files>\n",
                 " $ ", me, " time/ntime,lat/1,lon/1440 <outpath> <files>\n",
-                " $ ", me, " TIME/1,LATITUDE/180,LONGITUDE/360 <outpath> <files>\n")
+                " $ ", me, " TIME/1,LATITUDE/180,LONGITUDE/360 <outpath> <files>\n",
+                "\n",
+                "check chunking of file with `ncdump -hs <file>`\n")
 
 # check
 if (length(args) < 3) {

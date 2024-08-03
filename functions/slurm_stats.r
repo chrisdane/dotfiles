@@ -47,7 +47,9 @@ if (interactive()) {
     #args <- c("--exclude=24-26,29,31,35,43", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl2/log/*_compute_*-*_*.log")
     #args <- c("--exclude=115,166", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-hist/log/*_compute_*-*_*.log")
     #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/ant_01sv/log/*_compute_*-*_*.log"
-    args <- c("--exclude=60-72,200,367,778,826,1239", "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_nobio_spinup/log/*_compute_*-*_*.log")
+    #args <- c("--exclude=60-72,200,367,778,826,1239", "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_nobio_spinup/log/*_compute_*-*_*.log")
+    #args <- "/home/a/a270073/scripts/r/heatwaveR/success/calc_heatwaveR_awi-esm-1-1-lr_kh800_historical3_and_ssp585_2_tos_job_82_of_82_125312_126859_script_10903676.log"
+    args <- "/home/a/a270073/scripts/r/heatwaveR/success/*ssp585_2_job_*.log"
 
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
@@ -289,10 +291,12 @@ if (nrow(df) != length(jobids)) {
                 tmp <- tmp[9]
                 row$elapsed <- tmp # e.g. "03:40:44"
                 cmd <- paste0("grep \"* Nodelist         : \" ", logfile)
-                tmp <- suppressWarnings(system(cmd, intern=T)) 
-                tmp <- strsplit(tmp, " ")[[1]]
-                tmp <- gsub("[[:punct:]]", "", tmp[13]) # e.g. "(24)" --> "24"
+                tmp <- suppressWarnings(system(cmd, intern=T)) # e.g. "* Nodelist         : l40003 (1)                    " 
+                tmp <- strsplit(tmp, "\\* Nodelist         : ")[[1]][2] # e.g. "l40003 (1)                     "
+                tmp <- trimws(tmp) # e.g. "l40003 (1)"
+                tmp <- substr(tmp, regexpr("\\(", tmp)+1, nchar(tmp)-1) # e.g. "(1)" --> "1"
                 row$nnodes <- as.integer(tmp)
+                row$NodeList <- substr(tmp, 1, regexpr("\\(", tmp)-2) # e.g. "l40003"
                 df <- rbind(df, row)
             } # if dkrz job summary available or not
             utils::setTxtProgressBar(pb, value=jobi) # update progress bar
@@ -366,8 +370,9 @@ for (logi in seq_along(queue)) {
 energy_kWh <- energy_transfer_node * node_hours / 1e3 # W * h / 1e3 = kWh
 
 # clean node lists
-nodes <- df$NodeList
-nodes <- gsub("l\\[", "", nodes)
+nodes <- df$NodeList # e.g. "l40003", "l[x-y]", "l[x,y-z]"
+nodes <- gsub("^l", "", nodes)
+nodes <- gsub("\\[", "", nodes)
 nodes <- gsub("\\]", "", nodes)
 nodes <- strsplit(nodes, ",")
 for (ni in seq_along(nodes)) {
@@ -412,13 +417,14 @@ message("\nelapsed stats (in hours) without queue time:")
 print(summary(elapsed_hour))
 elapsed_per_run_hour_mean <- mean(elapsed_hour, na.rm=T)
 elapsed_per_run_hour_median <- median(elapsed_hour, na.rm=T)
-message("\nmean (median) elapsed per run without queue time: ", round(elapsed_per_run_hour_mean, 2), 
-        " (", round(elapsed_per_run_hour_median, 2), ") hours")
+elapsed_per_run_hour_sd <- sd(elapsed_hour, na.rm=T)
+message("\nmean (median) elapsed per run without queue time (1 sd): ", round(elapsed_per_run_hour_mean, 2), 
+        " (", round(elapsed_per_run_hour_median, 2), ") hours (sd = ", round(elapsed_per_run_hour_sd, 2), " hours)")
 message("--> mean (median) throughput per day without queue time = 24 hours/day / ", round(elapsed_per_run_hour_mean, 2), 
         " (", round(elapsed_per_run_hour_median, 2), ") hours/run = ", 
         round(24/elapsed_per_run_hour_mean, 2), " (", round(24/elapsed_per_run_hour_median, 2), ") ~ ", 
         floor(24/elapsed_per_run_hour_mean), " (", floor(24/elapsed_per_run_hour_median), ") runs/day")
-facs <- c(10, 30, 50, 100, 150, 165, 200, 250, seq(300, 1000, b=100))
+facs <- c(10, 30, 50, 86, 100, 150, 165, 200, 250, seq(300, 1000, b=100))
 message(paste(paste0("--> ", facs, " runs need ", 
                      round(facs*elapsed_per_run_hour_mean, 2), " (", round(facs*elapsed_per_run_hour_median, 2), ") hours = ",
                      round(facs*elapsed_per_run_hour_mean/24, 2), " (", round(facs*elapsed_per_run_hour_median/24, 2), ") days = ",

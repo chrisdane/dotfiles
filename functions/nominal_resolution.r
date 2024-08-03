@@ -6,13 +6,15 @@
 nominal_res_df <- data.frame(greater_equal=c(0   , 0.72, 1.6, 3.6, 7.2, 16, 36, 72 , 160, 360, 720 , 1600, 3600, 7200),
                              less_than=    c(0.72, 1.6 , 3.6, 7.3, 16 , 36, 72, 160, 360, 720, 1600, 3600, 7200, Inf),
                              nominal_res=  c(0.5 , 1   , 2.5, 5  , 10 , 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000))
+clean <- T
 
 if (interactive()) {
     me <- "fesom1_get_meshinfo.r"
+    args <- "~/mlotst_fesom_18700101.nc"
     #args <- "/work/ik1017/CMIP6/data/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p1f1/Omon/thetao/gn/v20190429/thetao_Omon_CanESM5_historical_r1i1p1f1_gn_185001-186012.nc"
     #args <- c("/work/ik1017/CMIP6/data/CMIP6/CMIP/CCCma/CanESM5/historical/r1i1p1f1/Omon/thetao/gn/v20190429/thetao_Omon_CanESM5_historical_r1i1p1f1_gn_185001-186012.nc",
     #          "thetao=/work/ik1017/CMIP6/data/CMIP6/CMIP/MIROC/MIROC-ES2L/historical/r1i1p1f2/Omon/thetao/gn/v20190823/thetao_Omon_MIROC-ES2L_historical_r1i1p1f2_gn_185001-201412.nc")
-    args <- "/work/ik1017/CMIP6/data/CMIP6/CMIP/CAS/FGOALS-f3-L/historical/r1i1p1f1/Omon/thetao/gn/v20191007/thetao_Omon_FGOALS-f3-L_historical_r1i1p1f1_gn_195001-201412.nc"
+    #args <- "/work/ik1017/CMIP6/data/CMIP6/CMIP/CAS/FGOALS-f3-L/historical/r1i1p1f1/Omon/thetao/gn/v20191007/thetao_Omon_FGOALS-f3-L_historical_r1i1p1f1_gn_195001-201412.nc"
 } else {
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -72,7 +74,7 @@ for (fi in seq_along(fs)) {
     cmd <- paste0(cdo, " -s -griddx ", select, " ", foutselect, " ", foutx)
     message("run `", cmd, "` ...")
     check <- system(cmd)
-    if (check != 0) { # cdo griddx no sucess (e.g. unstructured grid)
+    if (check != 0) { # cdo griddx no success (e.g. unstructured grid)
 
         # get gridarea in m2
         foutarea <- paste0("~/", basename(fs[fi]), "_area")
@@ -82,17 +84,35 @@ for (fi in seq_along(fs)) {
         check <- system(cmd)
         if (check != 0) stop("error")
 
-        # calc approximated dmax = sqrt(2*area_elem) --> Danilov 2022: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003177
+        # calc resolution from Danilov 2022: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003177
+        # --> dmax = sqrt(2*area_elem) ~ sqrt(area_node)
+        # nodes vs elems (km):
+        # core1     min   fldmean     max
+        # node:   7.1100  76.5955  152.42
+        # elem:  11.847   76.3513  146.62
+        # core2     min   fldmean     max
+        # node:   7.1114  76.5956  152.42
+        # elem:  11.850   76.3513  146.61
+        # LSea2     min   fldmean     max
+        # node:   2.7470  45.1649  102.71
+        # elem:   4.6788  45.2855  120.72
         foutdmax <- paste0("~/", basename(fs[fi]), "_dmax")
         if (file.exists(foutdmax)) stop("foutdmax ", foutdmax, " already exists")
-        message("\napproximate nominal resolution dmax = sqrt(2*area_elem) as recommended by Danilov 2022: https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003177 ...")
+        message("\napproximate resolution from Danilov 2022 (https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2022MS003177):\n",
+                "\"A rather good estimate is provided by the square root of the area of unit\n",
+                "cell (twice the triangle area or area of the dual cell) which is only 9%\n",
+                "coarser than the real resolution.\"\n",
+                "--> dmax = sqrt(2*area_elem) ~ sqrt(area_node)\n",
+                "- quadrilateral vs triangular meshes: number of vertices\n",
+                "- quadrilateral vs hexagonal meshes: number of cells")
         cmd <- paste0(cdo, " -s -setunit,km -expr,'dmax=sqrt(2*cell_area)/1e3' ", foutarea, " ", foutdmax)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
         
-        # clean
-        invisible(file.remove(foutarea))
+        if (clean) { # clean
+            invisible(file.remove(foutarea))
+        }
 
     } else { # cdo griddx success
     
@@ -121,9 +141,10 @@ for (fi in seq_along(fs)) {
         check <- system(cmd)
         if (check != 0) stop("error")
     
-        #clean
-        invisible(file.remove(foutx, fouty, foutxy))
-    
+        if (clean) { # clean
+            invisible(file.remove(foutx, fouty, foutxy))
+        }
+
     } # cdo griddx success or not
      
     # read dmax and print summary
@@ -161,10 +182,11 @@ for (fi in seq_along(fs)) {
                                         dmax_km_fldmean < nominal_res_df[,"less_than"]), "nominal_res"]
     message("--> average dmax = ", dmax_km_fldmean, " ~ ", round(dmax_km_fldmean), " km translates to nominal resolution of ", res_nominal, " km")
 
-    # clean
-    if (foutselect != fs[fi]) invisible(file.remove(foutselect))
-    invisible(file.remove(foutdmax, paste0(foutdmax, "_tmp")))
-    if (!is.null(foutarea)) invisible(file.remove(foutarea))
+    if (clean) { # clean
+        if (foutselect != fs[fi]) invisible(file.remove(foutselect))
+        invisible(file.remove(foutdmax, paste0(foutdmax, "_tmp")))
+        if (!is.null(foutarea)) invisible(file.remove(foutarea))
+    }
 
 } # for fi
 

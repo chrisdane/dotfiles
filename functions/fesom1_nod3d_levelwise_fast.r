@@ -45,7 +45,7 @@ usage <- paste0("\n",
                 "from https://github.com/FESOM/spheRlab.git but faster.",
                 "\n",
                 "\nUsage:\n", me,
-                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [shifttime=-1d] file1 [file2 filen]\n",
+                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [reduce_dim=true] [timstat=monmean] [shifttime=-1d] file1 [file2 filen]\n",
                 "\n",
                 " with e.g. (albedo) meshdir=/albedo/pool/FESOM/meshes_default/core\n",
                 "                    meshdir=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2\n",
@@ -55,6 +55,8 @@ usage <- paste0("\n",
                 "                     meshdir=/work/ab0246/a270073/mesh/fesom/LSea2\n",
                 "           (ollie) meshdir=/work/ollie/pool/FESOM/meshes_default/core\n",
                 "                   meshdir=/work/ollie/projects/clidyn/FESOM2/meshes/core2",
+                "\n\n",
+                "If `reduce_dim=true` is provided dimensions of length 1 will be dropped\n",
                 "\n")
 
 # check
@@ -135,6 +137,25 @@ if (any(grepl("^sellevel=", args))) {
 }
 if (!is.null(sellevel)) message("sellevel = ", sellevel)
 
+reduce_dim <- NULL # default
+if (any(grepl("^reduce_dim=", args))) {
+    ind <- which(grepl("^reduce_dim=", args))
+    reduce_dim <- sub("reduce_dim=", "", args[ind])
+    args <- args[-ind]
+}
+if (!is.null(reduce_dim)) {
+    message("reduce_dim = ", reduce_dim)
+    if (reduce_dim == "false") {
+        message("--> do not reduce dimensions of length 1")
+        reduce_dim <- NULL
+    } else if (reduce_dim == "true") {
+        message("--> reduce dimensions of length 1")
+        reduce_dim <- "--reduce_dim"
+    } else {
+        stop("`reduce_dim` must be \"false\" or \"true\"")
+    }
+}
+
 if (length(args) == 0) {
     if (interactive()) {
         stop(usage)
@@ -170,13 +191,8 @@ message("\ncheck ncks ... ", appendLF=F)
 ncks <- Sys.which("ncks")
 if (ncks == "") stop("could not find ncks")
 message("ok")
-cdo <- NULL
-if (!is.null(shifttime) || !is.null(timstat)) {
-    message("`shifttime` or `timstat` is wanted --> check cdo ... ", appendLF=F)
-    cdo <- Sys.which("cdo")
-    if (cdo == "") stop("could not find cdo")
-    message("ok")
-}
+cdo <- Sys.which("cdo")
+if (cdo == "") stop("could not find cdo")
 
 # load ncdf4 package
 check <- T
@@ -302,12 +318,6 @@ if (any(sellevel_interp)) {
 }
 nlev_needed <- length(sellevel_needed)
 message("--> nlev_needed = ", nlev_needed)
-if (sellevel_interp) {
-    message("some vertical interpolation necessary --> check cdo ... ", appendLF=F)
-    cdo <- Sys.which("cdo")
-    if (cdo == "") stop("could not find cdo")
-    message("ok")
-}
 
 # prepare output
 n2_dim <- ncdf4::ncdim_def(name="ncells", units="", vals=seq_len(n2), create_dimvar=F) # from spheRlab::sl.grid.FESOM3Ddata1Dto2D.R
@@ -484,17 +494,16 @@ for (fi in seq_along(files)) {
                     message("\nrm tmp timstat file ", tmp_files_timstat[fi])
                     invisible(file.remove(tmp_files_timstat[fi]))
                 }
-
-                # apply vertical interpolation
+                
+                # apply level bounds and vertical interpolation if wanted
                 cmd <- cdo
+                if (!is.null(reduce_dim)) cmd <- paste0(cmd, " ", reduce_dim)
                 if (!is.null(shifttime) && is.null(timstat)) cmd <- paste0(cmd, " -shifttime,", shifttime) # apply shifttime if not already done before
                 if (sellevel_interp) cmd <- paste0(cmd, " -intlevel,", paste(sellevel, collapse=",")) # apply vertical interpolation
-                if (cmd != cdo) {
-                    cmd <- paste0(cmd, " ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)
-                    message("\nrun `", cmd, "` ...")
-                    check <- system(cmd)
-                    if (check != 0) stop("cmd failed")
-                } # if vertical interpolation is necessary
+                cmd <- paste0(cmd, " -genlevelbounds ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)
+                message("\nrun `", cmd, "` ...")
+                check <- system(cmd)
+                if (check != 0) stop("cmd failed")
 
             } # if some non-NA data
         } # if fout already exists or not

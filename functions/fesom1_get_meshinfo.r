@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+# just print stuff
+
 if (interactive()) {
     me <- "fesom1_get_meshinfo.r"
     args <- c("/pool/data/AWICM/FESOM1/MESHES/core")
@@ -49,6 +51,7 @@ message("\nget number of 2d nodes, 3d nodes and levels, depth levels ...")
 n2 <- base::scan(paste0(meshpath, "/nod2d.out"), what=integer(), n=1, quiet=T)
 n3 <- base::scan(paste0(meshpath, "/nod3d.out"), what=integer(), n=1, quiet=T)
 nlev <- base::scan(paste0(meshpath, "/aux3d.out"), what=integer(), n=1, quiet=T)
+aux3d <- NULL
 if (data.table_check) {
     nod3d <- data.table::fread(paste0(meshpath, "/nod3d.out"), skip=1, showProgress=F)
     nod3d <- as.matrix(nod3d)
@@ -66,12 +69,28 @@ if (data.table_check) {
         aux3d <- matrix(aux3d, nrow=nlev, ncol=n2)
     }
 }
-depth <- drop(nod3d[,4])
-depth <- abs(unique(depth)) # model depths in m; negative downwards 
+colnames(nod3d) <- c("no", "lon", "lat", "depth", "")
+depth <- abs(unique(nod3d[,"depth"]))
 message("--> n2 = ", n2, "\n",
         "--> n3 = ", n3, "\n",
         "--> nlev = ", nlev, "\n",
         "--> depths = ", paste(depth, collapse=", "))
+if (!is.null(aux3d)) {
+    n_non_NA <- rep(NA, t=nlev)
+    for (di in seq_len(nlev)) {
+        message("depth ", di, "/", nlev, " ", depth[di], ": ", appendLF=F)
+        non_NA_inds <- which(aux3d[di,] > -999)
+        if (length(non_NA_inds) > 0) {
+            n_non_NA[di] <- length(non_NA_inds)
+            message(n_non_NA[di], "/", n2, 
+                    " non-NA nodes = ", round(n_non_NA[di]/n2*100), "% from ",
+                    paste(aux3d[di,range(non_NA_inds)], collapse=" to "))
+        } else {
+            message()
+        }
+    }
+    message("--> total non-NA nodes = ", sum(n_non_NA, na.rm=T))
+}
 
 message("\nfinished")
 

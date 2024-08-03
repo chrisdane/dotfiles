@@ -4,7 +4,7 @@ rm(list=ls()); graphics.off()
 
 me <- "oasis_plot_mask.r"
 help <- paste0("Usage:\n",
-               " $ ", me, " /path/to/{grids.nc,masks.nc}\n")
+               " $ ", me, " /path/to/masks.nc\n")
     
 # get args
 if (interactive()) {

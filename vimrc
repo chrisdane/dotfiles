@@ -143,9 +143,12 @@ set ffs=unix,dos,mac
 " convert: `:set fileencoding=utf-8`
 " convet to linux (solves carriage return \r \M issue): `:set ff=unix`
 
-" enable r-syntax in .Rprofile
+" enable r-syntax in .Rprofile since this file does not end on .r/R
 au BufReadPost *.Rprofile set syntax=r
 au BufReadPost *Rprofile set syntax=r
+
+" enable markdown syntax
+"au BufNewFile,BufFilePre,BufRead *.md set filetype=markdown " <-- no effect
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo

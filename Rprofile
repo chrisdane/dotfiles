@@ -272,7 +272,7 @@ if (T) { # set F for blank .Rprofile
                 }
             }
             if (exists("myEnv")) {
-                attach(myEnv, warn.conflicts=F) # if masked functions exist
+                base::attach(myEnv, warn.conflicts=F) # if masked functions exist
             }
         }
 
@@ -438,7 +438,7 @@ if (T) { # set F for blank .Rprofile
                 } # if myRPrompt() is loaded
                 
                 if (any(ls(pos=which(search() == "myEnv")) == "myErrorFun")) { 
-                    if (exists(".traceback")) { 
+                    if (exists(".traceback")) { # todo: why should `base::.traceback` not exist? 
                         message("   options(error=myErrorFun)   (check with 'getOption(\"error\")')")
                         options(error=myErrorFun)
                     }

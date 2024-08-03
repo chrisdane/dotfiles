@@ -96,12 +96,8 @@ else
         if [ -f /sys/class/power_supply/BAT0/status ]; then
             stat=$(cat /sys/class/power_supply/BAT0/status)
             if [ "${stat}" == "Charging" ]; then
-                #echo ""
-                #echo "C"
-                #echo "🗲"
                 echo "↑"
             elif [ "${stat}" == "Discharging" ]; then
-                #echo "!"
                 echo "↓"
             elif [ "${stat}" == "Full" ]; then
                 echo "F"
@@ -186,7 +182,7 @@ else
     }
     myfinds(){
         if [ $# -eq 0 ]; then
-            echo "Usage: myfind search_pattern"
+            echo "Usage: myfinds search_pattern"
             return 1
         else
             find -name "*$1*" 2>/dev/null | sort 
@@ -194,7 +190,7 @@ else
     }
     myfindi(){
         if [ $# -eq 0 ]; then
-            echo "Usage: myfind search_pattern"
+            echo "Usage: myfindi search_pattern"
             return 1
         else
             find -iname "*$1*" 2>/dev/null 
@@ -202,7 +198,7 @@ else
     }
     myfindis(){
         if [ $# -eq 0 ]; then
-            echo "Usage: myfind search_pattern"
+            echo "Usage: myfindis search_pattern"
             return 1
         else
             find -iname "*$1*" 2>/dev/null | sort 
@@ -223,11 +219,15 @@ else
         echo "mount -l -t fuse.sshfs"
         mount -l -t fuse.sshfs
     }
-    update_chmod(){
-        echo "run 'find ./ -type f -exec chmod go+r -- {} +' ..."
-        find ./ -type f -exec chmod go+r -- {} + # group & others get +r on all files
-        echo "run 'find ./ -type d -exec chmod go+rx -- {} +' ..."
-        find ./ -type d -exec chmod go+rx -- {} + # group & others get +rx on all dirs (+x necessary to `cd` into dir) 
+    update_chmod(){ # give group and others reading and accessing dirs
+        # old:
+        #echo "run 'find ./ -type f -exec chmod go+r -- {} +' ..."
+        #find ./ -type f -exec chmod go+r -- {} + # group & others get +r on all files
+        #echo "run 'find ./ -type d -exec chmod go+rx -- {} +' ..."
+        #find ./ -type d -exec chmod go+rx -- {} + # group & others get +rx on all dirs (+x necessary to `cd` into dir) 
+        # new:
+        echo "chmod -R go+rX ."
+        chmod -R go+rX .
         # before:
         # -rw-r----- 1 f1
         # drwxr-x--- 2 dir1/
@@ -320,6 +320,7 @@ else
         echo "sed -i \"s|ResultPath.*|ResultPath='${out_dir}/'|g\" \"${out_dir}/namelist.config\""
         echo "lsof +D /path \# list open files"
         echo "p_pa=$(seq -s, 100000 -5000 20000)"
+        echo "while read p; do echo \$p; done < file.txt"
     }
     scphelp(){
         echo "scp -O -r dir/ user@host:/path # -O legacy mode to prevent 'path canonicalization failed' error"
@@ -587,6 +588,12 @@ else
         echo "ncview -minmax all Sample.nc"
     }
     alias ncviewa="ncview -minmax all"
+    gribhelp(){
+        echo "grib_ls fin"
+        echo "grib_copy -w shortName=myname fin fout"
+        echo "grib_copy fin 'fout_[shortName]' # split; must use quotes for fout"
+        echo "codes_split_file [-v] nchunks input # faster split than grib_copy; nchunks=-1 for individual messages"
+    }
     pyhelp(){
         echo "python -c 'import sys; print(sys.path)'" 
         echo "exec(open('script.py').read())"
@@ -733,6 +740,7 @@ else
     alias ls='ls --color=auto -F' # default from /etc/skel/.bashrc: ls='ls --color=auto'
     alias ll='ls --color=auto -lFh'
     alias la='ls --color=auto -alFh'
+    alias llxl='ll -I "xios*" -I "lucia*"'
     # ls only files excluding .dotfiles
     alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls'
     # ls only files including .dotfiles
@@ -918,7 +926,15 @@ else
             fi
         fi
     fi # if vim or vimx exist
-   
+    
+    # check if go exists and change default go path
+    if check_existance go; then
+        go version &> /dev/null # silent output
+        if [ $? -eq 0 ]; then # if successfull
+            go env -w GOPATH="${HOME}/.local/share/go"
+        fi
+    fi
+
     # check if there are cronjobs running
     if check_existance crontab; then
         printf "crontab -l ..."

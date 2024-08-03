@@ -114,8 +114,8 @@ else
     # get cpu temperature if available
     get_current_temp(){
         if [ -x "$(command -v sensors)" ]; then
-            temp=$(sensors 2> /dev/null | grep -oP 'Package id 0.*?\+\K[0-9.]+') # dont show potential errors
-            temp=$(echo $temp | xargs printf "%.*f\n" "0") # round to full decimal
+            temp=$(sensors 2> /dev/null | \grep -oP 'Package id 0.*?\+\K[0-9.]+') # \grep and not grep to remove possible color
+            temp=$(echo $temp | xargs printf "%.0f\n") # round to full decimal
             echo "$temp°"
         else
             echo ""
@@ -1072,6 +1072,7 @@ else
     
     # link dotfiles-repo functions to bin
     fs=(
+        ntfs_fix_filenames.r
         diff_filelists.r diff_namelists.r
         cpu cpuall cpu_total mem scpd 
         rnohup mnohup nclnohup 
@@ -1214,27 +1215,29 @@ else
         #echo "--> change default pip path from ~/.local to PYTHONUSERBASE=${PYTHONUSERBASE} ..."
         #export PATH="${PYTHONUSERBASE}/bin:$PATH"
         #PIP_TARGET='${mywork}/sw/pip/pkgs' # not needed?
+        # without tilde expansion (hide name of home to be machine-agnostic):
         conda_prefix="${mywork}/sw/conda/envs"
         conda_envs_dirs="${conda_prefix}"
         conda_pkgs_dirs="${mywork}/sw/conda/pkgs"
-        mkdir -p ${conda_prefix} ${conda_envcs_dirs} ${conda_pkgs_dirs}
-        export CONDA_PREFIX="${conda_prefix}"
-        export CONDA_ENVS_DIRS="${conda_envs_dirs}"
-        export CONDA_PKGS_DIRS="${conda_pkgs_dirs}"
         echo "--> change default conda path from ~/.conda to"
-        echo "       CONDA_PREFIX=${CONDA_PREFIX}"
-        echo "       CONDA_ENVS_DIRS=${CONDA_ENVS_DIRS}"
-        echo "       CONDA_PKGS_DIRS=${CONDA_PKGS_DIRS}"
+        echo "       CONDA_PREFIX=${conda_prefix}"
+        echo "       CONDA_ENVS_DIRS=${conda_envs_dirs}"
+        echo "       CONDA_PKGS_DIRS=${conda_pkgs_dirs}"
+        # with tilde expansion: necessary for conda and mkdir:
+        export CONDA_PREFIX="${conda_prefix/#\~/$HOME}"
+        export CONDA_ENVS_DIRS="${conda_envs_dirs/#\~/$HOME}"
+        export CONDA_PKGS_DIRS="${conda_pkgs_dirs/#\~/$HOME}"
+        mkdir -p ${CONDA_PREFIX} ${CONDA_ENVS_DIRS} ${CONDA_PKGS_DIRS}
         conda_deactivate(){
             echo "---------------- conda_deactivate() ----------------"
             echo "run 'conda deactivate' ..."
             conda deactivate
             echo "run 'export CONDA_PREFIX=${conda_prefix}' ..."
-            export CONDA_PREFIX="${conda_prefix}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
+            export CONDA_PREFIX="${conda_prefix/#\~/$HOME}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
             echo "---------------- conda_deactivate() ----------------"
         } # conda_deactivate
     else
-        echo "'mywork' is not set"
+        echo "'mywork' is not set --> do not change default conda/pip paths"
     fi # if mywork is set
 
     # finish

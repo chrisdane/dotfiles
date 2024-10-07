@@ -673,12 +673,6 @@ else
         echo "pkg install -forge -verbose statistics"
         echo "pkg install -forge -verbose octproj"
     }
-    swifthelp(){
-        echo "module load py-python-swiftclient"
-        echo "swift list"
-        echo "swift list container/subdir -p pattern1"
-        echo "swift upload container/subdir f1 [f2]"
-    }
     qgishelp(){
         echo "get hull"
         echo "1 save lon,lat coords as two columns ascii"
@@ -1066,11 +1060,12 @@ else
     fi
    
     # python config
-    if [ -f ~/.pythonrc.py ]; then
-        export PYTHONSTARTUP=~/.pythonrc.py
+    if [ -f ~/.pyprofile ]; then
+        echo "run 'export PYTHONSTARTUP=~/.pyprofile' ..."
+        export PYTHONSTARTUP=~/.pyprofile
     fi
     
-    # link dotfiles-repo functions to bin
+    # set links to dotfiles-repo functions to bin
     fs=(
         ntfs_fix_filenames.r
         diff_filelists.r diff_namelists.r
@@ -1094,6 +1089,7 @@ else
         oasis_get_B_grid.sh oasis_split_grids.sh oasis_plot_mask.r
         oifs_check_input.r
         esgf_get_variables.r esgf_json_tree.sh
+        slk2list.r
         select_winter_summer.r
         mycdoseasmean.r mycdoseassum.r 
         mycdosplitlevel.r
@@ -1208,37 +1204,49 @@ else
     # xarray:   2.7G
     # pyfesom2: 1.9G 4.6G
     # pyint:    1.8G 6.4G
-    if [ ! -z ${mywork+x} ]; then # not empty
-        echo "mywork = ${mywork} is set"
-        # todo: how to do that correctly?
-        #export PYTHONUSERBASE="${mywork}/sw/pip" # = pythons site.USER_SITE
-        #echo "--> change default pip path from ~/.local to PYTHONUSERBASE=${PYTHONUSERBASE} ..."
-        #export PATH="${PYTHONUSERBASE}/bin:$PATH"
-        #PIP_TARGET='${mywork}/sw/pip/pkgs' # not needed?
-        # without tilde expansion (hide name of home to be machine-agnostic):
-        conda_prefix="${mywork}/sw/conda/envs"
-        conda_envs_dirs="${conda_prefix}"
-        conda_pkgs_dirs="${mywork}/sw/conda/pkgs"
-        echo "--> change default conda path from ~/.conda to"
-        echo "       CONDA_PREFIX=${conda_prefix}"
-        echo "       CONDA_ENVS_DIRS=${conda_envs_dirs}"
-        echo "       CONDA_PKGS_DIRS=${conda_pkgs_dirs}"
-        # with tilde expansion: necessary for conda and mkdir:
-        export CONDA_PREFIX="${conda_prefix/#\~/$HOME}"
-        export CONDA_ENVS_DIRS="${conda_envs_dirs/#\~/$HOME}"
-        export CONDA_PKGS_DIRS="${conda_pkgs_dirs/#\~/$HOME}"
-        mkdir -p ${CONDA_PREFIX} ${CONDA_ENVS_DIRS} ${CONDA_PKGS_DIRS}
-        conda_deactivate(){
-            echo "---------------- conda_deactivate() ----------------"
-            echo "run 'conda deactivate' ..."
-            conda deactivate
-            echo "run 'export CONDA_PREFIX=${conda_prefix}' ..."
-            export CONDA_PREFIX="${conda_prefix/#\~/$HOME}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
-            echo "---------------- conda_deactivate() ----------------"
-        } # conda_deactivate
-    else
-        echo "'mywork' is not set --> do not change default conda/pip paths"
-    fi # if mywork is set
+    if true; then
+        if [ ! -z ${mywork+x} ]; then # not empty
+            echo "mywork = ${mywork} is set"
+            # todo: how to do that correctly?
+            #export PYTHONUSERBASE="${mywork}/sw/pip" # = pythons site.USER_SITE
+            #echo "--> change default pip path from ~/.local to PYTHONUSERBASE=${PYTHONUSERBASE} ..."
+            #export PATH="${PYTHONUSERBASE}/bin:$PATH"
+            # without tilde expansion (hide name of home to be machine-agnostic):
+            if false; then
+                conda_prefix="${mywork}/sw/conda/envs"
+                conda_envs_dirs="${conda_prefix}"
+                conda_pkgs_dirs="${mywork}/sw/conda/pkgs"
+                echo "--> change default conda path from ~/.conda and add to \$PYTHONPATH:"
+                echo "       CONDA_PREFIX=${conda_prefix}"
+                echo "       CONDA_ENVS_DIRS=${conda_envs_dirs}"
+                echo "       CONDA_PKGS_DIRS=${conda_pkgs_dirs}"
+                # with tilde expansion: necessary for conda and mkdir:
+                export CONDA_PREFIX="${conda_prefix/#\~/$HOME}"
+                export CONDA_ENVS_DIRS="${conda_envs_dirs/#\~/$HOME}"
+                export CONDA_PKGS_DIRS="${conda_pkgs_dirs/#\~/$HOME}"
+                # todo: when both CONDA_PREFIX and PIP_TARGET are set: ERROR: Can not combine '--user' and '--target'
+                mkdir -p ${CONDA_PREFIX} ${CONDA_ENVS_DIRS} ${CONDA_PKGS_DIRS} ${PIP_PREFIX}
+                export PYTHONPATH=${conda_envs_dirs/#\~/$HOME}:${conda_pkgs_dirs/#\~/$HOME}:${pip_prefix/#\~/$HOME}:$PYTHONPATH
+            fi # true/false
+            if true; then
+                pip_prefix="~/mylocal" 
+                #pip_prefix="${mywork}/sw/" 
+                echo "       PIP_PREFIX=${pip_prefix}"
+                export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
+                mkdir -p ${PIP_PREFIX}
+            fi # true/false
+            conda_deactivate(){
+                echo "---------------- conda_deactivate() ----------------"
+                echo "run 'conda deactivate' ..."
+                conda deactivate
+                echo "run 'export CONDA_PREFIX=${conda_prefix}' ..."
+                export CONDA_PREFIX="${conda_prefix/#\~/$HOME}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
+                echo "---------------- conda_deactivate() ----------------"
+            } # conda_deactivate
+        else
+            echo "'mywork' is not set --> do not change default conda/pip paths"
+        fi # if mywork is set
+    fi # true/false
 
     # finish
     printf '%*s' "$ncol" | tr ' ' "*"

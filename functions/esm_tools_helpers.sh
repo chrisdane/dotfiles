@@ -15,11 +15,12 @@ esm_tools_info() {
         esm_tools_branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
         esm_tools_hash=$(git rev-parse --short HEAD)
         cd $owd
+        echo "host    = $(hostname)"
+        echo "bin     = $esm_master_bin"
         echo "version = $esm_tools_version"
+        echo "src     = $esm_tools_src_path"
         echo "branch  = $esm_tools_branch"
         echo "hash    = $esm_tools_hash"
-        echo "bin     = $(dirname $esm_master_bin) ($(hostname))"
-        echo "src     = $esm_tools_src_path ($(hostname))"
     else
         echo "could not find esm_tools"
         return 1

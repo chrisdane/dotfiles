@@ -14,7 +14,7 @@ if (interactive()) {
                   #"shifttime=-1day",
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20130101.nc")
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/uo_fesom_20130101.nc")
-    } else if (T) {
+    } else if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/post/fesom/levelwise",
                   "shifttime=-1day",
@@ -32,6 +32,11 @@ if (interactive()) {
         args <- c("meshdir=/work/ollie/cdanek/mesh/fesom/CbSCL",
                   "outdir=~/test",
                   "~/test/temp.nc")
+    } else if (T) {
+        args <- c("meshdir=/work/ab0246/a270073/mesh/fesom/CbSCL",
+                  "outdir=/work/ba1103/a270073/out/fesom-1.4_old/Low01/s52/levelwise",
+                  "/work/ba1103/a270073/out/fesom-1.4_old/Low01/s52/temp.fesom.2009.nc",
+                  "/work/ba1103/a270073/out/fesom-1.4_old/Low01/s52/salt.fesom.2009.nc")
     }
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F)
@@ -137,23 +142,21 @@ if (any(grepl("^sellevel=", args))) {
 }
 if (!is.null(sellevel)) message("sellevel = ", sellevel)
 
-reduce_dim <- NULL # default
+reduce_dim <- "true" # default
 if (any(grepl("^reduce_dim=", args))) {
     ind <- which(grepl("^reduce_dim=", args))
     reduce_dim <- sub("reduce_dim=", "", args[ind])
     args <- args[-ind]
 }
-if (!is.null(reduce_dim)) {
-    message("reduce_dim = ", reduce_dim)
-    if (reduce_dim == "false") {
-        message("--> do not reduce dimensions of length 1")
-        reduce_dim <- NULL
-    } else if (reduce_dim == "true") {
-        message("--> reduce dimensions of length 1")
-        reduce_dim <- "--reduce_dim"
-    } else {
-        stop("`reduce_dim` must be \"false\" or \"true\"")
-    }
+message("reduce_dim = ", reduce_dim)
+if (reduce_dim == "true") {
+    message("--> reduce dimensions of length 1")
+    reduce_dim <- "--reduce_dim"
+} else if (reduce_dim == "false") {
+    message("--> do not reduce dimensions of length 1")
+    reduce_dim <- NULL
+} else {
+    stop("`reduce_dim` must be \"true\" or \"false\"")
 }
 
 if (length(args) == 0) {
@@ -174,7 +177,9 @@ options(width=80)
 message()
 files2 <- vector("list", l=length(files))
 for (fi in seq_along(files)) {
-    files2[[fi]] <- list.files(dirname(files[fi]), glob2rx(basename(files[fi])), full.names=T)
+    fname <- list.files(dirname(files[fi]), pattern=glob2rx(basename(files[fi])), full.names=T)
+    if (length(fname) == 0) stop("did not understand file ", fi, ": ", files[fi])
+    files2[[fi]] <- fname 
 }
 files2 <- unlist(files2)
 files <- files2

@@ -49,8 +49,8 @@ if (interactive()) {
     #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/ant_01sv/log/*_compute_*-*_*.log"
     #args <- c("--exclude=60-72,200,367,778,826,1239", "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_nobio_spinup/log/*_compute_*-*_*.log")
     #args <- "/home/a/a270073/scripts/r/heatwaveR/success/calc_heatwaveR_awi-esm-1-1-lr_kh800_historical3_and_ssp585_2_tos_job_82_of_82_125312_126859_script_10903676.log"
-    args <- "/home/a/a270073/scripts/r/heatwaveR/success/*ssp585_2_job_*.log"
-
+    #args <- "/home/a/a270073/scripts/r/heatwaveR/success/*ssp585_2_job_*.log"
+    args <- "/home/a/a270073/scripts/r/heatwaveR/calc_heatwaveR_loop_logs/*.log"
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -64,7 +64,6 @@ help <- paste0("\nUsage:\n $ ", me, " [--exclude=1,2,3-5] logfile1 [logfile2 ...
                "        ", me, " *_awicm_compute_*\n",
                "        ", me, " *_compute_*-*_*.log\n")
 oo <- options() # save old/default options
-options(warn=2) # error on warning
 
 # stop if help
 if (length(args) == 0) {
@@ -165,6 +164,7 @@ nchars <- nchar(logs)
 nchars_unique <- unique(nchars)
 message("\nprovided ", length(logs), " logfile filename patterns have ", length(nchars_unique), " different numbers of characters. where is the jobid?")
 jobids <- vector("list", l=length(nchars_unique))
+names(jobids) <- paste0("nchar_", nchars_unique)
 for (nci in seq_along(nchars_unique)) {
     message("logfile pattern ", nci, "/", length(nchars_unique), ": ", nchars_unique[nci], " characters")
     inds <- which(nchars == nchars_unique[nci])
@@ -182,16 +182,17 @@ for (nci in seq_along(nchars_unique)) {
         fromto <- base::readLines("stdin", n=1)
     }
     fromto <- strsplit(fromto, "\\s+")[[1]]
+    if (length(fromto) != 2) stop("input must be 2 numbers")
     fromto <- as.integer(fromto) # 1 2 
     if (any(is.na(match(fromto, seq_len(nchars_unique[nci]))))) stop("start and end positions must be between 1 and ", nchars_unique[nci])
     jobid <- substr(logs[inds[1]], fromto[1], fromto[2])
     message("--> run `as.numeric(\"", jobid, "\")` ... ", appendLF=F)
-    jobid <- as.numeric(jobid) # error if no success (e.g. some letters included)
+    options(warn=2); jobid <- as.numeric(jobid); options(warn=oo$warn) # error if no success (e.g. NA or some letters included)
     message(jobid, " ok")
     jobids[[nci]] <- data.frame(log=logs[inds], jobid=substr(logs[inds], fromto[1], fromto[2]))
 } # for nci
-logs <- unlist(sapply(jobids, "[[", "log"))
-jobids <- unlist(sapply(jobids, "[[", "jobid"))
+logs <- unlist(sapply(jobids, "[[", "log"))[,1]
+jobids <- unlist(sapply(jobids, "[[", "jobid"))[,1]
 
 if (length(logs) == 0) { # exclude removed all log files
     message("--> exclude removed all logfiles")
@@ -210,7 +211,7 @@ if (F) { # debug
     jobids <- as.character(c(1392153, 1392499, 12329873492873423)) # successful, non-successful, non-existing
 }
 
-# try 1/2: `sacct`
+# try 1/2: `sacct` --> failed jobs will not be returned!
 sacct_colnames <- c("jobid", "cluster", "partition", "account", "submit", "start", "end", "elapsed", "nnodes") 
 sacct_nchars <-   c(     20,        20,          20,        20,       20,      20,    20,        20,       10)
 if (T) {
@@ -371,25 +372,29 @@ energy_kWh <- energy_transfer_node * node_hours / 1e3 # W * h / 1e3 = kWh
 
 # clean node lists
 nodes <- df$NodeList # e.g. "l40003", "l[x-y]", "l[x,y-z]"
+inds <- which(nodes == "")
+if (length(inds) > 0) nodes[inds] <- NA
 nodes <- gsub("^l", "", nodes)
 nodes <- gsub("\\[", "", nodes)
 nodes <- gsub("\\]", "", nodes)
-nodes <- strsplit(nodes, ",")
-for (ni in seq_along(nodes)) {
-    tmp <- vector("list", l=length(nodes[[ni]]))
-    for (nj in seq_along(tmp)) {
-        tmp2 <- as.integer(strsplit(nodes[[ni]][[nj]], "-")[[1]]) # e.g. 30156-30157
-        if (length(tmp2) == 1) {
-            tmp[[nj]] <- tmp2
-        } else if (length(tmp2) == 2) {
-            tmp[[nj]] <- seq(tmp2[1], tmp2[2], b=1L)
-        } else {
-            stop("should not happen")
-        }
-    } # for nj
-    nodes[[ni]] <- unlist(tmp) # sort not necessary; sacct returnes nodelist already sorted
+nodes <- strsplit(nodes, ",") # e.g. 2 entries: "40003", "40004"
+for (ni in seq_along(nodes)) { # for all jobs
+    if (!is.na(nodes[[ni]])) {
+        tmp <- vector("list", l=length(nodes[[ni]]))
+        for (nj in seq_along(tmp)) { # for every node of job
+            tmp2 <- as.integer(strsplit(nodes[[ni]][[nj]], "-")[[1]]) # e.g. 30156-30157
+            if (length(tmp2) == 1) {
+                tmp[[nj]] <- tmp2
+            } else if (length(tmp2) == 2) {
+                tmp[[nj]] <- seq(tmp2[1], tmp2[2], b=1L)
+            } else {
+                stop("should not happen")
+            }
+        } # for nj
+        nodes[[ni]] <- unlist(tmp) # sort not necessary; sacct returnes nodelist already sorted
+    } # if not NA
 } # for ni
-nodes_unique <- unique(unlist(nodes)) 
+nodes_unique <- sort(na.omit(unique(unlist(nodes)))) 
 nodes_cumulative_hode_hours <- nodes_cumulative_njobs <- nodes_cumulative_jobids <- rep(0, t=length(nodes_unique))
 for (ni in seq_along(nodes_unique)) {
     inds <- which(sapply(nodes, function(x) any(x == nodes_unique[ni])))

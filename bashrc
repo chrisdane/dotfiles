@@ -1234,11 +1234,11 @@ else
             #mkdir -p ${CONDA_PREFIX} ${CONDA_ENVS_DIRS} ${CONDA_PKGS_DIRS} ${PIP_PREFIX}
             #export PYTHONPATH=${conda_envs_dirs/#\~/$HOME}:${conda_pkgs_dirs/#\~/$HOME}:${pip_prefix/#\~/$HOME}:$PYTHONPATH
         fi # true/false
-        if false; then
+        if false; then # pip_prefix cannot be used on system where home/work/tmp are mounted on different file systems
+                       # --> at the end of the build the linking between /tmp and local fails: OSError: [Errno 18] Invalid cross-device link
             pip_prefix="${mywork}/sw"
-            echo "       PIP_PREFIX=${pip_prefix}"
+            echo "--> set PIP_PREFIX = ${pip_prefix}"
             export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
-            mkdir -p ${PIP_PREFIX}
         fi # true/false
         if true; then
             pythonuserbase="${mywork}/sw/pip"
@@ -1260,7 +1260,7 @@ else
             echo "---------------- conda_deactivate() ----------------"
         } # conda_deactivate
     else
-        echo "'mywork' is not set --> do not change default conda/pip paths"
+        echo "'mywork' is not set --> do not change default pip/conda paths"
     fi # if mywork is set
 
     # finish

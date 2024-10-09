@@ -1234,7 +1234,7 @@ else
             #mkdir -p ${CONDA_PREFIX} ${CONDA_ENVS_DIRS} ${CONDA_PKGS_DIRS} ${PIP_PREFIX}
             #export PYTHONPATH=${conda_envs_dirs/#\~/$HOME}:${conda_pkgs_dirs/#\~/$HOME}:${pip_prefix/#\~/$HOME}:$PYTHONPATH
         fi # true/false
-        if false; then # pip_prefix cannot be used on system where home/work/tmp are mounted on different file systems
+        if false; then # pip_prefix cannot be used on system where home, work, tmp, ... are mounted on different file systems
                        # --> at the end of the build the linking between /tmp and local fails: OSError: [Errno 18] Invalid cross-device link
             pip_prefix="${mywork}/sw"
             echo "--> set PIP_PREFIX = ${pip_prefix}"
@@ -1244,11 +1244,11 @@ else
             pythonuserbase="${mywork}/sw/pip"
             pythonpath="${pythonuserbase}/lib/python3.11/site-packages" # todo: add generic py version
             echo "--> set PYTHONUSERBASE = $pythonuserbase"
-            echo "        PYTHONPATH     = $pythonpath"
-            echo "--> add to PATH: ${$pythonpath}/bin"
+            echo "            PYTHONPATH = $pythonpath"
+            echo "-->         add to PATH: ${pythonuserbase}/bin"
             export PYTHONUSERBASE="${pythonuserbase/#\~/$HOME}"
             export PYTHONPATH="${pythonpath/#\~/$HOME}"
-            export PATH=${PYTHONUSERBAE}/bin:$PATH
+            export PATH=${PYTHONUSERBASE}/bin:$PATH
             # --> pip install -v --user .
         fi
         conda_deactivate(){

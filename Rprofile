@@ -127,6 +127,8 @@
 # decrease space between labels and ticks:
 #axis(2, at=yat, labels=F, tck=-0.03, las=2, cex.axis=0.9) # ticks only
 #axis(2, at=yat, line=-0.5, lwd=0, las=2, cex.axis=0.9) # add labels
+# compile bookdown:
+# bookdown::render_book("index.Rmd", "bookdown::gitbook")
 
 if (T) { # set F for blank .Rprofile
 

@@ -597,7 +597,8 @@ else
     pyhelp(){
         echo "python -c 'import sys; print(sys.path)'" 
         echo "exec(open('script.py').read())"
-        echo "%run scriptname"
+        echo "exec(open(os.path.expanduser('~/foo.py')).read())"
+        echo "%run scriptname # only works in ipython"
         echo "ipynb2py: jupyter nbconvert --to script 'file.ipynb'"
         echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
         echo "python -mpdb ~/.local/bin/esm_master # then: c for continue (h for help)"
@@ -814,12 +815,17 @@ else
             printf "%s" "\"$f\" exists --> package manager is ${osInfo[$f]}"
             # arch linux specific
             if [[ ${osInfo[$f]} == "pacman" ]]; then
-                printf "%s" " --> /var/cache/pacman/pkg/ needs "
-                printf "%s " $(du -hc /var/cache/pacman/pkg/ | tail -1)
+                printf "%s" " --> /var/cache/pacman/pkg needs "
+                printf "%s " $(du -hc /var/cache/pacman/pkg | tail -1)
             fi
             echo
         fi
     done
+    if check_existance yay; then
+        printf "%s" " --> ~/.cache/yay needs "
+        printf "%s " $(du -hc ~/.cache/yay | tail -1)
+        echo
+    fi
 
     # print free disk space on ~/ 
     printf "~/ "
@@ -1229,19 +1235,20 @@ else
             #export PYTHONPATH=${conda_envs_dirs/#\~/$HOME}:${conda_pkgs_dirs/#\~/$HOME}:${pip_prefix/#\~/$HOME}:$PYTHONPATH
         fi # true/false
         if false; then
-            #pip_prefix="~/mylocal"
             pip_prefix="${mywork}/sw"
             echo "       PIP_PREFIX=${pip_prefix}"
             export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
             mkdir -p ${PIP_PREFIX}
         fi # true/false
         if true; then
-            export PATH=${mywork}/sw/bin:$PATH
-            export PYTHONPATH=${mywork}/sw/lib/python3.11/site-packages
-            export PYTHONUSERBASE=${mywork}/sw
-            echo "--> set \$PYTHONPATH     = $PYTHONPATH"
-            echo "        \$PYTHONUSERBASE = $PYTHONUSERBASE"
-            echo "--> add to \$PATH: ${mywork}/sw/bin"
+            pythonuserbase="${mywork}/sw/pip"
+            pythonpath="${pythonuserbase}/lib/python3.11/site-packages" # todo: add generic py version
+            echo "--> set PYTHONUSERBASE = $pythonuserbase"
+            echo "        PYTHONPATH     = $pythonpath"
+            echo "--> add to PATH: ${$pythonpath}/bin"
+            export PYTHONUSERBASE="${pythonuserbase/#\~/$HOME}"
+            export PYTHONPATH="${pythonpath/#\~/$HOME}"
+            export PATH=${PYTHONUSERBAE}/bin:$PATH
             # --> pip install -v --user .
         fi
         conda_deactivate(){

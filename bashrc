@@ -252,12 +252,16 @@ else
         convert $fout -gravity North -chop 0x$top $fout
     }
     linuxhelp(){
+        echo "file permissions"
+        echo "r: 4, w: 2, x: 1"
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
         echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
         echo "  'pdftk in1.pdf in2.pdf output out.pdf'"
         echo "  'convert Screenshot* slides.pdf'"
         echo "  'convert *.png -auto-orient slides.pdf'"
+        echo convert
+        echo "   img2pdf -o f.pdf f.png # better quality than 'magick f.png f.pdf'"
         echo compress
         echo "  'gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/default -dNOPAUSE -dQUIET -dBATCH -dDetectDuplicateImages -dCompressFonts=true -r150 -sOutputFile=output.pdf input.pdf'"
         echo cut

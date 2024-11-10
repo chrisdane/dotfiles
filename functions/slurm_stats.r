@@ -429,7 +429,7 @@ message("--> mean (median) throughput per day without queue time = 24 hours/day 
         " (", round(elapsed_per_run_hour_median, 2), ") hours/run = ", 
         round(24/elapsed_per_run_hour_mean, 2), " (", round(24/elapsed_per_run_hour_median, 2), ") ~ ", 
         floor(24/elapsed_per_run_hour_mean), " (", floor(24/elapsed_per_run_hour_median), ") runs/day")
-facs <- c(10, 30, 50, 86, 100, 150, 165, 200, 250, seq(300, 1000, b=100))
+facs <- c(10, 15, 20, 25, 30, 50, 86, 100, 150, 165, 200, 250, seq(300, 1000, b=100))
 message(paste(paste0("--> ", facs, " runs need ", 
                      round(facs*elapsed_per_run_hour_mean, 2), " (", round(facs*elapsed_per_run_hour_median, 2), ") hours = ",
                      round(facs*elapsed_per_run_hour_mean/24, 2), " (", round(facs*elapsed_per_run_hour_median/24, 2), ") days = ",

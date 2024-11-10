@@ -581,7 +581,7 @@ else
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
     }
-    nccopyhelp(){
+    ncohelp(){
         echo "nccopy -u -w -c time/12,nodes_2d/126859 fin fout"
     }
     ncviewhelp(){
@@ -602,6 +602,7 @@ else
         echo "ipynb2py: jupyter nbconvert --to script 'file.ipynb'"
         echo "ipynb2py: jupyter nbconvert --output-dir='~/' --to script 'file.ipynb'"
         echo "python -mpdb ~/.local/bin/esm_master # then: c for continue (h for help)"
+        echo "pip install [-e .] # --editable runs 'python setup.py develop' and not the default 'python setup.py install'"
     }
     condahelp(){
         echo "conda info"
@@ -729,6 +730,9 @@ else
     }
     configurehelp(){
         echo "./configure CFLAGS=\"-I/usr/local/include\" LDFLAGS=\"-L/usr/local/lib\""
+    }
+    echomypath(){
+        Rscript -e "strsplit(system('echo $PATH', intern=T), ':')[[1]]"
     }
 
     # aliase (check with 'type alias')
@@ -1242,14 +1246,16 @@ else
         fi # true/false
         if true; then
             pythonuserbase="${mywork}/sw/pip"
-            pythonpath="${pythonuserbase}/lib/python3.11/site-packages" # todo: add generic py version
+            pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
+            pyversion=${pyversion%.*} # e.g. 3.10
+            pythonpath="${pythonuserbase}/lib/python${pyversion}/site-packages"
             echo "--> set PYTHONUSERBASE = $pythonuserbase"
             echo "            PYTHONPATH = $pythonpath"
             echo "-->         add to PATH: ${pythonuserbase}/bin"
             export PYTHONUSERBASE="${pythonuserbase/#\~/$HOME}"
             export PYTHONPATH="${pythonpath/#\~/$HOME}"
             export PATH=${PYTHONUSERBASE}/bin:$PATH
-            # --> pip install -v --user .
+            echo "--> install with 'pip install [-v] --user [-e .]'"
         fi
         conda_deactivate(){
             echo "---------------- conda_deactivate() ----------------"

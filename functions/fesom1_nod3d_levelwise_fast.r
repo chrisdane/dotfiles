@@ -32,17 +32,28 @@ if (interactive()) {
         args <- c("meshdir=/work/ollie/cdanek/mesh/fesom/CbSCL",
                   "outdir=~/test",
                   "~/test/temp.nc")
-    } else if (T) {
+    } else if (F) {
         args <- c("meshdir=/work/ab0246/a270073/mesh/fesom/CbSCL",
                   "outdir=/work/ba1103/a270073/out/fesom-1.4_old/Low01/s52/levelwise",
                   "/work/ba1103/a270073/out/fesom-1.4_old/Low01/s52/temp.fesom.2009.nc",
                   "/work/ba1103/a270073/out/fesom-1.4_old/Low01/s52/salt.fesom.2009.nc")
+    } else if (T) {
+        args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
+                  "outdir=/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/post/fesom/levelwise",
+                  #"/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/fesom/thetao_fesom*.nc")
+                  #"/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/fesom/so_fesom_{1970..2014}*.nc")
+                  #"/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/fesom/so_fesom_19[7-9][0-9]|200[0-9]|201[0-4]*.nc") # does not work
+                  #"/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/fesom/^so_fesom_(1970|1971|1972|1973|1974|1975|1976|1977|1978|1979|1980|1981|1982|1983|1984|1985|1986|1987|1988|1989|1990|1991|1992|1993|1994|1995|1996|1997|1998|1999|2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014).*.nc") # works
+                  "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/fesom/^so_fesom_(1970|1971|1972|1973|1974|1975|1976|1977|1978|1979|1980|1981|1982|1983|1984|1985|1986|1987|1988|1989|1990|1991|1992|1993|1994|1995|1996|1997|1998|1999|2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014).*.nc")
+                  #"/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/fesom/^so_fesom_(1970|1971|1972|1973|1974|1975|1976|1977|1978|1979|1980|1981|1982|1983|1984|1985|1986|1987|1988|1989|1990|1991|1992|1993|1994|1995|1996|1997|1998|1999|2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014)0101.nc")
     }
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
+    
     #./fesom1_nod3d_levelwise_fast.r meshdir=/pool/data/AWICM/FESOM1/MESHES/core outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise shifttime=-1day /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20140101.nc > levelwise.log 2>&1 &
+    #fesom1_nod3d_levelwise_fast.r meshdir=/pool/data/AWICM/FESOM1/MESHES/core outdir=post/fesom/levelwise timstat=monmean shifttime=-1d "fesom/^thetao_fesom_(1970|1971|1972|1973|1974|1975|1976|1977|1978|1979|1980|1981|1982|1983|1984|1985|1986|1987|1988|1989|1990|1991|1992|1993|1994|1995|1996|1997|1998|1999|2000|2001|2002|2003|2004|2005|2006|2007|2008|2009|2010|2011|2012|2013|2014).*.nc" > lvl_thetao.log 2>&1 &
 }
 
 usage <- paste0("\n",
@@ -50,7 +61,7 @@ usage <- paste0("\n",
                 "from https://github.com/FESOM/spheRlab.git but faster.",
                 "\n",
                 "\nUsage:\n", me,
-                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [reduce_dim=true] [timstat=monmean] [shifttime=-1d] file1 [file2 filen]\n",
+                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [reduce_dim=true] [timstat=monmean] [shifttime=-1d] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc]\n",
                 "\n",
                 " with e.g. (albedo) meshdir=/albedo/pool/FESOM/meshes_default/core\n",
                 "                    meshdir=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2\n",
@@ -61,7 +72,7 @@ usage <- paste0("\n",
                 "           (ollie) meshdir=/work/ollie/pool/FESOM/meshes_default/core\n",
                 "                   meshdir=/work/ollie/projects/clidyn/FESOM2/meshes/core2",
                 "\n\n",
-                "If `reduce_dim=true` is provided dimensions of length 1 will be dropped\n",
+                "If `reduce_dim=true`, dimensions of length 1 will be dropped\n",
                 "\n")
 
 # check
@@ -177,9 +188,11 @@ options(width=80)
 message()
 files2 <- vector("list", l=length(files))
 for (fi in seq_along(files)) {
-    fname <- list.files(dirname(files[fi]), pattern=glob2rx(basename(files[fi])), full.names=T)
-    if (length(fname) == 0) stop("did not understand file ", fi, ": ", files[fi])
-    files2[[fi]] <- fname 
+    #pattern <- basename(files[fi])
+    pattern <- glob2rx(basename(files[fi]))
+    fnames <- list.files(dirname(files[fi]), pattern=pattern, full.names=T)
+    if (length(fnames) == 0) stop("found zero files with pattern \"", pattern, "\" as given by file ", fi, ":\n", files[fi])
+    files2[[fi]] <- fnames
 }
 files2 <- unlist(files2)
 files <- files2
@@ -188,6 +201,7 @@ options(width=1000)
 print(data.frame(file=files))
 options(width=80)
 message()
+#stop("asd")
 
 ################
 

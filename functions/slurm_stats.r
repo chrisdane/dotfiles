@@ -50,7 +50,11 @@ if (interactive()) {
     #args <- c("--exclude=60-72,200,367,778,826,1239", "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_nobio_spinup/log/*_compute_*-*_*.log")
     #args <- "/home/a/a270073/scripts/r/heatwaveR/success/calc_heatwaveR_awi-esm-1-1-lr_kh800_historical3_and_ssp585_2_tos_job_82_of_82_125312_126859_script_10903676.log"
     #args <- "/home/a/a270073/scripts/r/heatwaveR/success/*ssp585_2_job_*.log"
-    args <- "/home/a/a270073/scripts/r/heatwaveR/calc_heatwaveR_loop_logs/*.log"
+    #args <- "/home/a/a270073/scripts/r/heatwaveR/calc_heatwaveR_loop_logs/*.log"
+    #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl3995_1719483239*.log"
+    #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldH*.log"
+    #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020*.log"
+    args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020_1719480730_job_62_of_86_62_62_script_10867554.log"
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -191,8 +195,8 @@ for (nci in seq_along(nchars_unique)) {
     message(jobid, " ok")
     jobids[[nci]] <- data.frame(log=logs[inds], jobid=substr(logs[inds], fromto[1], fromto[2]))
 } # for nci
-logs <- unlist(sapply(jobids, "[[", "log"))[,1]
-jobids <- unlist(sapply(jobids, "[[", "jobid"))[,1]
+logs <- unlist(sapply(jobids, "[[", "log"))#[,1]     # why did I 
+jobids <- unlist(sapply(jobids, "[[", "jobid"))#[,1] # put the [,1]?
 
 if (length(logs) == 0) { # exclude removed all log files
     message("--> exclude removed all logfiles")
@@ -290,7 +294,7 @@ if (nrow(df) != length(jobids)) {
                 tmp <- suppressWarnings(system(cmd, intern=T))
                 tmp <- strsplit(tmp, " ")[[1]]
                 tmp <- tmp[9]
-                row$elapsed <- tmp # e.g. "03:40:44"
+                row$elapsed <- tmp # e.g. "[1-]03:40:44"
                 cmd <- paste0("grep \"* Nodelist         : \" ", logfile)
                 tmp <- suppressWarnings(system(cmd, intern=T)) # e.g. "* Nodelist         : l40003 (1)                    " 
                 tmp <- strsplit(tmp, "\\* Nodelist         : ")[[1]][2] # e.g. "l40003 (1)                     "
@@ -343,14 +347,20 @@ df <- df[inds,]
 start <- df$start # "2022-08-08T02:35:12"
 submit <- df$submit # "2022-08-08T02:34:44"
 end <- df$end # 2022-08-08T04:54:54"
-elapsed <- df$elapsed # "02:19:42"
+elapsed <- df$elapsed # "[1-]02:19:42"
 nnodes <- as.integer(df$nnodes) # 10
 
 # calc nodes hours = nnodes * elapsed_hours
-# elapsed in HH:MM:SS
-elapsed_hour <- as.integer(substr(elapsed, 1, 2))
-elapsed_hour <- elapsed_hour + as.integer(substr(elapsed, 4, 5))/60
-elapsed_hour <- elapsed_hour + as.integer(substr(elapsed, 7, 8))/60/60
+# elapsed = "[D-]HH:MM:SS"
+elapsed_hour <- as.integer(substr(elapsed, nchar(elapsed)-7, nchar(elapsed)-6))
+elapsed_min <- as.integer(substr(elapsed, nchar(elapsed)-4, nchar(elapsed)-3))
+elapsed_sec <- as.integer(substr(elapsed, nchar(elapsed)-1, nchar(elapsed)))
+inds <- which(nchar(elapsed) > 8) # D-HH:MM:SS
+elapsed_day <- rep(0L, t=length(elapsed)) # default: jobs elapsed less than a day
+if (length(inds) > 0) {
+    elapsed_day[inds] <- as.integer(substr(elapsed[inds], 1, regexpr("-", elapsed[inds])-1))
+}
+elapsed_hour <- elapsed_day*24 + elapsed_hour + elapsed_min/60 + elapsed_sec/(60*60)
 node_hours <- nnodes * elapsed_hour
 
 # calc queue time = start - submit

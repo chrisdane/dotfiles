@@ -24,6 +24,8 @@ if (any(grepl("--timeinterval", args))) {
 }
 if (timeinterval == "monthly") {
     timeinterval_posix <- "1 mon"
+} else if (timeinterval == "annual") {
+    timeinterval_posix <- "1 year"
 } else {
     stop("timeinterval \"", timeinterval, "\" not supported yet.")
 }
@@ -147,6 +149,9 @@ originlt <- as.POSIXlt(newtimeorigin, o="1970-1-1", tz="UTC") # error if not suc
 
 if (timeinterval == "monthly") {
     # set day of month to 15 to avoid month jumps due to irregular month lenghts
+    originlt$mday <- 15 
+} else if (timeinterval == "annual") {
+    originlt$mon <- 5 # counts from zero, i.e. 5 = June
     originlt$mday <- 15 
 } else {
     warning("timeinterval \"", timeinterval, "\" not tested here", .immediate=T)

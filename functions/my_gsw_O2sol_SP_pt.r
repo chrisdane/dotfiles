@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+# wrapper for gsw::my_gsw_O2sol_SP_pt() to calc Oxygen Solubility in Seawater
+
 if (interactive()) {
     rm(list=ls())
     me <- "my_gsw_O2sol_SP_pt.r"
@@ -22,9 +24,11 @@ if (interactive()) {
 }
 
 usage <- paste0("\nUsage:\n",
-                " $ ", me, " thetao_varname=/path/to/thetao so_varname=/path/to/so [nod3d.out=/path/to/nod3d.out/if/fesom1/non-levelwise] [unit_out=mmol m-3] fout=/path/to/fout\n",
+                " $ ", me, " thetao_varname=/path/to/thetao so_varname=/path/to/so [nod3d.out=/path/to/nod3d.out/if/fesom1/non-levelwise] [unit_out=µmol kg-1] fout=/path/to/fout\n",
                 "\n",
                 "e.g. nod3d.out=/pool/data/AWICM/FESOM1/MESHES/core/nod3d.out\n",
+                "      unit_out=µmol kg-1 (default since its gsw's default)\n"
+                "      unit_out=mmol m-3 (will need to calculate seawater density)\n",
                 "\n")
 
 # check
@@ -229,7 +233,7 @@ if (unit_out == "mmol m-3") {
     CT <- gsw::gsw_CT_from_pt(SA=SA, pt=thetao)
     message("min/max = ", min(CT, na.rm=T), "/", max(CT, na.rm=T), " °C")
 
-    # todo: oxygen is in-situ, i.e. mass to volume conversion needs in-situ density?
+    # todo: oxygen is in-situ, i.e. mass to volume conversion needs in-situ density, correct?
     message("\ncalc in-situ density ...")
     rho_insitu <- gsw::gsw_rho(SA=SA, CT=CT, p=p_dbar)
     message("min/max = ", min(rho_insitu, na.rm=T), "/", max(rho_insitu, na.rm=T), " kg m-3")

@@ -1,10 +1,24 @@
 #!/usr/bin/env Rscript
 
-# calc linear regression (stats::lm) save temporal trend and its std. error and p value
+# calc linear regression (stats::lm) and save slope, its std. error and p value
+# on arbitrary mesh
 
 # dependencies: 
-# - cdo: showname, showtimestamp, select, setgrid
+# - cdo
 # - nccopy (if rechunking is wanted and necessary)
+
+# todo:
+# cdo interprets the space dim of variables that have no time dim but units "days ..." as the time dim and is confused, e.g.:
+# ```
+# cdo griddes fout
+# cdi  warning (find_time_vars): Time variable >x< not found!
+# gridtype  = generic
+# gridsize  = 1
+# ```
+# , i.e. coercing the spatial dim into a temporal dim
+# --> this is a bug: https://code.mpimet.mpg.de/issues/12004
+# --> solution is to not have string e.g. "days" in the units attribute of the variable
+# --> how to name the units of temporal trend slope results?
 
 if (interactive()) { # test
     rm(list=ls())
@@ -17,7 +31,7 @@ if (interactive()) { # test
         args <- c("--fin=/work/ba1103/a270073/post/CanESM5-CanOE/select/mlotst/CanESM5-CanOE_historical_and_ssp126_r1i1p2f1_CanESM5-CanOE_select_mlotst_global_Jan-Dec_1970-2019.nc",
                   "--fout=/work/ba1103/a270073/post/CanESM5-CanOE/select/mlotst/test_lm_<varname>_as_time.nc"
                   , "--spatialdimnames=i,j")
-    } else if (T) {
+    } else if (F) {
         args <- c("--fin=/work/ba1103/a270073/post/CanESM5-CanOE/select/fgco2/CanESM5-CanOE_historical_and_ssp126_r1i1p2f1_gn_CanESM5-CanOE_select_fgco2_global_Jan-Dec_1982-2019.nc,/work/ba1103/a270073/post/CanESM5-CanOE/select/mlotst/CanESM5-CanOE_historical_and_ssp126_r1i1p2f1_gn_CanESM5-CanOE_select_mlotst_global_Jan-Dec_1982-2019.nc",
                   "--fout=/work/ba1103/a270073/post/CanESM5-CanOE/select/fgco2/test_lm_<varname1>_as_<varname2>.nc",
                   "--spatialdimnames=i,j"
@@ -34,8 +48,13 @@ if (interactive()) { # test
     } else if (F) {
         args <- c("--fin=/work/ba1103/a270073/post/GFDL-ESM4/select/mldepthdensp030_m/GFDL-ESM4_historical_r1i1p1f1_GFDL-ESM4_select_mldepthdensp030_m_global_annual_1970-2014.nc",
                   "--fout=/work/ba1103/a270073/post/GFDL-ESM4/select/lm_mldepthdensp030_m/GFDL-ESM4_historical_r1i1p1f1_GFDL-ESM4_select_lm_<varname>_as_time_global_annual_1970-2014.nc")
+    } else if (T) {
+        args <- c("--spatialdimnames=ncells",
+                  "--fin=/work/ba1103/a270073/post/heatwaveR/yearsum/ce_tos_bgc22/awi-esm-1-1-lr_kh800_historical3_and_ssp585_2/ce_mhw_tos_pctile_90_mcs_bgc22_0m_pctile_10_ts_19820101-21001231_clim_19820101-20111231_minDuration_5_fixed_baseline_withTrend_locinds_000001-126859_nloc_123340_duration_yearsum.nc",
+                  "--fout=/work/ba1103/a270073/post/heatwaveR/yearsum/ce_tos_bgc22/awi-esm-1-1-lr_kh800_historical3_and_ssp585_2/test_lm_<varname>.nc")
     }
-} else {
+
+} else { # not interactive
     args <- commandArgs(trailingOnly=F) # get args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
@@ -317,7 +336,7 @@ for (vari in seq_len(nit)) {
             spatial_dims_nc[[fi]] <- tmp2
         } # for fi
         if (mode == "var1_vs_var2") {
-            if (!identical_list(spatial_dims)) stop("not all spatial dims are equal across the files")
+            if (!identical_list(spatial_dims)) stop("not all spatial dims are equal across input files")
         }
         spatial_dims <- spatial_dims[[1]]
         spatial_dims_nc <- spatial_dims_nc[[1]]
@@ -553,11 +572,17 @@ for (vari in seq_len(nit)) {
                     }
                 } # for fi
                 inds <- lapply(ts, function(x) which(!is.na(x)))
-                if (mode == "var1_vs_var2") inds <- base::intersect(inds[[1]], inds[[2]])
+                if (mode == "var_vs_time") {
+                    inds <- base::unlist(inds)
+                } else if (mode == "var1_vs_var2") { # get common inds in case of two variables
+                    inds <- base::intersect(inds[[1]], inds[[2]])
+                }
                 ninds <- length(inds)
                 ok <- F
                 if (all(ninds > 3)) {
-                    for (fi in seq_along(fin)) {
+                        
+                    # apply operator before regression
+                    for (fi in seq_along(fin)) { 
                         if (!is.null(operator[fi])) {
                             if (operator[fi] != "none") {
                                 cmd <- paste0("ts[[", fi, "]] <- ts[[", fi, "]] ", operator[fi], " ", operator_value[fi])
@@ -566,10 +591,11 @@ for (vari in seq_len(nit)) {
                             }
                         }
                     }
-                    # get common inds in case of two variables
-                    if (lm_method == "stats::lm") {
+                    
+                    # calc regression
+                    if (lm_method == "stats::lm") { 
                         if (mode == "var_vs_time") {
-                            lm <- stats::lm(ts[inds] ~ time_vari_sec[inds])
+                            lm <- stats::lm(ts[[1]][inds] ~ time_vari_sec[inds])
                         } else if (mode == "var1_vs_var2") {
                             lm <- stats::lm(ts[[1]][inds] ~ ts[[2]][inds])
                         }
@@ -626,24 +652,26 @@ for (vari in seq_len(nit)) {
             } else { # save output
                 
                 message("save ", fouti, " ...")
+                names <- c("ntime", "slope", "slope_err", "t_val", "p_val")
                 if (mode == "var_vs_time") {
-                    names <- paste0(varname, "_ntime", "_slope", "_t_val", "_p_val")
                     varunits <- nc[[1]]$var[[varname]]$units
-                    slope_unit <- paste0(varunits, " / time")
+                    if (varunits == "days") { # special: see https://code.mpimet.mpg.de/issues/12004
+                        varunits <- paste0(varname, " days")
+                        message("\nspecial: need to convert temporal slope units \"days\" to \"", varunits, "\"\n")  
+                    }
+                    slope_unit <- paste0(varunits, " (sec)-1")
+                    longname <- paste0(varname, " per time")
                 } else if (mode == "var1_vs_var2") {
-                    names <- c("ntime", paste0("slope_", varnames[1], "_per_", varnames[2]), "t_val", "p_val")
                     varunits <- c(nc[[1]]$var[[varnames[1]]]$units, nc[[2]]$var[[varnames[2]]]$units)
-                    slope_unit <- paste0(varunits[1], " / ", varunits[2])
+                    slope_unit <- paste0(varunits[1], " (", varunits[2], ")-1")
+                    longname <- paste0(varnames[1], " per ", varnames[2])
                 }
-                ntime_var <- ncdf4::ncvar_def(name=names[1],
-                                              units="", dim=spatial_dims_nc)
-                slope_var <- ncdf4::ncvar_def(name=names[2],
-                                              units=slope_unit, dim=spatial_dims_nc)
-                t_val_var <- ncdf4::ncvar_def(name=names[3],
-                                              units="", dim=spatial_dims_nc)
-                p_val_var <- ncdf4::ncvar_def(name=names[4],
-                                              units="", dim=spatial_dims_nc)
-                ncvars <- list(ntime_var, slope_var, t_val_var, p_val_var)
+                ntime_var <- ncdf4::ncvar_def(name=names[1], units="", dim=spatial_dims_nc, missval=NA)
+                slope_var <- ncdf4::ncvar_def(name=names[2], units=slope_unit, dim=spatial_dims_nc, missval=NA, longname=longname)
+                slope_err_var <- ncdf4::ncvar_def(name=names[3], units=slope_unit, dim=spatial_dims_nc, missval=NA)
+                t_val_var <- ncdf4::ncvar_def(name=names[4], units="", dim=spatial_dims_nc, missval=NA)
+                p_val_var <- ncdf4::ncvar_def(name=names[5], units="", dim=spatial_dims_nc, missval=NA)
+                ncvars <- list(ntime_var, slope_var, slope_err_var, t_val_var, p_val_var)
                 if (mode == "var_vs_time") {
                     save_trend_per_month <- save_trend_per_year <- save_trend_per_decade <- save_trend_per_century <- save_trend_per_millenium <- F # default
                     slope_all_per_day <- slope_day_all/dt_day_all
@@ -676,53 +704,43 @@ for (vari in seq_len(nit)) {
                     }
                     if (any(dt_day_all > 100*366, na.rm=T)) {
                         slope_all_per_century <- slope_all_per_decade*10
+                        slope_err_all_per_century <- slope_err_all_per_decade*10
                         save_trend_per_century <- T
                     }
                     if (any(dt_day_all > 1000*366, na.rm=T)) {
                         slope_all_per_millenium <- slope_all_per_century*10
+                        slope_err_all_per_millenium <- slope_err_all_per_century*10
                         save_trend_per_millenium <- T
                     }
 
                     if (save_trend_per_day) {
-                        slope_per_day_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_day"),
-                                                              units=paste0(varunits, " / day"), dim=spatial_dims_nc)
-                        slope_err_per_day_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_day_err"),
-                                                                  units=paste0(varunits, " / day"), dim=spatial_dims_nc)
+                        slope_per_day_var <- ncdf4::ncvar_def(name="slope_per_day", units=paste0(varunits, " (day)-1"), dim=spatial_dims_nc, missval=NA)
+                        slope_err_per_day_var <- ncdf4::ncvar_def(name="slope_per_day_err", units=paste0(varunits, " (day)-1"), dim=spatial_dims_nc, missval=NA)
                         ncvars <- c(ncvars, list(slope_per_day_var, slope_err_per_day_var))
                     }
                     if (save_trend_per_month) {
-                        slope_per_month_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_month"),
-                                                                units=paste0(varunits, " / month"), dim=spatial_dims_nc)
-                        slope_err_per_month_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_month_err"),
-                                                                    units=paste0(varunits, " / month"), dim=spatial_dims_nc)
+                        slope_per_month_var <- ncdf4::ncvar_def(name="slope_per_month", units=paste0(varunits, " (month)-1"), dim=spatial_dims_nc, missval=NA)
+                        slope_err_per_month_var <- ncdf4::ncvar_def(name="slope_per_month_err", units=paste0(varunits, " (month)-1"), dim=spatial_dims_nc, missval=NA)
                         ncvars <- c(ncvars, list(slope_per_month_var, slope_err_per_month_var))
                     }
                     if (save_trend_per_year) {
-                        slope_per_year_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_year"),
-                                                               units=paste0(varunits, " / year"), dim=spatial_dims_nc)
-                        slope_err_per_year_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_year_err"),
-                                                                   units=paste0(varunits, " / year"), dim=spatial_dims_nc)
+                        slope_per_year_var <- ncdf4::ncvar_def(name="slope_per_year", units=paste0(varunits, " (year)-1"), dim=spatial_dims_nc, missval=NA)
+                        slope_err_per_year_var <- ncdf4::ncvar_def(name="slope_per_year_err", units=paste0(varunits, " (year)-1"), dim=spatial_dims_nc, missval=NA)
                         ncvars <- c(ncvars, list(slope_per_year_var, slope_err_per_year_var))
                     }
                     if (save_trend_per_decade) {
-                        slope_per_decade_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_decade"),
-                                                                 units=paste0(varunits, " / decade"), dim=spatial_dims_nc)
-                        slope_err_per_decade_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_decade_err"),
-                                                                     units=paste0(varunits, " / decade"), dim=spatial_dims_nc)
+                        slope_per_decade_var <- ncdf4::ncvar_def(name="slope_per_decade", units=paste0(varunits, " (decade)-1"), dim=spatial_dims_nc, missval=NA)
+                        slope_err_per_decade_var <- ncdf4::ncvar_def(name="slope_per_decade_err", units=paste0(varunits, " (decade)-1"), dim=spatial_dims_nc, missval=NA)
                         ncvars <- c(ncvars, list(slope_per_decade_var, slope_err_per_decade_var))
                     }
                     if (save_trend_per_century) {
-                        slope_per_century_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_century"),
-                                                                  units=paste0(varunits, " / century"), dim=spatial_dims_nc)
-                        slope_err_per_century_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_century_err"),
-                                                                      units=paste0(varunits, " / century"), dim=spatial_dims_nc)
+                        slope_per_century_var <- ncdf4::ncvar_def(name="slope_per_century", units=paste0(varunits, " (century)-1"), dim=spatial_dims_nc, missval=NA)
+                        slope_err_per_century_var <- ncdf4::ncvar_def(name="slope_per_century_err", units=paste0(varunits, " (century)-1"), dim=spatial_dims_nc, missval=NA)
                         ncvars <- c(ncvars, list(slope_per_century_var, slope_err_per_century_var))
                     }
                     if (save_trend_per_millenium) {
-                        slope_per_millenium_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_millenium"),
-                                                                    units=paste0(varunits, " / millenium"), dim=spatial_dims_nc)
-                        slope_err_per_millenium_var <- ncdf4::ncvar_def(name=paste0(varname, "_per_millenium"),
-                                                                        units=paste0(varunits, " / millenium"), dim=spatial_dims_nc)
+                        slope_per_millenium_var <- ncdf4::ncvar_def(name="slope_per_millenium", units=paste0(varunits, " (millenium)-1"), dim=spatial_dims_nc, missval=NA)
+                        slope_err_per_millenium_var <- ncdf4::ncvar_def(name="slope_per_millenium", units=paste0(varunits, " (millenium)-1"), dim=spatial_dims_nc, missval=NA)
                         ncvars <- c(ncvars, list(slope_per_millenium_var, slope_err_per_millenium_var))
                     }
                 } # if var_vs_time
@@ -730,6 +748,7 @@ for (vari in seq_len(nit)) {
                 outnc <- ncdf4::nc_create(filename=fouti, force_v4=T, vars=ncvars)
                 ncdf4::ncvar_put(nc=outnc, varid=ntime_var, vals=ntime_all)
                 ncdf4::ncvar_put(nc=outnc, varid=slope_var, vals=slope_all)
+                ncdf4::ncvar_put(nc=outnc, varid=slope_err_var, vals=slope_err_all)
                 ncdf4::ncvar_put(nc=outnc, varid=t_val_var, vals=t_val_all)
                 ncdf4::ncvar_put(nc=outnc, varid=p_val_var, vals=p_val_all)
                 if (mode == "var_vs_time") {
@@ -753,6 +772,11 @@ for (vari in seq_len(nit)) {
                         ncdf4::ncvar_put(nc=outnc, varid=slope_per_decade_var, vals=slope_all_per_decade)
                         ncdf4::ncvar_put(nc=outnc, varid=slope_err_per_decade_var, vals=slope_err_all_per_decade)
                     }
+                    if (save_trend_per_century) {
+                        message("save trends per century (min/max ", min(slope_all_per_century, na.rm=T), "/", max(slope_all_per_century, na.rm=T), ") ...")
+                        ncdf4::ncvar_put(nc=outnc, varid=slope_per_century_var, vals=slope_all_per_century)
+                        ncdf4::ncvar_put(nc=outnc, varid=slope_err_per_century_var, vals=slope_err_all_per_century)
+                    }
                     if (save_trend_per_millenium) {
                         message("save trends per millenium (min/max ", min(slope_all_per_millenium, na.rm=T), "/", max(slope_all_per_millenium, na.rm=T), ") ...")
                         ncdf4::ncvar_put(nc=outnc, varid=slope_per_millenium_var, vals=slope_all_per_millenium)
@@ -761,13 +785,13 @@ for (vari in seq_len(nit)) {
                 } # if var_vs_time
                 
                 if (mode == "var_vs_time") {
-                    ncdf4::ncatt_put(nc=outnc, varid=0, "input", fin)
-                    ncdf4::ncatt_put(nc=outnc, varid=0, "varname", varname)
+                    ncdf4::ncatt_put(nc=outnc, varid=0, "input_fin", fin)
+                    ncdf4::ncatt_put(nc=outnc, varid=0, "input_varname", varname)
                 } else if (mode == "var1_vs_var2") {
-                    ncdf4::ncatt_put(nc=outnc, varid=0, "input1", fin[1])
-                    ncdf4::ncatt_put(nc=outnc, varid=0, "input2", fin[2])
-                    ncdf4::ncatt_put(nc=outnc, varid=0, "varname1", varnames[1])
-                    ncdf4::ncatt_put(nc=outnc, varid=0, "varname2", varnames[2])
+                    ncdf4::ncatt_put(nc=outnc, varid=0, "input_fin1", fin[1])
+                    ncdf4::ncatt_put(nc=outnc, varid=0, "input_fin2", fin[2])
+                    ncdf4::ncatt_put(nc=outnc, varid=0, "input_varname1", varnames[1])
+                    ncdf4::ncatt_put(nc=outnc, varid=0, "input_varname2", varnames[2])
                 }
                 if (!is.null(operator)) {
                     if (mode == "var_vs_time") {
@@ -786,6 +810,7 @@ for (vari in seq_len(nit)) {
                         }
                     }
                 }
+                ncdf4::ncatt_put(nc=outnc, varid=0, "lm_script", me)
                 ncdf4::ncatt_put(nc=outnc, varid=0, "lm_method", lm_method)
                 ncdf4::nc_close(outnc)
 

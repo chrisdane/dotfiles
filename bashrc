@@ -168,6 +168,9 @@ else
     diffc(){ # colored diff with git
         git diff --no-index $1 $2
     }
+    diffcc(){ # colored character-wise diff with git
+        git diff --no-index --word-diff-regex=. $1 $2
+    }
     diffc2(){ # colored diff with vi
         diff $1 $2 | vim -R -
         #diff $1 $2 | colordiff # needs program colordiff
@@ -1249,6 +1252,7 @@ else
             export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
         fi # true/false
         if true; then
+        #if false; then
             pythonuserbase="${mywork}/sw/pip"
             pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
             pyversion=${pyversion%.*} # e.g. 3.10

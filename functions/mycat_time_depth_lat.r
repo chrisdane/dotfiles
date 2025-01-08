@@ -1,4 +1,4 @@
-#!/sw/rhel6-x64/r/r-3.3.3-gcc48/bin/Rscript --vanilla
+#!/usr/bin/env Rscript
 
 args <- commandArgs(trailingOnly=F)
 me <- basename(sub("--file=", "", args[grep("--file=", args)]))

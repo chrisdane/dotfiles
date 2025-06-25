@@ -1276,12 +1276,8 @@ else
             echo "--> set PIP_PREFIX = ${pip_prefix}"
             export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
         fi # true/false
-<<<<<<< Updated upstream
         #if true; then
         if false; then
-=======
-        if false; then # still not working!!!
->>>>>>> Stashed changes
             pythonuserbase="${mywork}/sw/pip"
             pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
             pyversion=${pyversion%.*} # e.g. 3.10

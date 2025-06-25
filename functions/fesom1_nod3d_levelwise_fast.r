@@ -61,7 +61,7 @@ usage <- paste0("\n",
                 "from https://github.com/FESOM/spheRlab.git but faster.",
                 "\n",
                 "\nUsage:\n", me,
-                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [reduce_dim=true] [timstat=monmean] [shifttime=-1d] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc]\n",
+                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [shifttime=-1d] [griddes=/path/to/griddes.nc] [reduce_dim=true] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc] [> lvl.log 2>&1 &]\n",
                 "\n",
                 " with e.g. (albedo) meshdir=/albedo/pool/FESOM/meshes_default/core\n",
                 "                    meshdir=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2\n",
@@ -72,8 +72,20 @@ usage <- paste0("\n",
                 "           (ollie) meshdir=/work/ollie/pool/FESOM/meshes_default/core\n",
                 "                   meshdir=/work/ollie/projects/clidyn/FESOM2/meshes/core2",
                 "\n\n",
-                "If `reduce_dim=true`, dimensions of length 1 will be dropped\n",
-                "\n")
+                " with e.g. (albedo) griddes=/albedo/pool/FESOM/meshes_default/core/griddes.nc\n",
+                "                    griddes=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2/core2_griddes_nodes.nc\n",
+                "                    griddes=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2/core2_griddes_elements.nc\n",
+                "           (ecmwf) griddes=/scratch/deu5912/pool/FESOM2/awicm3/core2/core2_griddes_nodes.nc\n",
+                "           (levante) griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc\n",
+                "                     griddes=/pool/data/AWICM/FESOM2/MESHES_FESOM2.1/core2/core2_griddes_nodes.nc\n",
+                "                     griddes=/pool/data/AWICM/FESOM2/MESHES_FESOM2.1/core2/core2_griddes_elements.nc\n",
+                "                     griddes=/work/ab0246/a270073/mesh/fesom/LSea2/griddes_LSea2.nc\n",
+                "           (ollie) griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n",
+                "                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_nodes.nc\n",
+                "                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_elements.nc\n",
+                "\n",
+                "If `griddes` is given (not by default), this griddes will be set to levelwise result file.\n",
+                "If `reduce_dim=true` (default), dimensions of length 1 of levelwise result fule will be dropped.\n")
 
 # check
 if (length(args) < 3) { # meshdir, outdir, file1
@@ -129,6 +141,14 @@ if (file.access(outdir, mode=0) == -1) { # not existing
 outdir <- normalizePath(outdir)
 message("outdir = ", outdir)
 
+sellevel <- NULL # default
+if (any(grepl("^sellevel=", args))) {
+    ind <- which(grepl("^sellevel=", args))
+    sellevel <- sub("sellevel=", "", args[ind])
+    args <- args[-ind]
+}
+if (!is.null(sellevel)) message("sellevel = ", sellevel)
+
 shifttime <- NULL # default
 if (any(grepl("^shifttime=", args))) {
     ind <- which(grepl("^shifttime=", args))
@@ -145,14 +165,6 @@ if (any(grepl("^timstat=", args))) {
 }
 if (!is.null(timstat)) message("timstat = ", timstat)
 
-sellevel <- NULL # default
-if (any(grepl("^sellevel=", args))) {
-    ind <- which(grepl("^sellevel=", args))
-    sellevel <- sub("sellevel=", "", args[ind])
-    args <- args[-ind]
-}
-if (!is.null(sellevel)) message("sellevel = ", sellevel)
-
 reduce_dim <- "true" # default
 if (any(grepl("^reduce_dim=", args))) {
     ind <- which(grepl("^reduce_dim=", args))
@@ -168,6 +180,22 @@ if (reduce_dim == "true") {
     reduce_dim <- NULL
 } else {
     stop("`reduce_dim` must be \"true\" or \"false\"")
+}
+
+griddes <- NULL # default
+if (any(grepl("^griddes=", args))) {
+    ind <- which(grepl("^griddes=", args))
+    griddes <- sub("griddes=", "", args[ind])
+    args <- args[-ind]
+}
+if (!is.null(griddes)) {
+    message("griddes = ", griddes)
+    if (!file.exists(griddes)) {
+        stop("provided `griddes` = ", griddes, " does not exist")
+    }
+    if (file.access(outdir, mode=4) == -1) { # not readable
+        stop("provided `griddes` = ", griddes, " not readable")
+    }
 }
 
 if (length(args) == 0) {
@@ -516,7 +544,8 @@ for (fi in seq_along(files)) {
                 
                 # apply level bounds and vertical interpolation if wanted
                 cmd <- cdo
-                if (!is.null(reduce_dim)) cmd <- paste0(cmd, " ", reduce_dim)
+                if (!is.null(reduce_dim)) cmd <- paste0(cmd, " ", reduce_dim) # --reduce_dim
+                if (!is.null(griddes)) cmd <- paste0(cmd, " -setgrid,", griddes) # apply griddes
                 if (!is.null(shifttime) && is.null(timstat)) cmd <- paste0(cmd, " -shifttime,", shifttime) # apply shifttime if not already done before
                 if (sellevel_interp) cmd <- paste0(cmd, " -intlevel,", paste(sellevel, collapse=",")) # apply vertical interpolation
                 cmd <- paste0(cmd, " -genlevelbounds ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)

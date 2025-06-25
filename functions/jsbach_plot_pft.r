@@ -15,15 +15,17 @@ known_varnames <- c("pft_fract_box")
 if (interactive()) {
     #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_esm-piControl2_jsbach_fldsum_pft_fract_box_global_annual_1850-1872.nc"
     #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_esm-piControl_wout_talk_rest2_jsbach_fldsum_pft_fract_box_global_annual_3208-3945.nc"
-    args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_piControl_and_esm-piControl_jsbach_fldsum_pft_fract_box_global_annual_1950-3945.nc"
+    #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_piControl_and_esm-piControl_jsbach_fldsum_pft_fract_box_global_annual_1950-3945.nc"
     #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_piControl_and_esm-piControl_jsbach_fldsum_pft_fract_box_global_annual_1950-4527.nc"
+    args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_historical2_jsbach_fldsum_pft_fract_box_global_Jan-Dec_1850-2014.nc"
+
 } else {
 
     # get args
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     help <- paste0("Usage:\n",
-                   " $ ", me, " <result_of_jsbach_pft_wrt_box.r>\n")
+                   " $ ", me, " <result_of_fldsum_of_jsbach_pft_wrt_box.r>\n")
 
     # check args 
     args <- commandArgs(trailingOnly=T)
@@ -39,6 +41,7 @@ if (interactive()) {
 # checks
 fin <- args[1]
 if (!file.exists(fin)) stop("fin ", fin, " does not exist")
+fin <- normalizePath(fin)
 
 message("load ncdf4 package ...")
 library(ncdf4)
@@ -97,7 +100,7 @@ message("time:")
 time <- as.POSIXct(strsplit(trimws(system(paste0("cdo -s showtimestamp ", fin), intern=T)), "  ")[[1]], tz="UTC")
 cat(capture.output(str(time)), sep="\n")
 xlab <- "year"
-if (T) {
+if (F) {
     message("\nspecial: set new time ...")
     time <- as.POSIXlt(time)
     if (F) {
@@ -126,30 +129,54 @@ if (!is.null(exclude)) {
 # aggregate PFTs
 if (T) {
     message("\naggreagte PFTs for plot ...")
-    mapping <- list(list(pfts_in=c("C3 grass", "C4 grass"),
-                         newname="grass (C3+C4)"),
-                    list(pfts_in=c("C3 pasture", "C4 pasture"),
-                         newname="pasture (C3+C4)"),
-                    list(pfts_in=c("C3 crops", "C4 crops"),
-                         newname="crops (C3+C4)"))
-    if (T) {
+    mapping <- list()
+    if (F) {
         mapping[[length(mapping)+1]] <- list(pfts_in=c("tropical broadleaf evergreen", "tropical broadleaf deciduous"),
                                              newname="tropical tree")
         mapping[[length(mapping)+1]] <- list(pfts_in=c("extra-tropical evergreen", "extra-tropical deciduous"),
                                              newname="extra-tropical tree")
     }
-    for (mi in seq_along(mapping)) {
-        inds <- match(mapping[[mi]]$pfts_in, levs)
-        if (!any(is.na(inds))) {
-            message("aggregate ", length(inds), " PFTs together: ", paste(levs[inds], collapse=", "))
-            tmp <- apply(data[inds,], 2, sum)
-            data[inds[1],] <- tmp
-            data <- abind::asub(data, idx=seq_along(levs)[-inds[2]], dims=levind)
-            dimnames(data)[[1]][inds[1]] <- mapping[[mi]]$newname 
-            levs <- dimnames(data)[[1]] # update
+    if (T) {
+        mapping[[length(mapping)+1]] <- list(pfts_in=c("tropical broadleaf evergreen", "tropical broadleaf deciduous", "extra-tropical evergreen", "extra-tropical deciduous"),
+                                             newname="tree")
+    }
+    if (T) {
+        mapping[[length(mapping)+1]] <- list(pfts_in=c("raingreen shrubs", "deciduous shrubs"),
+                                             newname="shrub")
+    }
+    if (F) {
+        mapping[[length(mapping)+1]] <- list(pfts_in=c("C3 grass", "C4 grass"),
+                                             newname="grass (C3+C4)")
+        mapping[[length(mapping)+1]] <- list(pfts_in=c("C3 pasture", "C4 pasture"),
+                                             newname="pasture (C3+C4)")
+        mapping[[length(mapping)+1]] <- list(pfts_in=c("C3 crops", "C4 crops"),
+                                             newname="cropland (C3+C4)")
+    }
+    if (T) {
+        mapping[[length(mapping)+1]] <- list(pfts_in=c("C3 grass", "C4 grass"),
+                                             newname="grass")
+        mapping[[length(mapping)+1]] <- list(pfts_in=c("C3 pasture", "C4 pasture", "C3 crops", "C4 crops"),
+                                             newname="pasture + cropland")
+    }
+    if (length(mapping) > 0) {
+        for (mi in seq_along(mapping)) {
+            inds <- match(mapping[[mi]]$pfts_in, levs)
+            if (length(inds) > 1 && !any(is.na(inds))) {
+                message("aggregate (sum) ", length(inds), " PFTs (", paste(levs[inds], collapse=", "), ") to ", mapping[[mi]]$newname, " ...")
+                tmp <- apply(data[inds,], 2, sum)
+                data[inds[1],] <- tmp
+                levs[inds[1]] <- mapping[[mi]]$newname
+                levs[inds[2:length(inds)]] <- NA
+            }
+        } # for mi
+        if (anyNA(levs)) {
+            inds <- which(is.na(levs))
+            levs <- levs[-inds]
+            data <- data[-inds,]
+            dimnames(data)[[1]] <- levs
         }
-    } # for gi
-}
+    }
+} # if aggregate
 
 nlev <- dim(data)[levind]
 
@@ -179,7 +206,14 @@ if (plottype == "png") {
     stop("plottype == ", plottype, " not defined")
 }
 ylim <- range(data, na.rm=T)
-ltys <- rep(1:10, e=3, l=nlev)
+message("ylim = ", ylim[1], ", ", ylim[2])
+# historical2: ylim = 1.59224856728788, 17.4425790794838
+# esm-hist: ylim = 1.81241902579601, 15.7980779086769
+if (T) {
+    message("special: historical2 and esm-hist ylims")
+    ylim <- c(1.59224856728788, 17.4425790794838)
+}
+ltys <- rep(1:10, e=4, l=nlev)
 cols <- rep(1:8, t=10, l=nlev)
 if (T) cols <- mycols(nlev)
 plot(time, rep(NA, t=length(time)), 
@@ -188,7 +222,7 @@ plot(time, rep(NA, t=length(time)),
 if (F) {
     axis.POSIXct(1, at=pretty(time, n=10))
 } else if (T) {
-    axis.POSIXct(1, at=pretty(time, n=30), format="%Y")
+    axis.POSIXct(1, at=pretty(time, n=10), format="%Y")
 }
 axis(2, pretty(ylim, n=10), las=2)
 for (i in seq_len(dim(data)[levind])) {
@@ -196,7 +230,7 @@ for (i in seq_len(dim(data)[levind])) {
     lines(time, tmp, lty=ltys[i], col=cols[i])
 }
 legend("topright", dimnames(data)[[levind]], lty=ltys, col=cols,
-       bty="n", x.intersp=0.5, cex=0.66, ncol=3)
+       bty="n", x.intersp=0.2, cex=1, ncol=1)
 invisible(dev.off())
 
 message("\nfinished\n")

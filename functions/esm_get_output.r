@@ -46,16 +46,22 @@ if (interactive()) {
     #expidpath <- "/work/ab1095/a270094/AWIESM/SR_output"
     #year <- 2000
     #outname <- "~/awicm1-recom_piControl_og_chunk1_output.ods"
-    expidpath <- "/work/ba1103/a270094/AWIESM/test"
-    year <- 2030
+    #expidpath <- "/work/ba1103/a270094/AWIESM/test"
+    #year <- 2030
     #outname <- "~/awicm1-recom_piControl_og_chunk2_output.ods"
-    outname <- "/work/ab1095/a270073/awicm1-recom_piControl_og_chunk2_output.ods"
+    #outname <- "/work/ab1095/a270073/awicm1-recom_piControl_og_chunk2_output.ods"
     #expidpath <- "/work/ab0246/a270073/out/awicm3-v3.1/test_mon"
     #year <- 2000
     #outname <- "~/awicm3_output.ods"
     #expidpath <- "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-hist"
     #year <- 1850
     #outname <- "~/awicm1-recom_production.ods"
+    #expidpath <- "/work/ba1103/a270120/out/awicm-1.0-recom-coccos/oceannets/esm_ssp534OS_COCCOS_OAE_FINAL"
+    #year <- 2015
+    #outname <- "~/awicm-1.0-recom_coccos_output.ods"
+    expidpath <- "/work/ba1103/a270114/AWIESM/PICTRL3"
+    year <- 1950
+    outname <- "~/awicm1-recom_PICTRL3.ods"
 
     #models <- c("echam", "jsbach", "fesom", "recom") # recom and fesom double
     #models <- c("echam", "jsbach", "fesom")
@@ -72,8 +78,8 @@ if (interactive()) {
     #./get_esm_output_vars.r /work/ba0989/a270077/CMIP6_PMIP4/a270073/CMIP6/CMIP_PMIP/dynveg_true/hist ~/cmip6/hist_output.ods > log 2>&1 &
     
     me <- basename(sub(pattern=".*=", replacement="", commandArgs()[4]))
-    usage <- paste0("\nUsage: ", me, " arg1 arg2 [--models=] [--libpaths=] or\n",
-                    "       ", me, " arg1 arg2 [--models=] [--libpaths=] > output.log 2>&1 &\n",
+    usage <- paste0("\nUsage: ", me, " arg1 arg2 arg3 [--models=] [--libpaths=] or\n",
+                    "       ", me, " arg1 arg2 arg3 [--models=] [--libpaths=] > output.log 2>&1 &\n",
                     "\n",
                     "   unnamed arg1: /path/that/contains/outdata/dir\n",
                     "   unnames arg2: year\n",
@@ -116,15 +122,17 @@ cdo_silent <- F
 check_nml <- F
 
 # known models
-# !!! must have `interval_files` and `pattern`
+# !!! must have `interval_files` and `pattern` in regex
 known_models <- list("echam"=list(interval_files="monthly",
-                                  pattern="_<year>12.01"),
+                                  #pattern="_<year>12.01"),
+                                  pattern="_<year>12"),
                      "jsbach"=list(interval_files="monthly",
-                                   pattern="_<year>12.01"),
+                                   #pattern="_<year>12.01"),
+                                   pattern="_<year>12"),
                      "fesom"=list(interval_files="annual",
-                                  pattern="_<year>0101"),
+                                  pattern="(_|.)<year>01.*01"), # aggc_fesom_19640101.nc or aggc.fesom.196401.01.nc
                      "recom"=list(interval_files="annual",
-                                  pattern="_<year>0101"),
+                                  pattern="(_|.)<year>01.*01"),
                      "oifs"=list(interval_files="monthly",
                                  pattern="_<year>-<year+1>.nc_<year>0131-<year+1>0131")) # known models so far
 if (F) { # adjust manually depending on output
@@ -155,7 +163,7 @@ known_dims[["fesom"]] <- c("time"="time",
                            # fesom1:
                            "nodes", "nodes_2d", "nodes_3d", "depth",
                            # fesom2:
-                           "nod2", "nz1", "elem")
+                           "ndens", "nod2", "nz", "nz1", "elem")
 known_dims[["recom"]] <- known_dims[["fesom"]]
 known_dims[["oifs"]] <- c("time"="time_counter", "lon", "lat", "axis_nbounds", "pressure_levels")
 for (mi in seq_along(known_dims)) {
@@ -171,10 +179,10 @@ if (F) { # why?!
 }
 
 # known intervals
-known_intervals <- list(c("hour", "hours"),
-                        c("day", "days"),
-                        c("month", "months"),
-                        c("year", "years"))
+known_intervals <- list(c("hour", "hours", "1hour"),
+                        c("day", "days", "1day"),
+                        c("month", "months", "1month"),
+                        c("year", "years", "1year"))
 
 cdo_known_codetables <- c("echam4", "echam5", "echam6", "mpiom1", "ecmwf", "remo",
                           "cosmo002", "cosmo201", "cosmo202", "cosmo203", "cosmo205", "cosmo250")
@@ -356,7 +364,7 @@ for (i in seq_along(models)) {
 
     } else if (length(outfiles) == 0) { # no files found
         message("--> no files found --> skip to next model")
-        stop("asd")
+        #stop("asd")
         next # model i
     }
     
@@ -1228,6 +1236,7 @@ for (i in seq_along(models)) {
         ints <- known_intervals[[inti]] # e.g. "hour" "hours"
         message(inti, ": ", paste(ints, collapse=", "))
         inds <- sapply(ints, grepl, table$interval)
+        if (nrow(table) == 1) inds <- matrix(inds, nrow=1)
         inds <- which(apply(inds, 1, any))
         if (length(inds) > 0) {
             if (!exists("table_tmp")) {

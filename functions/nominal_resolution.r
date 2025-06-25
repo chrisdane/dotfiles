@@ -62,7 +62,7 @@ for (fi in seq_along(fs)) {
     if (varname != "") {
         foutselect <- paste0("~/", basename(fs[fi]), "_select")
         if (file.exists(foutselect)) stop("foutselect ", foutselect, " already exists")
-        cmd <- paste0(cdo, " -s -sellevidx,1 -seltimestep,1 -select,name=", varname, " ", fs[fi], " ", foutselect)
+        cmd <- paste0(cdo, " -sellevidx,1 -seltimestep,1 -select,name=", varname, " ", fs[fi], " ", foutselect)
         message("run `", cmd, "` ... (this may take some time for a large file)")
         check <- system(cmd)
         if (check != 0) stop("error")
@@ -71,7 +71,7 @@ for (fi in seq_along(fs)) {
     # get dx in m
     foutx <- paste0("~/", basename(fs[fi]), "_griddx")
     if (file.exists(foutx)) stop("foutx ", foutx, " already exists")
-    cmd <- paste0(cdo, " -s -griddx ", select, " ", foutselect, " ", foutx)
+    cmd <- paste0(cdo, " -griddx ", select, " ", foutselect, " ", foutx)
     message("run `", cmd, "` ...")
     check <- system(cmd)
     if (check != 0) { # cdo griddx no success (e.g. unstructured grid)
@@ -79,7 +79,7 @@ for (fi in seq_along(fs)) {
         # get gridarea in m2
         foutarea <- paste0("~/", basename(fs[fi]), "_area")
         message("\n--> `cdo griddx` not supported for this grid --> try to approximate dmax from grid area ...")
-        cmd <- paste0(cdo, " -s gridarea ", foutselect, " ", foutarea)
+        cmd <- paste0(cdo, " gridarea ", foutselect, " ", foutarea)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
@@ -105,7 +105,7 @@ for (fi in seq_along(fs)) {
                 "--> dmax = sqrt(2*area_elem) ~ sqrt(area_node)\n",
                 "- quadrilateral vs triangular meshes: number of vertices\n",
                 "- quadrilateral vs hexagonal meshes: number of cells")
-        cmd <- paste0(cdo, " -s -setunit,km -expr,'dmax=sqrt(2*cell_area)/1e3' ", foutarea, " ", foutdmax)
+        cmd <- paste0(cdo, " -setunit,km -expr,'dmax=sqrt(2*cell_area)/1e3' ", foutarea, " ", foutdmax)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
@@ -119,7 +119,7 @@ for (fi in seq_along(fs)) {
         # get dy in m
         fouty <- paste0("~/", basename(fs[fi]), "_griddy")
         if (file.exists(fouty)) stop("fouty ", fouty, " already exists")
-        cmd <- paste0(cdo, " -s -griddy ", select, " ", foutselect, " ", fouty)
+        cmd <- paste0(cdo, " -griddy ", select, " ", foutselect, " ", fouty)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
@@ -127,7 +127,7 @@ for (fi in seq_along(fs)) {
         # merge dx and dy
         foutxy <- paste0("~/", basename(fs[fi]), "_griddxy")
         if (file.exists(foutxy)) stop("foutxy ", foutxy, " already exists")
-        cmd <- paste0(cdo, " -s merge ", foutx, " ", fouty, " ", foutxy)
+        cmd <- paste0(cdo, " merge ", foutx, " ", fouty, " ", foutxy)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
@@ -136,7 +136,7 @@ for (fi in seq_along(fs)) {
         foutdmax <- paste0("~/", basename(fs[fi]), "_dmax")
         if (file.exists(foutdmax)) stop("foutdmax ", foutdmax, " already exists")
         message("\ncalc nominal resolution dmax = sqrt(dx^2 + dy^2) as in Taylor et al. ...")
-        cmd <- paste0(cdo, " -s -setunit,km -divc,1e3 -expr,'dmax=sqrt(dx*dx + dy*dy)' ", foutxy, " ", foutdmax)
+        cmd <- paste0(cdo, " -setunit,km -divc,1e3 -expr,'dmax=sqrt(dx*dx + dy*dy)' ", foutxy, " ", foutdmax)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
@@ -155,22 +155,22 @@ for (fi in seq_along(fs)) {
 
     # calc fldmean of dmax
     message("\nget global mean of dmax ...")
-    cmd <- paste0(cdo, " -s -fldsum -gridarea ", foutdmax, " ", foutdmax, "_tmp")
+    cmd <- paste0(cdo, " -fldsum -gridarea ", foutdmax, " ", foutdmax, "_tmp")
     check <- system(cmd)
     if (check != 0) { # case 1: griddes not complete: cannot use fldmean --> get area by dx*dy
         foutarea <- paste0("~/", basename(fs[fi]), "_area")
         message("--> grid is not completely defined. workaround: get area=dx*dy ...")
-        cmd <- paste0(cdo, " -s -expr,'area_m2=dx*dy' ", foutxy, " ", foutarea)
+        cmd <- paste0(cdo, " -expr,'area_m2=dx*dy' ", foutxy, " ", foutarea)
         message("run `", cmd, "` ...")
         check <- system(cmd)
         if (check != 0) stop("error")
-        cmd <- paste0(cdo, " -s -output -fldsum ", foutarea)
+        cmd <- paste0(cdo, " -output -fldsum ", foutarea)
         message("run `", cmd, "` ...")
         area_m2_fldsum <- trimws(system(cmd, intern=T))
-        cmd <- paste0(cdo, " -s -output -divc,", area_m2_fldsum, " -fldsum [ -mul ", foutdmax, " ", foutarea, " ]")
+        cmd <- paste0(cdo, " -output -divc,", area_m2_fldsum, " -fldsum [ -mul ", foutdmax, " ", foutarea, " ]")
     } else { # case 2: griddes complete: simply use fldmean
         foutarea <- NULL
-        cmd <- paste0(cdo, " -s -output -fldmean ", foutdmax)
+        cmd <- paste0(cdo, " --pedantic -output -fldmean ", foutdmax)
     }
     message("run `", cmd, "` ...")
     dmax_km_fldmean <- trimws(system(cmd, intern=T))

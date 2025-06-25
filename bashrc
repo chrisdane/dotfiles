@@ -137,6 +137,9 @@ else
     # check if program exists also if its masked by alias
     # if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
     # https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
+    mygroups(){
+        groups | tr " " "\n" | sort
+    }
     getmod () {
         stat --format '%a' $1
     }
@@ -388,6 +391,9 @@ else
         echo "tar -xvf archive.tar --wildcards \"*.nc\""
         echo "tar -xvf archive.tar --wildcards *{pat1,pat2}*nc"
         echo "tar -tf archive.tar # list files" 
+    }
+    untar() {
+        tar -xvf $1
     }
     ziphelp(){
         echo "zip archive.zip file1 file2 # create"
@@ -1251,8 +1257,8 @@ else
             echo "--> set PIP_PREFIX = ${pip_prefix}"
             export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
         fi # true/false
-        if true; then
-        #if false; then
+        #if true; then
+        if false; then
             pythonuserbase="${mywork}/sw/pip"
             pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
             pyversion=${pyversion%.*} # e.g. 3.10

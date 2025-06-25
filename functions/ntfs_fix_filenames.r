@@ -6,12 +6,14 @@
 # --> add additional characters ’—ñ
 # --> add additional weird slash: ⁄
 # --> add additional glob characters []{}
-patterns <- list(list(patt="[<>:\"/\\|?*’]", # [] are needed for regex
+patterns <- list(list(patt="[<>\"/\\|?*’]", # [] are needed for regex
                       repl=""),
                  list(patt="\\[|\\{",
                       repl="("),
                  list(patt="\\]|\\}",
                       repl=")"),
+                 list(patt=":",
+                      repl="-"),
                  list(patt="—",
                       repl="-"),
                  list(patt="ñ",

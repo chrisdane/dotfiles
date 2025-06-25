@@ -150,6 +150,7 @@ au BufReadPost *Rprofile set syntax=r
 " enable markdown syntax
 "au BufNewFile,BufFilePre,BufRead *.md set filetype=markdown " <-- no effect
 
+
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " => Files, backups and undo
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

@@ -14,6 +14,7 @@
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
 # getSrcDirectory
 # remove all white space: gsub(" ", "", x, fixed=T)
+# replace vector: mapply(gsub, c("pat1", "pat2"), "", fsin, USE.NAMES = FALSE)
 # anyNA(x) is more efficient than any(is.na(x))
 # which.min is more efficient than which(x == min(x)). ATTENTION: which.min(c(1,1,2)) = 1, i.e. the second (and 3rd,4th,...) minimum is negelected
 # which(abs(zlevels - center_around) == min(abs(zlevels - center_around)))
@@ -43,7 +44,7 @@
 # options("scipen"=100, "digits"=4): c(1.810032e+09, 4) --> 1810032000, 4
 # list.files(pattern = glob2rx('*.tif'))
 # list.files(pattern = '^.*\\.tif$')
-# intersect(intersect(a,b),c) = Reduce(intersect, list(a,b,c))
+# intersect(intersect(a,b),c) = base::Reduce(intersect, list(a,b,c))
 # sprintf("%02i", 1) --> 01; sprintf("%2s", "a") --> " a"
 # rJava pkg error: JDK is incomplete! Please make sure you have a complete JDK. JRE is *not* sufficient: sudo R CMD javareconf
 # RColorBrewer::brewer.pal(n=RColorBrewer:::maxcolors["Spectral"], name="Spectral")
@@ -127,8 +128,26 @@
 # decrease space between labels and ticks:
 #axis(2, at=yat, labels=F, tck=-0.03, las=2, cex.axis=0.9) # ticks only
 #axis(2, at=yat, line=-0.5, lwd=0, las=2, cex.axis=0.9) # add labels
+# exponential axis labels:
+#exponents <- log(range(x), base=10)
+#exponents <- seq(exponents[1], exponents[2], b=1)
+#xat_lab <- yat_lab <- 10^exponents
+#xlab <- ylab <- xat_lab # todo
+#xat <- rep(NA, t=length(xlab)*8)
+#for (i in seq_along(xlab)) { inds <- ((i-1)*8+1):(i*8); xat[inds] <- xlab[i] + 1:8*xlab[i] }
+#yat <- xat
+#plot(x, y, t="n", log="xy", 
+#     xlim=xlim, ylim=ylim,
+#     xaxt="n", yaxt="n", xaxs="i", yaxs="i",
+#     xlab="", ylab="")
+#axis(1, at=xat, labels=F, tck=-0.015) # ticks only
+#axis(1, at=xat_lab, xlab=xlab, tck=-0.025)
+#axis(2, at=yat, labels=F, tck=-0.015)
+#axis(2, at=yat_lab, xlab=ylab, tck=-0.025, las=2)
 # compile bookdown:
 # bookdown::render_book("index.Rmd", "bookdown::gitbook")
+# available data set from packages: data()
+# remove dir: check <- base::unlink(unknowndir, recursive=T)
 
 if (T) { # set F for blank .Rprofile
 
@@ -223,24 +242,21 @@ if (T) { # set F for blank .Rprofile
     # - a specific compiler can be set while package installation, e.g.:
     #      withr::with_makevars(list(CXX11STD = "-std=c++11"), install.packages("s2"))
     # - within minor version changes, package re-compilation usually is not necessary, e.g. from "3.6.1" to "3.6.2"
-    # - from e.g. "3.6.x" to "3.7.x", package re-compilation _may_ be necessary
-    # --> no general rule found: e.g. r 3.5 packages may or may not work in r 3.6 and vice versa
+    # - from e.g. "3.6.x" to "3.7.x", package re-compilation _may_ be necessary --> todo: no general rule?
     # --> minimum version-dependent package directory structure is 3.5, 3.6, etc.
-    newLibPaths_main <- "~/scripts/r/packages/bin" # hardware-independent path where packages should be installed
+    myLibPaths_main <- "~/scripts/r/packages/bin" # machine-independent path where packages should be installed
     rversion_x.y <- paste0(version$major, ".", substr(version$minor, 1, 1)) # e.g. "3.6" and not "3.6.1"
-    newLibPaths <- paste0(newLibPaths_main, "/r_", rversion_x.y) # currently running r version in format e.g. "3.6" and not "3.6.1"
-    newLibPaths <- c(
-                     # current r version path will be first entry of `.libPaths()` 
-                     newLibPaths, 
-                     # all other potentially available dirs with same major version, e.g. "3.5", "3.7", ...
-                     # todo: increasing 3.5, 3.7 (default) or decreasing 3.7, 3.5?
-                     list.files(newLibPaths_main, pattern=paste0("r_", version$major), full.names=T) 
-                     )
-    newLibPaths <- unique(newLibPaths)
+    myLibPaths <- paste0(myLibPaths_main, "/r_", rversion_x.y) # currently running r version in format e.g. "3.6" and not "3.6.1"
+    myLibPaths <- c(# current r version path will be first entry of `.libPaths()` 
+                    myLibPaths, 
+                    # all other potentially available dirs with same major version in _decreasing_ order, e.g. "3.7", "3.5", ...
+                    sort(list.files(myLibPaths_main, pattern=paste0("r_", version$major), full.names=T), decreasing=T) 
+                    )
+    myLibPaths <- unique(myLibPaths)
     if (interactive()) message("Set .libPaths() ...")
-    sapply(newLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
-    .libPaths(newLibPaths) # add my libpaths before system defaults
-    if (interactive()) message(paste0("   ", .libPaths(), collapse="\n"))
+    sapply(myLibPaths, function(x) dir.create(x, recursive=T, showWarnings=F))
+    .libPaths(myLibPaths) # add my libpaths before system defaults
+    if (interactive()) message(paste0("   ", sub(Sys.getenv("HOME"), "~", .libPaths()), collapse="\n")) # escape home to be machine-agnostic
     #Sys.setenv(R_LIBS_USER=paste(.libPaths(), collapse=":")) # this may be needed for package build
     
     # do rest only if interactive session

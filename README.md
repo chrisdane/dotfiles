@@ -18,3 +18,7 @@ The `Rprofile` results in (check the `functions` repo for function defs):
 <br><br>
 <img align="left" width="600" src="screen_rprofile.png">
 
+# todo
+
+- `~/.gitconfig`
+

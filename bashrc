@@ -168,15 +168,18 @@ else
         printf "lfs getstripe --mdt-index $(readlink -f .): "
         lfs getstripe --mdt-index .
     }
-    diffc(){ # colored diff with git
-        git diff --no-index $1 $2
+    diffc(){ # colored diff
+        diff --color=always -u $1 $2 | less -i -R # `always` when piped
     }
     diffcc(){ # colored character-wise diff with git
         git diff --no-index --word-diff-regex=. $1 $2
     }
     diffc2(){ # colored diff with vi
         diff $1 $2 | vim -R -
-        #diff $1 $2 | colordiff # needs program colordiff
+        #diff $1 $2 | colordiff # needs colordiff
+    }
+    diffcg(){ # colored diff of non-git files with git
+        git diff --color=always --no-index $1 $2
     }
     myfind(){
         if [ $# -eq 0 ]; then
@@ -264,8 +267,8 @@ else
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
         echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
         echo "  'pdftk in1.pdf in2.pdf output out.pdf'"
-        echo "  'convert Screenshot* slides.pdf'"
-        echo "  'convert *.png -auto-orient slides.pdf'"
+        echo "  'magick Screenshot* slides.pdf'"
+        echo "  'magick *.png -auto-orient slides.pdf'"
         echo convert
         echo "   img2pdf -o f.pdf f.png # better quality than 'magick f.png f.pdf'"
         echo compress
@@ -331,6 +334,14 @@ else
         echo "lsof +D /path \# list open files"
         echo "p_pa=$(seq -s, 100000 -5000 20000)"
         echo "while read p; do echo \$p; done < file.txt"
+        echo "Glob Wildcard     Regular Expression  Meaning"
+        echo "?                 .                   Any single character"
+        echo "*                 .*                  Zero or more characters"
+        echo "[a-z]             [a-z]               Any character from the range"
+        echo "[!a-m]            [^a-m]              A character not in the range"
+        echo "[a,b,c]           [abc]               One of the given characters"
+        echo "{cat,dog,bat}     (cat|dog|bat)       One of the given options"
+        echo "{*.tar,*.gz}      (.*\.tar|.*\.gz)    One of the given options, considering nested wildcards}"
     }
     scphelp(){
         echo "scp -O -r dir/ user@host:/path # -O legacy mode to prevent 'path canonicalization failed' error"
@@ -362,6 +373,9 @@ else
         echo "f, F # find (F go backwards)"
         echo "t, T # find (T go backwards)"
         echo "/ # find"
+        echo ""
+        echo "repeat operation for multiple lines:"
+        echo "ctrl + v -> arrow up/down to select lines -> shift + i -> <make edit> -> esc"
         echo ""
         echo "motions ~ nouns:"
         echo "w # forward by word "
@@ -492,7 +506,7 @@ else
         printf '%s' "--> $nrepofiles tracked files in repo; total size of ${repopath//$homeprefix/$repl_pat_home}: "
         du -hcs $repopath | tail -1
     } # llg
-    gp(){
+    gp(){ # workaround for git token
         if git rev-parse --git-dir > /dev/null 2>&1; then
             if [ -f ~/.myprofile ]; then
                 if [ -z "$1" ]; then
@@ -527,6 +541,10 @@ else
             return 1
         fi
     } # gp
+    if [[ -f ~/sw/git-diff-blame/git-diff-blame ]]; then # git-diff-blame
+        #alias git-diff-blame="~/sw/git-diff-blame/git-diff-blame"
+        alias gd="~/sw/git-diff-blame/git-diff-blame"
+    fi
     svnhelp(){
         echo "colored diff: svn diff | vi -R - # or vim"
     }
@@ -639,7 +657,8 @@ else
         echo "jupyter lab --no-browser --port=9999"
     }
     texhelp(){
-        echo "latexdiff -t CFONT old.tex new.tex > changes.tex # -t UNDERLINE; -t CFONT; set link colors to black"
+        echo "latexdiff old.tex new.tex > changes.tex # -t UNDERLINE; -t CFONT; set link colors to black"
+        echo "trace back missing bracket: add '\\endinput' and recompile to come closer to the error line"
         # minimal example:
         echo "\documentclass{article}"
         echo "\usepackage[margin=0.7in]{geometry}"
@@ -1202,7 +1221,7 @@ else
     fi
     
     # replace prompt with liquidprompt if git is available (thats why do it after .myprofile)
-    if true; then
+    if true; then # use liquidprompt prompt
         if [ -x "$(command -v liquidprompt)" ]; then 
             LP_PS1_PREFIX="\$(get_battery_capacity)\$(get_battery_status)\$(get_current_temp)"
             source liquidprompt # check ~/.liquidpromptrc
@@ -1210,7 +1229,7 @@ else
             echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
         fi
     fi
-    if false; then
+    if false; then # use starship prompt
         if [ -x "$(command -v starship)" ]; then 
             eval "$(starship init bash)"
         else 
@@ -1257,8 +1276,12 @@ else
             echo "--> set PIP_PREFIX = ${pip_prefix}"
             export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
         fi # true/false
+<<<<<<< Updated upstream
         #if true; then
         if false; then
+=======
+        if false; then # still not working!!!
+>>>>>>> Stashed changes
             pythonuserbase="${mywork}/sw/pip"
             pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
             pyversion=${pyversion%.*} # e.g. 3.10

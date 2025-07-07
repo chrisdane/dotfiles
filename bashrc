@@ -291,6 +291,9 @@ else
         echo "  sudo cat /etc/NetworkManager/system-connections/*"
         echo "  nmcli device wifi show-password"
         echo "recursive soft link of directory structure: cp -Rs src dst"
+        echo "get laptop size"
+        echo "  unplug external monitor; 'xrandr --query' returns sth like 'eDP or LVDS ... 309mm x 174mm'"
+        echo "  echo \"scale=2; sqrt((309/25.4)^2 + (174/25.4)^2)\" | bc -l # = 13.96151 ~ 14 inch"
     }
     archhelp(){
         echo "debug"
@@ -548,6 +551,9 @@ else
     svnhelp(){
         echo "colored diff: svn diff | vi -R - # or vim"
     }
+    cdohgrep(){
+        cdo -h 2>&1 | grep --color=auto -i $1
+    }
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
         echo "cdo --operators"
@@ -686,6 +692,7 @@ else
         echo "scontrol show jobid -dd jobid"
         echo "scancel {1000..1050}"
         echo "scontrol show partition <name>"
+        echo "sacctmgr -s show user name=\$USER format=Account%30"
     }
     officehelp(){
         echo "enter line before TOC:"
@@ -790,6 +797,35 @@ else
     # own variables
     export VISUAL=vim
     export EDITOR="$VISUAL" # also applies to git
+    
+    # hostname
+    printf "\$(hostname)@\$(hostname -d): "
+    printf "$(hostname)@"
+    domain=$(timeout 2 hostname -d) # todo: can be slow if domain is "(none)"; `dnsdomainname`?
+    if [ $? -eq 124 ]; then # timeout
+        echo "<forced timeout after 2 sec>"
+    else
+        echo "$domain"
+    fi
+
+    # external ip address
+    # todo: dig +short myip.opendns.com @resolver4.opendns.com
+    if false; then
+        #if [ ! "$domain" == "(none)" ]; then
+            printf "  get public ip: 'wget -qO- ifconfig.me' ... "
+            wget -q --spider ifconfig.me
+            if [ $? -eq 0 ]; then # online
+                ip=$(wget -qO- ifconfig.me)
+                #ip=$(curl ifconfig.me) # needs awk/cut
+                #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
+                echo "$ip"
+                printf '%s' "  --> 'nslookup $ip': "
+                echo "'$(nslookup $ip | head -1)'"
+            else
+                echo "  no internet connection or ifconfig.me is offline"
+            fi 
+        #fi
+    fi
 
     # check cpus
     if check_existance lscpu; then
@@ -982,7 +1018,7 @@ else
             readarray -t arr <<<$ct # split vector by \n to array
             cnt=0
             for line in "${arr[@]}"; do
-                #if [[ "$line" =~ ^#.* ]]; then # starts with "#"
+                #if [[ "$line" =~ ^#.* ]]; then # =~: regex; starts with "#"
                 if [[ "$line" != \#* && ${#line} != 0 ]]; then # starts not with "#"
                     cnt=$((cnt+1))
                     if (( $cnt == 1 )); then
@@ -1021,7 +1057,7 @@ else
             if [[ "$line" = *" ago "* ]]; then # check if valid line
                 service=${line##* } # get active service --> last component of line
                 # exclude default system services
-                #if [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # if included
+                #if [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # =~: regex; if included
                 #    printf "\n  service \"$service\" is included in system_services. skip."
                 if ! [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # if not included
                     printf "\n  systemctl status $service:"
@@ -1063,35 +1099,6 @@ else
         echo "loaded startup modules:"; module list
     else
         echo "module command is not set"
-    fi
-    
-    # hostname
-    printf "\$(hostname)@\$(hostname -d): "
-    printf "$(hostname)@"
-    domain=$(timeout 2 hostname -d) # todo: can be slow if domain is "(none)"; `dnsdomainname`?
-    if [ $? -eq 124 ]; then # timeout
-        echo "<forced timeout after 2 sec>"
-    else
-        echo "$domain"
-    fi
-
-    # external ip address
-    # todo: dig +short myip.opendns.com @resolver4.opendns.com
-    if false; then
-        #if [ ! "$domain" == "(none)" ]; then
-            printf "  get public ip: 'wget -qO- ifconfig.me' ... "
-            wget -q --spider ifconfig.me
-            if [ $? -eq 0 ]; then # online
-                ip=$(wget -qO- ifconfig.me)
-                #ip=$(curl ifconfig.me) # needs awk/cut
-                #ip=$(dig +short ANY whoami.akamai.net @ns1-1.akamaitech.net) # faster than wget/curl but does not work on every HPC
-                echo "$ip"
-                printf '%s' "  --> 'nslookup $ip': "
-                echo "'$(nslookup $ip | head -1)'"
-            else
-                echo "  no internet connection or ifconfig.me is offline"
-            fi 
-        #fi
     fi
 
     # run R stuff if available

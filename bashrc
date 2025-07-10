@@ -544,7 +544,7 @@ else
             return 1
         fi
     } # gp
-    if [[ -f ~/sw/git-diff-blame/git-diff-blame ]]; then # git-diff-blame
+    if [[ -f ~/sw/git-diff-blame/git-diff-blame ]]; then # git diff blame git-diff-blame
         #alias git-diff-blame="~/sw/git-diff-blame/git-diff-blame"
         alias gd="~/sw/git-diff-blame/git-diff-blame"
     fi

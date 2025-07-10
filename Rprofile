@@ -48,6 +48,8 @@
 # sprintf("%02i", 1) --> 01; sprintf("%2s", "a") --> " a"
 # rJava pkg error: JDK is incomplete! Please make sure you have a complete JDK. JRE is *not* sufficient: sudo R CMD javareconf
 # RColorBrewer::brewer.pal(n=RColorBrewer:::maxcolors["Spectral"], name="Spectral")
+# print summary
+# print(format(data.frame(att=global_nc_atts$att, val=substr(global_nc_atts$val, 1, 100)), justify="left"), width=300) # left justify
 # cat(capture.output(str(dates_in_list)), sep="\n")
 # return(as.list(environment())) # return everything defined in function
 #‘isTRUE(x)’ is the same as ‘{ is.logical(x) && length(x) == 1 &&

@@ -17,7 +17,7 @@ cdo_remap <- "remapycon"
 target_grid <- "global_1"
 target_grid_file <- NULL
 if (interactive()) { # rest
-    if (T) {
+    if (F) {
         fin <- "/work/ba1103/a270073/bc/input4MIPs/wfo_input4MIPs_surfaceFluxes_FAFMIP_NCAS-2-1-0_gn.nc"
         varname <- "wfo"
         outdir <- dirname(fin)
@@ -37,6 +37,11 @@ if (interactive()) { # rest
         varname <- "fwf"
         target_grid <- "global_1"
         outdir <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/fwf_01/outdata/post/fesom/remap_quasi_conservative"
+    } else if (T) {
+        fin <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/post/fesom/levelwise/so_fesom_20140101_levelwise_0-5900m.nc"
+        varname <- "so"
+        target_grid <- "global_1"
+        outdir <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/post/cmor/sofia/CMIP6/CMIP/AWI/AWI-ESM-1-REcoM/historical/r1i2p1f1/Omon/so/gr1adj/v20240107"
     }
 
 } else if (!interactive()) {
@@ -368,18 +373,22 @@ if (method == "default") {
                 message("get fldint of absolute flux on target grid: run `", cmd, "` ...")
                 fldint_abs_target_num <- system(cmd, intern=T)
                 fldint_abs_target_num <- gsub(" ", "", fldint_abs_target_num, fixed=T) # remove all white space
-                message("--> fldint[ abs( X_target ) ] = \"", fldint_abs_target_num, "\"")
+                # e.g. (for all depths)
+                # [1] "1.29268e+16" "1.29289e+16" "1.29404e+16" "1.292e+16"   "1.29053e+16"
+                # [6] "1.28909e+16" "1.27472e+16" "1.26813e+16" "1.26539e+16" "1.26295e+16"
+                message("--> fldint[ abs( X_target(t=", ti, ") ) ] = \"", paste(fldint_abs_target_num, collapse=" "), "\"")
                 message("convert to numeric ... ", appendLF=F)
                 options(warn=2); fldint_abs_target_num <- as.numeric(fldint_abs_target_num); options(warn=warn)
-                message("ok: ", fldint_abs_target_num)
+                message("ok: ", paste(fldint_abs_target_num, collapse=" "))
 
-                if (fldint_abs_target_num != 0) { # R14:2.51 case 1
+                if (any(fldint_abs_target_num != 0)) { # R14:2.51 case 1
+                    if (length(fldint_abs_target_num) != 1) stop("3D case not implemented")
                     cmd <- paste0(cdo, " --pedantic -s -divc,", fldint_abs_target_num, " -abs -seltimestep,", ti, " ", fout, " ", fout_target_grid_weights)
                     message("calc weight case 1: run `", cmd, "` ...")
                     check <- system(cmd)
                     if (check != 0) stop("cmd not successful")
 
-                } else if (fldint_abs_target_num == 0) { # R14:2.51 case 2
+                } else if (all(fldint_abs_target_num == 0)) { # R14:2.51 case 2
                     stop("not implemented")
                 } # if R14:2.51 case 1 or 2
 

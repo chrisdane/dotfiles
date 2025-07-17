@@ -12,12 +12,14 @@ if (interactive()) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise",
                   #"shifttime=-1day",
+                  #"settbounds=day",
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20130101.nc")
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/uo_fesom_20130101.nc")
     } else if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/post/fesom/levelwise",
                   "shifttime=-1day",
+                  "settbounds=day",
                   "timstat=monmean",
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/fesom/so_fesom_20200101.nc")
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/fesom/so_fesom_*")
@@ -25,6 +27,7 @@ if (interactive()) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/post/recom",
                   "shifttime=-1mon",
+                  "settbounds=mon",
                   "sellevel=100,1337.8,1338",
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/fesom/thetao_fesom_39440101.nc")
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/recom/bgc22_fesom_39440101.nc")
@@ -61,7 +64,7 @@ usage <- paste0("\n",
                 "from https://github.com/FESOM/spheRlab.git but faster.",
                 "\n",
                 "\nUsage:\n", me,
-                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [shifttime=-1d] [griddes=/path/to/griddes.nc] [reduce_dim=true] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc] [> lvl.log 2>&1 &]\n",
+                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [settbounds=day] [shifttime=-1d] [griddes=/path/to/griddes.nc] [reduce_dim=true] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc] [> lvl.log 2>&1 &]\n",
                 "\n",
                 " with e.g. (albedo) meshdir=/albedo/pool/FESOM/meshes_default/core\n",
                 "                    meshdir=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2\n",
@@ -156,6 +159,14 @@ if (any(grepl("^shifttime=", args))) {
     args <- args[-ind]
 }
 if (!is.null(shifttime)) message("shifttime = ", shifttime)
+
+settbounds <- NULL # default
+if (any(grepl("^settbounds=", args))) {
+    ind <- which(grepl("^settbounds=", args))
+    settbounds <- sub("settbounds=", "", args[ind])
+    args <- args[-ind]
+}
+if (!is.null(settbounds)) message("settbounds = ", settbounds)
 
 timstat <- NULL # default
 if (any(grepl("^timstat=", args))) {
@@ -354,7 +365,7 @@ for (li in seq_along(sellevel)) {
     }
     sellevel_li[[li]] <- list(depth=sellevel[li], inds=ind, depths=depth[ind], interp=interp)
 } # for li
-cat(capture.output(str(sellevel_li, digits=10)), sep="\n")
+cat(capture.output(str(sellevel_li, digits=10)), sep="\n") # todo: print as df
 sellevel_needed <- unique(as.vector(unlist(lapply(sellevel_li, "[[", "depths"))))
 sellevel_needed_inds <- unique(as.vector(unlist(lapply(sellevel_li, "[[", "inds"))))
 sellevel_interp <- unique(as.vector(unlist(lapply(sellevel_li, "[[", "interp"))))
@@ -414,6 +425,7 @@ for (fi in seq_along(files)) {
             if (!is.null(timstat)) {
                 message("\n`timstat` = \"", timstat, "\"")
                 cmd <- paste0(cdo, " -", timstat)
+                if (!is.null(settbounds)) cmd <- paste0(cmd, " -settbounds,", settbounds)
                 if (!is.null(shifttime)) cmd <- paste0(cmd, " -shifttime,", shifttime)
                 tmp_files_timstat[fi] <- paste0(ofile, "_", timstat)
                 cmd <- paste0(cmd, " ", files[fi], " ", tmp_files_timstat[fi])
@@ -421,7 +433,7 @@ for (fi in seq_along(files)) {
                 check <- system(cmd)
                 if (check != 0) stop("cmd failed")
                 files[fi] <- tmp_files_timstat[fi] # continue with timstat file
-            } # if shifttime 
+            } # if timstat 
             
             # step 1: select nodes from current level; they are all non-NA and of different length per level
             message("\nstep 1: select data from ", nlev_needed, " levels ...")
@@ -546,6 +558,7 @@ for (fi in seq_along(files)) {
                 cmd <- cdo
                 if (!is.null(reduce_dim)) cmd <- paste0(cmd, " ", reduce_dim) # --reduce_dim
                 if (!is.null(griddes)) cmd <- paste0(cmd, " -setgrid,", griddes) # apply griddes
+                if (!is.null(settbounds) && is.null(timstat)) cmd <- paste0(cmd, " -settbounds,", settbounds) # apply settbounds if not already done before
                 if (!is.null(shifttime) && is.null(timstat)) cmd <- paste0(cmd, " -shifttime,", shifttime) # apply shifttime if not already done before
                 if (sellevel_interp) cmd <- paste0(cmd, " -intlevel,", paste(sellevel, collapse=",")) # apply vertical interpolation
                 cmd <- paste0(cmd, " -genlevelbounds ", ofile, " ", ofile, "_tmp && mv ", ofile, "_tmp ", ofile)

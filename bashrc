@@ -403,11 +403,19 @@ else
     }
     tarhelp(){
         echo "https://www.gnu.org/software/tar/manual/html_section/"
-        echo "tar -cvf archive.tar f1 f2 # [c]reate archive named <[f]ile>"
-        echo "tar -xvf archive.tar # e[x]tract archive named <[f]ile>"
-        echo "tar -xvf archive.tar --wildcards \"*.nc\""
-        echo "tar -xvf archive.tar --wildcards *{pat1,pat2}*nc"
-        echo "tar -tf archive.tar # list files" 
+        echo "also use tar to process 'gzip compressed data' files, i.e. file.tar.gz"
+        echo "--> add -z if file.tar.gz and not file.tar; -z: filter through gzip"
+        echo "always: -f archive.tar"
+        echo "list: -t"
+        echo "tar -tvf archive.tar"
+        echo "create -c"
+        echo "tar -cvf archive.tar f1 f2"
+        echo "extract: -x"
+        echo "tar -xvf archive.tar"
+        echo "tar --stip=3 -xvf archive.tar                 # strip n leading dirs in filename"
+        echo "tar --transform='s/^.*\///' -xvf archive.tar  # strip all leading dirs in filename"
+        echo "tar --wildcards \"*.nc\" -xvf archive.tar"
+        echo "tar --wildcards *{pat1,pat2}*nc -xvf archive.tar"
     }
     untar() {
         tar -xvf $1
@@ -483,7 +491,7 @@ else
         echo "@other pc: git remote prune origin # to delete the old branch in the 'git branch -av' list"
     } # githelp
     llg(){
-        repofiles="$(git ls-tree --full-tree --name-only -r HEAD)"
+        repofiles="$(git ls-tree --full-tree --name-only -r HEAD)" # omits untracked, ignored, deleted files., e.g. potentially large dir ./git
         if [ $? -ne 0 ]; then
             return 1
         fi
@@ -503,11 +511,15 @@ else
         #printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
         dus=$(du -hc "${vec[@]}" | sort -h)
         homeprefix=$(readlink -f ~/)
+        # replace home in du result
         repl_pat_home='~' # need this extra variable for line below
-        repl_path_repo=$repopath
-        dus="${dus//$homeprefix/$repl_pat_home}" # replace "[/optional/prefix]/home/user" with pattern
+        #dus="${dus//$homeprefix/$repl_pat_home}" # replace "[/optional/prefix]/home/user" with pattern
+        # replace absolute path in du result
+        repl_pat_abs='.'
+        dus="${dus//$repopath/$repl_pat_abs}" # replace "[/optional/prefix]/home/user" with pattern
         printf '%s\n' "${dus[@]}"
-        printf '%s' "--> $nrepofiles tracked files in repo; total size of ${repopath//$homeprefix/$repl_pat_home}: "
+        printf '%s\n' "--> $nrepofiles _tracked_ repo files in repo"
+        printf '%s' "--> _total_ size (including untracked, ignored, deleted) of ${repopath//$homeprefix/$repl_pat_home}: "
         du -hcs $repopath | tail -1
     } # llg
     gp(){ # workaround for git token

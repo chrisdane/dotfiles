@@ -428,6 +428,7 @@ else
         echo "get hash: git rev-parse --short HEAD"
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
+        echo "git config core.fileMode false \# ignore file permission changes" 
         echo "# branch/tag"
         echo "show list:        git {branch,tag} [-av]"
         echo "default branch:   cat .git/refs/remotes/origin/HEAD"
@@ -557,6 +558,7 @@ else
     cdohelp(){
         echo "man cdo does not exist: cdo manual -> Intro -> Usage -> Options"
         echo "cdo --operators"
+        echo "cdo --argument_groups"
         echo "cdo -h [operator] # e.g. cdo -h after"
         echo "-b F32: to float; F64: to double"
         echo "cdo -b f32 copy  infile ofile \# convert short to float with add_offset and scale_factor" 
@@ -953,7 +955,9 @@ else
     # check if vim/vimx is installed and supports clipboard pasting
     if check_existance vim || check_existance vimx; then
         if check_existance vim; then
-            tmp=$(vim --version | grep clipboard)
+            echo $(which vim)
+            tmp=$(vim --version) # | grep clipboard) # <-- with incl. grep the later check `"$tmp" == *"+clipboard"*` does not work anymore o_O
+            #tmp="+clipboard +lambda -python +viminfo +cryptv +localmap +scrollbind +wayland_clipboard +ex_extra +mouse_sgr +tag_binary +xterm_clipboard"
             vim_clipboard=1 # default: no clipboard
             vim_xterm_clipboard=1
             if [[ "$tmp" == *"+clipboard"* ]]; then 
@@ -991,6 +995,7 @@ else
         if check_existance vim; then
             if [[ $vim_return == 1 ]]; then
                 echo warning: vim exists but with -clipboard and -xterm_clipboard
+                return
             fi
         fi
         if check_existance vimx; then

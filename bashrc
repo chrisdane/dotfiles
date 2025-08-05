@@ -805,7 +805,7 @@ else
     printf "$(hostname)@"
     domain=$(timeout 2 hostname -d) # todo: can be slow if domain is "(none)"; `dnsdomainname`?
     if [ $? -eq 124 ]; then # timeout
-        echo "<forced timeout after 2 sec>"
+        echo "<'hostname -d' forced timeout after 2 sec>"
     else
         echo "$domain"
     fi

@@ -9,6 +9,10 @@
 # options(warn=2) # print warnings as they occur and stop, i.e. turn warning into error
 # options(error = recover)
 # options(error = NULL)
+# x$name is equivalent to x[["name", exact = FALSE]] --> indexing by `$` _always_ uses partial matching!!!
+# options("warnPartialMatchArgs"=T) # logical.  If true, warns if partial matching is used in argument matching.
+# options("warnPartialMatchAttr"=T) # logical.  If true, warns if partial matching is used in extracting attributes via ‘attr’.
+# options("warnPartialMatchDollar"=T) # logical.  If true, warns if partial matching is used for extraction by ‘$’.
 # save output to file: sink("file.txt"); <do stuff>; sink()
 # file.edit()
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
@@ -437,6 +441,10 @@ if (T) { # set F for blank .Rprofile
             options(repos=r)
             message("   options(continue=\"   \")")
             options(continue="   ")
+            message("   options(warnPartialMatchAttr=T)")
+            options(warnPartialMatchAttr=T)
+            message("   options(warnPartialMatchDollar=T)")
+            options(warnPartialMatchDollar=T)
             message("   options(show.error.locations=T)")
             options(show.error.locations=T)
             #message("   options(stringsAsFactors=F)")

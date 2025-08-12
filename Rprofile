@@ -441,6 +441,8 @@ if (T) { # set F for blank .Rprofile
             options(repos=r)
             message("   options(continue=\"   \")")
             options(continue="   ")
+            message("   options(warnPartialMatchArgs=T)")
+            options(warnPartialMatchArgs=T)
             message("   options(warnPartialMatchAttr=T)")
             options(warnPartialMatchAttr=T)
             message("   options(warnPartialMatchDollar=T)")

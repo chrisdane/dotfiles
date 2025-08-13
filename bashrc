@@ -790,8 +790,8 @@ else
 
     # aliase (check with 'type alias')
     alias ls='ls --color=auto -F' # default from /etc/skel/.bashrc: ls='ls --color=auto'
-    alias ll='ls --color=auto -ldFh'
-    alias la='ls --color=auto -aldFh'
+    alias ll='ls --color=auto -lFh'
+    alias la='ls --color=auto -alFh'
     alias llxl='ll -I "xios*" -I "lucia*"'
     # ls only files excluding dotfiles
     alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls'

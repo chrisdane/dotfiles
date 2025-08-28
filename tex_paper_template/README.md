@@ -7,7 +7,15 @@ This minimalistic Latex paper template supports
 - supports longtables
 - tries to be as minimal as possible
 
+# todo
+
+```
+\externaldocument[supp-]{<file>[.tex]}
+```
+--> can be used as `Fig. \ref{supp-<myname>}`
+
 # Change font
+
 Put this in the preamble:
 ```
 \usepackage{ifxetex,ifluatex}

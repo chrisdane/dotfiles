@@ -181,12 +181,16 @@ else
     diffcg(){ # colored diff of non-git files with git
         git diff --color=always --no-index $1 $2
     }
+    diffcgw(){ # colored diff of non-git files with git
+        # word-diff=porcelain
+        git diff --color=always --word-diff=color --no-index $1 $2
+    }
     myfind(){
         if [ $# -eq 0 ]; then
             echo "Usage: myfind search_pattern"
             return 1
         else
-            find -name "*$1*" 2>/dev/null 
+            find -path "*$1*" 2>/dev/null # -path and not -name to support '/'
         fi
     }
     myfinds(){
@@ -194,7 +198,7 @@ else
             echo "Usage: myfinds search_pattern"
             return 1
         else
-            find -name "*$1*" 2>/dev/null | sort 
+            find -path "*$1*" 2>/dev/null | sort # -path and not -name to support '/'
         fi
     }
     myfindi(){
@@ -202,7 +206,7 @@ else
             echo "Usage: myfindi search_pattern"
             return 1
         else
-            find -iname "*$1*" 2>/dev/null 
+            find -ipath "*$1*" 2>/dev/null # -path and not -name to support '/'
         fi
     }
     myfindis(){
@@ -210,7 +214,7 @@ else
             echo "Usage: myfindis search_pattern"
             return 1
         else
-            find -iname "*$1*" 2>/dev/null | sort 
+            find -ipath "*$1*" 2>/dev/null | sort # -path and not -name to support '/'
         fi
     }
     psme(){
@@ -412,10 +416,13 @@ else
         echo "tar -cvf archive.tar f1 f2"
         echo "extract: -x"
         echo "tar -xvf archive.tar"
-        echo "tar --stip=3 -xvf archive.tar                 # strip n leading dirs in filename"
-        echo "tar --transform='s/^.*\///' -xvf archive.tar  # strip all leading dirs in filename"
-        echo "tar --wildcards \"*.nc\" -xvf archive.tar"
-        echo "tar --wildcards *{pat1,pat2}*nc -xvf archive.tar"
+        echo "tar --wildcards \"*.nc\" -xvf archive.tar                # extract specific files"
+        echo "tar --wildcards \"*{pat1,pat2}*nc\" -xvf archive.tar"
+        echo "tar --transform='s/^.*\///' -xvf archive.tar             # strip all leading dirs"
+        echo "tar --stip=3 -xvf archive.tar                            # strip n leading dirs"
+        echo "tar --transform='s:.*/\([^/]*\)/:\1/:' -xvf archive.tar  # strip n-1 leading dirs"
+        echo "tar --transform='s/^.*\///' --wildcards \"*pat*\" -xvf archive.tar"
+        echo "tar --transform='s:.*/\([^/]*\)/:\1/:' --wildcards \"*pat*\" -xvf archive.tar"
     }
     untar() {
         tar -xvf $1
@@ -628,12 +635,10 @@ else
         echo "ncrename -d record,time out.nc # rename dim"
         echo "ncpdq -a time,depth in out # switch dims"
         echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
+        echo "nccopy -u -w -c time/12,nodes_2d/126859 fin fout"
     }
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
-    }
-    ncohelp(){
-        echo "nccopy -u -w -c time/12,nodes_2d/126859 fin fout"
     }
     ncviewhelp(){
         echo "ncview -minmax all Sample.nc"

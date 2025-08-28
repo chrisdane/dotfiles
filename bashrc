@@ -861,8 +861,14 @@ else
     uptime | awk -F'( |,|:)+' '{print $6,$7",",$8,"hours,",$9,"minutes"}'
 
     # which OS/distro
+    if [ -f /etc/os-release ]; then
+        printf "cat /etc/os-release | head -1: "
+        cat /etc/os-release | head -1
+    else
+        echo "/etc/os-release does not exist. what crazy OS/distro is this!?"
+    fi
     if [ -f /proc/version ]; then
-        echo "cat /proc/version:"
+        printf "cat /proc/version: "
         cat /proc/version # gives distro name; `uname` does not; `lsb_release -a` not always available
     else
         echo "/proc/version does not exist. what crazy OS/distro is this!?"
@@ -1012,7 +1018,6 @@ else
         if check_existance vim; then
             if [[ $vim_return == 1 ]]; then
                 echo warning: vim exists but with -clipboard and -xterm_clipboard
-                return
             fi
         fi
         if check_existance vimx; then
@@ -1201,10 +1206,22 @@ else
     fi
     if check_existance squeue; then
         sme() {
-            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.30j %.7a %.8u %.2t %.7l %.10M %.6D %R\" # jobid partition jobname account user status time maxtime nodes nodelist"
-            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.30j %.7a %.8u %.2t %.10M %l %.6D %R"
+            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.20j %.30a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.20j %.30a %.15u %.2t %.20V %.20S %.10M %.6D %R"
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.18i %.12P %.30j %.7a %.8u %.2t %.10M %l %.6D %R" ; }
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.8i %.12P %.20j %.30a %.15u %.2t %.20V %.20S %.10M %.6D %R" ; }
+    fi
+    if check_existance sacctmgr; then
+        smy() {
+            echo "sacctmgr -s show user name=\$(whoami) format=\"Account%-30\""
+            sacctmgr -s show user name=$(whoami) format="Account%-30"
+        } 
+    fi
+    if check_existance sshare; then
+        sshareme() {
+            echo "sshare -U -u \$(whoami) --format=\"Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare\""
+            sshare -U -u $(whoami) --format="Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare"
+        }
     fi
     if check_existance scontrol; then
         smee() {

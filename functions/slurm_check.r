@@ -29,7 +29,7 @@ if (length(args) == 0) { # default: own user
 options(width=3000) # increase length per print line from default 80
 
 # step 1/2: check if there are jobs in the queue
-cmd <- paste0("squeue -u ", user, " --start")
+cmd <- paste0("squeue -u ", user, " --start") # --start to return estimated start_time
 message("run `", cmd, "` ...")
 squeue <- base::pipe(cmd)
 squeue <- read.table(squeue, header=T, stringsAsFactors=F) # does not work for the 3rd line in
@@ -70,7 +70,7 @@ if (any(squeue$ST != "R")) { # not running
 
 # step 2/2: check if user has running jobs
 #cmd <- paste0("squeue -u ", user)
-cmd <- paste0("squeue -u ", user, " -o \"%.8i %.12P %.20j %.7a %.8u %.2t %.10M %.6D %R\"") # jobid partition jobname account user status time nodes nodelist
+cmd <- paste0("squeue -u ", user, " -o \"%.8i %.12P %.20j %.15a %.10u %.2t %.20V %.20S %.10M %.6D %R\"") # jobid partition jobname account user status submit_time start_time time nodes nodelist
 message("\nrun `", cmd, "` ...")
 squeue <- base::pipe(cmd)
 squeue <- read.table(squeue, header=T, stringsAsFactors=F)

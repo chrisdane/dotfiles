@@ -1,12 +1,12 @@
 #!/usr/bin/env Rscript
 
-# run `cdo [remapycon,global_1] -setgrid,<fesom1_griddesh.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`
+# run `cdo [remapycon,global_1] -setgrid,<fesom_griddesh.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`
 # input must either be 2D or, if 3D, levelwise
 
 rm(list=ls()); graphics.off()
 
 if (interactive()) {
-    me <- "fesom1_setgrid_regrid.r"
+    me <- "fesom_setgrid_regrid.r"
     args <- c("griddes"="/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc",
               #"regrid"="-remapycon,global_1",
               #"cmd_before_regrid="-shifttime,-1day",
@@ -16,8 +16,8 @@ if (interactive()) {
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
-    #fesom1_setgrid_regrid.r griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/levelwise/wgrid /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/levelwise/*.nc > setgrid_ssp126.log 2>&1 &
-    #fesom1_setgrid_regrid.r griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc outdir=. *_levelwise_0-5900m.nc > setgri.log 2>&1 &
+    #fesom_setgrid_regrid.r griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/levelwise/wgrid /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/levelwise/*.nc > setgrid_ssp126.log 2>&1 &
+    #fesom_setgrid_regrid.r griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc outdir=. *_levelwise_0-5900m.nc > setgri.log 2>&1 &
 }
 
 usage <- paste0("\nUsage:\n $ ", me, 
@@ -35,7 +35,7 @@ usage <- paste0("\nUsage:\n $ ", me,
                 "                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_nodes.nc\n",
                 "                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_elements.nc\n",
                 "\n",
-                " runs `cdo [remapycon,global_1] -setgrid,<fesom1_griddes.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`\n",
+                " runs `cdo [remapycon,global_1] -setgrid,<fesom_griddes.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`\n",
                 " input must either be 2D or, if 3D, levelwise\n\n",
                 " if <in_irreg_2D_or_levelwise> already has a proper griddes, e.g. cmorized data, `setgrid` is not necessary\n")
 

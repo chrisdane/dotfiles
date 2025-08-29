@@ -258,7 +258,7 @@ if (nrow(df) != length(jobids)) {
     # 1: job was not finished --> sacct returns something option `--state=completed` is not provided
     # 2: job is too old and not in sacct database anymore --> sacct returns nothing
     missing_jobid_inds <- which(is.na(match(jobids, df$jobid)))
-    message("\n", length(missing_jobid_inds), "/", length(jobids), " jobs were not found in `sacct` database or were not completed")
+    message("\n", length(missing_jobid_inds), "/", length(jobids), " jobs were not found in `sacct` database (maybe simply too old) or were not completed")
         
     # get job infos try 2/2: dkrz job summary
     dkrz_grep_pattern <- "This is the automated job summary provided by DKRZ."

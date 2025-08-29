@@ -1158,8 +1158,8 @@ else
         esm_tools_helpers.sh
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         jsbach_pft_wrt_box.r jsbach_tile2pft.r jsbach_plot_pft.r 
-        fesom1_get_meshinfo.r 
-        fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r fesom1_setgrid_regrid.r 
+        fesom_setgrid_regrid.r 
+        fesom1_get_meshinfo.r fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r
         fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
         oasis_get_B_grid.sh oasis_split_grids.sh oasis_plot_mask.r
@@ -1167,7 +1167,7 @@ else
         esgf_get_variables.r esgf_json_tree.sh
         slk2list.r
         select_winter_summer.r
-        mycdoseasmean.r mycdoseassum.r 
+        mycdotimstat_loop.r mycdoseasmean.r mycdoseassum.r 
         mycdosplitlevel.r
         mytrend.r mycdotrend.r mycdoeof.r
         mycat_areadepth mycat_time.r mycat_time_depth mycat_time_depth_lat.r mycat_time_depth.r

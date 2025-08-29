@@ -1,0 +1,19 @@
+[user]
+	name = chrisdane
+    email = cdanek@awi.de
+[alias]
+    #lol = log --decorate --oneline --graph --abbrev-commit
+    lol = log --decorate --oneline --graph --abbrev-commit --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an)%C(reset)%C(yellow)%d%C(reset)'
+    #lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    lola = log --all --decorate --oneline --graph --abbrev-commit --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an)%C(reset)%C(yellow)%d%C(reset)'
+    gethash = rev-parse --short HEAD
+    diffn = diff --name-only
+[color]
+    branch = auto
+    diff = auto
+    interactive = auto
+    status = auto
+[credential]
+    helper = cache --timeout=10
+[safe]
+	directory = *

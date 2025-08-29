@@ -36,14 +36,14 @@ while sleep 1; do
     partition=$(scontrol show jobid -dd $1 | grep Partition) # "Partition=compute,compute2 AllocNode:Sid=mlogin100:10034"
     partition=$(echo $partition | cut -d' ' -f1) # "Partition=compute,compute2"
     partition=$(echo $partition | cut -d'=' -f2) # "compute,compute2"
-    echo "$(date): slurm job $1 account $account partition $partition submitted at $hostname: $status"
+    echo "$(date): status of slurm job $1 submitted on $hostname (account: $account, partition: $partition): $status"
     if [ "$status" == "RUNNING" ]; then
-        msg="slurm job $1 account $account partition $partition submitted at $hostname started!"
+        msg="slurm job $1 started on $hostname (account: $account, partition: $partition)"
         if command -v zenity &> /dev/null; then # inform via small zenity GUI alert
-            echo "run zenity ..."
+            echo "run 'zenity --info --text=\$msg' ..."
             zenity --info --text="$msg"
         else # inform just in terminal
-            echo "program zenity not found"
+            echo "could not find zenity"
             echo $msg
         fi
         echo "stopping slurm_wait"

@@ -84,7 +84,7 @@ if (file.exists(fout)) {
     dlat <- unique(sapply(dlat, unique))
     latlim <- range(lapply(moc, "[[", "lat"))
     lat <- seq(latlim[1], latlim[2], b=dlat)
-    lat_dim <- ncdim_def("lat", units="degrees north", vals=lat)
+    lat_dim <- ncdim_def("lat", units="degrees_north", vals=lat)
         
     # basin dim
     basin_dim <- ncdim_def("basin", units="", vals=seq_along(sectors), create_dimvar=F)

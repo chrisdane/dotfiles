@@ -212,6 +212,7 @@ message("ylim = ", ylim[1], ", ", ylim[2])
 if (T) {
     message("special: historical2 and esm-hist ylims")
     ylim <- c(1.59224856728788, 17.4425790794838)
+    message("ylim = ", ylim[1], ", ", ylim[2])
 }
 ltys <- rep(1:10, e=4, l=nlev)
 cols <- rep(1:8, t=10, l=nlev)

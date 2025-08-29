@@ -88,7 +88,8 @@ if (interactive()) { # rest
 } # if interactive
 
 ####################################################################
-    
+
+# check
 if (!any(method == c("default", "R14"))) stop("`method` must be one of \"default\", \"R14\"")
 cdo <- Sys.which("cdo")
 if (cdo == "") stop("could not find cdo")
@@ -104,7 +105,7 @@ if (!is.null(target_grid_file)) {
     if (!file.exists(target_grid_file)) stop("`target_grid_file` ", target_grid_file, " does not exist")
     if (file.access(target_grid_file, mode=4) == -1) stop("`target_grid_file` ", target_grid_file, " is not readable")
 }
-message("load ncdf4 package ...")
+#message("load ncdf4 package ...")
 library(ncdf4)
 warn <- options()$warn
 nproc <- system("nproc", intern=T)

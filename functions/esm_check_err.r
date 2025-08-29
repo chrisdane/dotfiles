@@ -4,13 +4,16 @@
 args <- commandArgs(trailingOnly=F)
 me <- basename(sub("--file=", "", args[grep("--file=", args)]))
 default_logs <- c(# echam6
-                  "echam6.log", "atmout", "echam.stderr", "echam.stdout", 
+                  "echam6.log", "atmout", "echam.stderr", "echam.stdout" 
+                  # lpjg
+                  , "guess.log"
                   # oasis
-                  "debug.", "debug.root.", "debug.notroot.", "debug_notroot.", "lucia.", "nout.0",
+                  , "debug.", "debug.root.", "debug.notroot.", "debug_notroot.", "lucia.", "nout.0"
                   # oifs
-                  "NODE.",
+                  , "meminfo.txt", "NODE."
                   # xios
-                  "xios_client_", "xios_server_")
+                  #, "xios_client_", "xios_server"
+                  )
 
 help <- paste0("\nUsage:\n $ ", me, " [logfile1 ... logileN]\n",
                "  e.g. ", me, "\n",
@@ -36,9 +39,13 @@ for (logi in seq_along(logs)) {
         message()
         for (fi in seq_along(fs)) {
             if (file.info(fs[fi])["size"] > 0) {
-                cmd <- paste0("grep -Ein \"warn|err|fail|severe|abort|invalid|stop|abort|\\!|No such file or directory\" ", fs[fi])
+                cmd <- paste0(
+                              #"grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|\\!|No such file or directory\" ", 
+                              "grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|No such file or directory\" ", 
+                              fs[fi])
                 message("--> run `", cmd, "` ...")
                 system(cmd)
+                if (grepl("xios_", basename(fs[fi]))) next # skip many xios_{client,server}_x.{err,log} files
             } # if file is larger than 0 bytes
         } # for fi
     } else {

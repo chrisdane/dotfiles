@@ -185,38 +185,14 @@ else
         # word-diff=porcelain
         git diff --color=always --word-diff=color --no-index $1 $2
     }
-    myfind(){
-        if [ $# -eq 0 ]; then
-            echo "Usage: myfind search_pattern"
-            return 1
-        else
-            find -path "*$1*" 2>/dev/null # -path and not -name to support '/'
-        fi
-    }
-    myfinds(){
-        if [ $# -eq 0 ]; then
-            echo "Usage: myfinds search_pattern"
-            return 1
-        else
-            find -path "*$1*" 2>/dev/null | sort # -path and not -name to support '/'
-        fi
-    }
-    myfindi(){
-        if [ $# -eq 0 ]; then
-            echo "Usage: myfindi search_pattern"
-            return 1
-        else
-            find -ipath "*$1*" 2>/dev/null # -path and not -name to support '/'
-        fi
-    }
-    myfindis(){
-        if [ $# -eq 0 ]; then
-            echo "Usage: myfindis search_pattern"
-            return 1
-        else
-            find -ipath "*$1*" 2>/dev/null | sort # -path and not -name to support '/'
-        fi
-    }
+    myfind() { find -name "*$1*" 2>/dev/null ; }
+    myfindp() { find -path "*$1*" 2>/dev/null ; } # -path and not -name to support '/'
+    myfinds(){ find -name "*$1*" 2>/dev/null | sort ; }
+    myfindps(){ find -path "*$1*" 2>/dev/null | sort ; }
+    myfindi(){ find -iname "*$1*" 2>/dev/null ; }
+    myfindpi(){ find -ipath "*$1*" 2>/dev/null ; }
+    myfindis(){ find -iname "*$1*" 2>/dev/null | sort ; }
+    myfindpis(){ find -ipath "*$1*" 2>/dev/null | sort ; }
     psme(){
         ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
     }

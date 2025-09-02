@@ -510,9 +510,13 @@ for (i in seq_along(usage)) {
 }
 
 # plot queue time
+message("\nplot queue stats ...")
+plotname <- "~/sw/slurm/queue"
+if (!dir.exists(plotname)) dir.create(plotname, recursive=T, showWarnings=F)
+if (!dir.exists(plotname)) stop("could not create dir ", plotname)
 jobname <- logs[1]
-plotname <- paste0(normalizePath("~"), "/queue_time_", jobname, "_", length(jobids), "_jobs.png")
-message("\nplot queue stats: ", plotname, " ...")
+plotname <- paste0(plotname, "/queue_time_", jobname, "_", length(jobids), "_jobs.png")
+message("--> ", plotname)
 
 # todo: automatic selection of most informative date labels? 
 xat <- pretty(start, n=40)

@@ -1139,7 +1139,7 @@ else
         fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
         oasis_get_B_grid.sh oasis_split_grids.sh oasis_plot_mask.r
-        oifs_check_input.r
+        oifs_check_input.r oifs_post_ifs.stat.r
         esgf_get_variables.r esgf_json_tree.sh
         slk2list.r
         select_winter_summer.r
@@ -1182,10 +1182,10 @@ else
     fi
     if check_existance squeue; then
         sme() {
-            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.20j %.30a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
-            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.20j %.30a %.15u %.2t %.20V %.20S %.10M %.6D %R"
+            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.25j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.25j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R"
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.8i %.12P %.20j %.30a %.15u %.2t %.20V %.20S %.10M %.6D %R" ; }
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.8i %.12P %.25j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R" ; }
     fi
     if check_existance sacctmgr; then
         smy() {

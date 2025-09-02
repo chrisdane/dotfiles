@@ -158,9 +158,9 @@
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 
-        message(c(rep("*", t=(getOption("width")/2 - 6)),
+        message(c(rep("*", times=(getOption("width")/2 - 6)),
                   " ~/.Rprofile ", 
-                  rep("*", t=(getOption("width")/2 - 6))))
+                  rep("*", times=(getOption("width")/2 - 6))))
         message(R.version.string, " on ", 
                 Sys.info()[4], " (PID ", Sys.getpid(), ")")
     }
@@ -332,7 +332,7 @@ if (T) { # set F for blank .Rprofile
                 
                 cnt <- cnt + 1
                 message("   ", sprintf(paste0("%", nchar_no, "i"), cnt), "/", npkg, "  ", pkg, "  ", 
-                        paste0(rep(" ", t=max(nchar_pkg) - nchar(pkg)), collapse=""), appendLF=F)
+                        paste0(rep(" ", times=max(nchar_pkg) - nchar(pkg)), collapse=""), appendLF=F)
                
                 # try to load package from all available .libPaths()
                 for (libpathi in seq_along(libpaths)) {
@@ -507,9 +507,9 @@ if (T) { # set F for blank .Rprofile
             } # if any packages failed
         } # if load default packages
 
-        message(c(rep("*", t=(getOption("width")/2 - 6)),
+        message(c(rep("*", times=(getOption("width")/2 - 6)),
                   " ~/.Rprofile ",
-                  rep("*", t=(getOption("width")/2 - 6))))
+                  rep("*", times=(getOption("width")/2 - 6))))
 
     } # if interactive
 

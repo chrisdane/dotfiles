@@ -22,5 +22,3 @@ The `Rprofile` results in (check the `functions` repo for function defs):
 
 # todo
 
-- `~/.gitconfig`
-

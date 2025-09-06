@@ -7,10 +7,9 @@ plottype <- "png" # "png" "pdf"
 exclude <- NULL
 if (F) exclude <- c("glacier")
 if (T) exclude <- c("glacier", "bare land (1-veg_ratio_max)")
+known_varnames <- c("pft_fract_box", "pft_area_box")
 
 #########################################
-
-known_varnames <- c("pft_fract_box")
 
 if (interactive()) {
     #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_esm-piControl2_jsbach_fldsum_pft_fract_box_global_annual_1850-1872.nc"
@@ -20,25 +19,19 @@ if (interactive()) {
     args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_historical2_jsbach_fldsum_pft_fract_box_global_Jan-Dec_1850-2014.nc"
 
 } else {
-
-    # get args
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
-    help <- paste0("Usage:\n",
-                   " $ ", me, " <result_of_fldsum_of_jsbach_pft_wrt_box.r>\n")
-
-    # check args 
     args <- commandArgs(trailingOnly=T)
-    if (length(args) != 1) {
-        message(help)
-        quit()
-    }
-    message("\nstart ", me, " ...\n")
-    source("~/scripts/r/functions/myfunctions.r") # mycols(), plot_sizes()
 
 } # if interactive or not
 
 # checks
+help <- paste0("Usage:\n",
+               " $ ", me, " <fldsum_of_jsbach_select_pft_wrt_box.r> # result of jsbach_pft_wrt_box.r\n")
+if (length(args) != 1) {
+    message(help)
+    quit()
+}
 fin <- args[1]
 if (!file.exists(fin)) stop("fin ", fin, " does not exist")
 fin <- normalizePath(fin)
@@ -47,6 +40,8 @@ message("load ncdf4 package ...")
 library(ncdf4)
 message("load abind package ...")
 library(abind)
+
+source("~/scripts/r/functions/myfunctions.r") # mycols(), plot_sizes()
 
 # open file
 message("\nopen ", fin, " ...")
@@ -62,7 +57,7 @@ cat(capture.output(str(atts)), sep="\n")
 units <- atts$units
 if (units == "fraction") {
     ylab <- "PFT fraction"
-} else if (units == "area") {
+} else if (units == "m2") {
     ylab <- "PFT area" 
 } else {
     stop("`units` = ", units, " not defined")
@@ -181,10 +176,16 @@ if (T) {
 nlev <- dim(data)[levind]
 
 # normalize
-if (T && varname == "pft_fract_box") {
-    message("\nvarname is pft_fract_box --> normalize by total land points ...")
-    nland <- atts$slm_nland
-    data <- data/nland*100
+if (T) {
+    if (varname == "pft_fract_box") {
+        message("\nvarname is pft_fract_box --> normalize by total land points ...")
+        nland <- atts$slm_nland
+        data <- data/nland*100
+    } else if (varname == "pft_area_box") {
+        message("\nvarname is pft_area_box --> normalize by total land area ...")
+        arealand <- atts$slm_arealand
+        data <- data/arealand*100
+    }
     ylab <- "PFT cover of global land [%]"
 }
 
@@ -210,7 +211,7 @@ message("ylim = ", ylim[1], ", ", ylim[2])
 # historical2: ylim = 1.59224856728788, 17.4425790794838
 # esm-hist: ylim = 1.81241902579601, 15.7980779086769
 if (T) {
-    message("special: historical2 and esm-hist ylims")
+    message("\nspecial: historical2 and esm-hist ylims")
     ylim <- c(1.59224856728788, 17.4425790794838)
     message("ylim = ", ylim[1], ", ", ylim[2])
 }
@@ -229,6 +230,7 @@ axis(2, pretty(ylim, n=10), las=2)
 for (i in seq_len(dim(data)[levind])) {
     tmp <- abind::asub(data, idx=i, dims=levind)
     lines(time, tmp, lty=ltys[i], col=cols[i])
+    if (F) points(time, tmp, col=cols[i])
 }
 legend("topright", dimnames(data)[[levind]], lty=ltys, col=cols,
        bty="n", x.intersp=0.2, cex=1, ncol=1)

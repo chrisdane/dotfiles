@@ -1,10 +1,23 @@
 #!/usr/bin/env Rscript
+    
+# get jsbach PFT fraction or area with respect to grid area and not vegetated area (=`cover_fract`), i.e. 
+# calc eq 1.5 from jsbach docu (Reick et al. 2021):
+#       c_i = v_i / V_veg = f_i / veg_max
+#   <=> f_i = c_i * veg_max --> this is calculated here (times area if wanted)
+# with c_i = cover fraction relative to the vegetated part of grid box
+#      f_i = cover fraction relative to the full grid box
+#      v_i = area covered by PFT associated with tile i in a grid box (m2)
+#      V_veg = area of grid box accessible to vegetation = A veg_max
+#      veg_max = fraction of grid box hospitable to vegetation
+#      A = area of grid box
 
-# - run `jsbach_pft_wrt_box.r` in terminal to display help
-# - simple cdo commands are not possible since mapping from `cover_type` to `cover_fract` is needed as indicated by the different `tilelev` and `pftlev` dimensions above (see reference at the end of script)
-# - the warning `cdo(2) mul (Warning): Input parameters have different levels!` can be ignored
-# - the lon,lat dims of jsbach variables `cover_fract` etc. refer to the binary land sea mask `slm` and not the fractional land sea mask `slf`
-#   --> this makes no sense since in T63 `cover_fract` at panama strait (`cdo remapnn,lon=279.375/lat=8.393669`) has no values, i.e. no vegetation although slf != 0
+# -> a bit tricky since several `cover_type`s can be saved on one tile in cover_fract(location,tile,time)
+# -> see reference at the end of script
+# -> warning `cdo(2) mul (Warning): Input parameters have different levels!` can be ignored
+# -> todo: jsbach's `cover_fract` uses binary jsbach:slm instead of fractional jsbach:slf
+#          -> in T63, `cover_fract` at panama strait (`cdo remapnn,lon=279.375/lat=8.393669`) has no values since slm=0 but slf != 0
+#          -> is this a bug or a feature?
+
 ##########################################################################################
 
 options(warn=2) # stop on warnings    
@@ -25,7 +38,7 @@ if (interactive()) { # test
     # get args
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
-    help <- paste0("\nGet jsbach PFT fraction or area with respect to grid area and not vegetated area (=`cover_fract`).\n\n",
+    help <- paste0("\nGet jsbach PFT fraction or area with respect to grid area and not vegetated area (=`cover_fract`), i.e. calc eq. 1.5 from Reick et al. 2021\n\n",
                    "If `outunit` = \"fraction\":\n",
                    "  if glacier (`cover_type`=1)\n",
                    "    pft_fract_box(lon,lat,pftlev,time) = pft_mask(lon,lat,pftlev) * cover_fract(lon,lat,tilelev,time)\n",
@@ -152,8 +165,6 @@ message(ncatted)
 message("load ncdf4 package ...")
 library(ncdf4)
 
-## checks
-
 # check varnames of cover_fract file 
 message("\ncheck varnames of cover_fract file ... ")
 cmd <- paste0(cdo, " showname ", fcover_fract)
@@ -194,19 +205,52 @@ if (!any(!is.na(match(c("cover_type"), jsbach_nc_vars)))) {
 }
 
 ## start
+random_number <- paste0(Sys.getpid(), "_", format(Sys.time(), "%s"))
 
 # get number of land points from binary land sea mask `slm`
+# --> slm is either 1 (land) or 0 (ocean)
+# --> todo: should slf be used instead?
 slm_ind <- which(!is.na(match(names(jsbach_nc$var), c("slm", "SLM"))))
 if (length(slm_ind) != 1) {
     stop("this forcing file has ", length(slm_ind), " vars named `slm` or `SLM`. must have 1")
 }
-slm <- ncdf4::ncvar_get(jsbach_nc, names(jsbach_nc$var)[slm_ind])
-ntotal <- prod(dim(slm))
-nland <- length(which(slm == 1))
-nocean <- ntotal - nland
+slm_varname <- names(jsbach_nc$var)[slm_ind]
+slm <- ncdf4::ncvar_get(jsbach_nc, slm_varname)
+ntotal <- prod(dim(slm)) # e.g. 18432
+nland <- length(which(slm == 1)) # e.g. 6126 (33.24%)
+nocean <- ntotal - nland # e.g. 12306 (66.76%)
 message("--> total grid cells = ", ntotal, "\n",
         "--> land grid cells = ", nland, " (", round(nland/ntotal*100, 2), "%)\n",
         "--> ocean grid cells = ", nocean, " (", round(nocean/ntotal*100, 2), "%)")
+        
+# get area in m2
+if (outunit == "area") {
+    message("\n`outunit` = area")
+
+    farea <- paste0(outpath, "/tmp_area_m2_", random_number, ".nc")
+    cmd <- paste0(cdo, " -gridarea -select,name=", slm_varname, " ", fjsbach, " ", farea)
+    message("run `", cmd, "` ...")
+    system(cmd)
+
+    fslm <- paste0(outpath, "/tmp_slm_", random_number, ".nc")
+    cmd <- paste0(cdo, " -select,name=", slm_varname, " ", fjsbach, " ", fslm)
+    message("run `", cmd, "` ...")
+    system(cmd)
+
+    cmd <- paste0(cdo, " -s -output -fldsum ", farea)
+    message("run `", cmd, "` ...")
+    areatotal <- system(cmd, intern=T)
+    areatotal <- as.numeric(trimws(areatotal)) # e.g. 5.10064e+14 m2
+    cmd <- paste0(cdo, " -s -output -fldsum -mul ", farea, " ", fslm) #
+    message("run `", cmd, "` ...")
+    arealand <- system(cmd, intern=T)
+    arealand <- as.numeric(trimws(arealand)) # e.g. 1.44686e+14 m2 (28.37%) 
+    areaocean <- areatotal - arealand # e.g. 3.65378e+14 m2 (71.63%)
+
+    message("--> total area = ", areatotal, "\n",
+            "--> land area = ", arealand, " (", round(arealand/areatotal*100, 2), "%)\n",
+            "--> ocean area = ", areaocean, " (", round(areaocean/areatotal*100, 2), "%)")
+} # if outunit == "area"
 
 # get number of tiles
 if (!any(names(jsbach_nc$dim) == "ntiles")) {
@@ -238,8 +282,8 @@ for (lcti in seq_along(lcts)) {
 }
 lct <- data.frame(cover_type=lct_vals, 
                   name=lct_types, stringsAsFactors=F)
-message("--> based on this forcing file, there are ", length(lcts), 
-        " possible `cover_type`", ifelse(length(lcts) > 1, "s", ""), ":")
+message("--> in given jsbach file, there are ", length(lcts), 
+        " _possible_ `cover_type`", ifelse(length(lcts) > 1, "s", ""), ":")
 print(lct)
 
 # load variable `cover_type`
@@ -258,7 +302,7 @@ for (tilei in seq_len(ntiles)) {
     tiles[[tilei]] <- cover_type_vals
     names(tiles)[tilei] <- tilei
 }
-message("--> in this specific file, ", length(unlist(tiles)), " `cover_type`",
+message("\n--> in given jsbach file, ", length(unlist(tiles)), " _actual_ `cover_type`",
         ifelse(length(unlist(tiles)) > 1, "s", ""), " are saved in `ntiles`=", 
         ntiles, " levels:")
 cat(capture.output(str(tiles)), sep="\n")
@@ -266,7 +310,6 @@ cat(capture.output(str(tiles)), sep="\n")
 # calc pft fraction with respect to grid area for all pfts
 fouts <- list()
 cnt <- 0
-pid <- Sys.getpid()
 for (tilei in seq_len(ntiles)) {
     
     cover_types <- tiles[[tilei]]
@@ -278,18 +321,19 @@ for (tilei in seq_len(ntiles)) {
     for (typei in seq_along(cover_types)) {
 
         # create mask file of current cover_type of current tile
-        message("\nget location inds where `cover_type` = ", cover_types[typei], 
+        message("\ntype ", typei, "/", length(cover_types), ": get location inds where `cover_type` = ", cover_types[typei], 
                 " (\"", names(cover_types)[typei], "\") ...")
         cmd <- rep(",", t=length(dim(cover_type)))
         cmd[ntiles_dim_ind] <- tilei
         cmd <- paste0("inds <- cover_type[", paste(cmd, collapse=""), ",drop=T] == ", cover_types[typei])
+        message("run `", cmd, "` ...")
         eval(parse(text=cmd))
         if (!any(inds)) stop("this should not happen")
         ncells <- length(which(inds))
         ncells_rel <- ncells/nland*100
         message("--> ", ncells, " grid cells = ", round(ncells_rel, 2), " % of ", nland, " land cells") 
         pft_name <- gsub(" ", "_", names(cover_types)[typei])
-        fmask <- paste0(outpath, "/tmp_mask_cover_type_", cover_types[typei], "_", pft_name, "_", pid, ".nc")
+        fmask <- paste0(outpath, "/tmp_mask_cover_type_", cover_types[typei], "_", pft_name, "_", random_number, ".nc")
         message("create mask file ", fmask, " ...")
         if (tilei == 1 && typei == 1) {
             lon_dim <- jsbach_nc$dim$lon
@@ -301,17 +345,18 @@ for (tilei in seq_len(ntiles)) {
         ncdf4::ncvar_put(nc=outnc, varid=mask_var, vals=inds)
         ncdf4::nc_close(outnc)
 
-        # get area in m2
-        if (outunit == "area" && tilei == 1 && typei == 1) {
-            farea <- paste0(outpath, "/tmp_area_m2_", pid, ".nc")
-            cmd <- paste0(cdo, " gridarea ", fmask, " ", farea)
-            message("run `", cmd, "` ...")
-            system(cmd)
+        # todo: issue mask(t=1) * mask(t=1) * data(t=n) = result(t=1)
+        # but this works: mask(t=1) * data(t=n) = result(t=n)
+        if (T && outunit == "area") {
+            cmd <- paste0(cdo, " mul ", fmask, " ", farea, " tmp_", random_number, " && mv tmp_", random_number, " ", fmask)
+            message("todo run `", cmd, "` ...")
+            check <- system(cmd)
+            if (check != 0) stop("error")
         }
-        
+
         # calc pft fraction with respect to grid cell area = eq 1.5 jsbach docu = 
         # grid_area(j) * cover_fract(i,j,k) * veg_ratio_max(i,j)
-        fouti <- paste0(outpath, "/pft_fract_box_", pft_name, "_", pid, ".nc")
+        fouti <- paste0(outpath, "/pft_fract_box_", pft_name, "_", random_number, ".nc")
         cnt <- cnt + 1
         fouts[[cnt]] <- list(lev=cover_types[typei],
                              cover_type=cover_types[typei],
@@ -321,7 +366,7 @@ for (tilei in seq_len(ntiles)) {
         cmd <- paste0(cdo, 
                       " -setname,cover_fract", # since multiplication with mask file would yield varname of mask file
                       " -setlevel,", cover_types[typei]) # PFT number
-        if (outunit == "area") cmd <- paste0(cmd, " -mul ", farea)
+        if (F && outunit == "area") cmd <- paste0(cmd, " -mul ", farea) # todo: can be re-enabled when fmask*fmask*fdata issue above is solved
         cmd <- paste0(cmd, " -mul ", fmask)
         if (names(cover_types)[typei] == "glacier") { 
             # special case glacier: does not need multiplication with `veg_ratio_max` as
@@ -364,16 +409,25 @@ ncells_rel <- ncells/nland*100
 message("--> ", ncells, " grid cells = ", round(ncells_rel, 2), " % of ", nland, " land cells") 
 
 # mask file for bare land
-fmask <- paste0(outpath, "/tmp_mask_cover_type_non_glacier_", pid, ".nc")
+fmask <- paste0(outpath, "/tmp_mask_cover_type_non_glacier_", random_number, ".nc")
 message("create mask file ", fmask, " ...")
 mask_var <- ncdf4::ncvar_def(name="mask_non_glacier", units="", 
                              dim=list(lon_dim, lat_dim), missval=0)
 outnc <- ncdf4::nc_create(filename=fmask, force_v4=T, vars=mask_var)
 ncdf4::ncvar_put(nc=outnc, varid=mask_var, vals=inds_non_glacier)
 ncdf4::nc_close(outnc)
+
+# todo: issue mask(t=1) * mask(t=1) * data(t=n) = result(t=1)
+# but this works: mask(t=1) * data(t=n) = result(t=n)
+if (T && outunit == "area") {
+    cmd <- paste0(cdo, " mul ", fmask, " ", farea, " tmp_", random_number, " && mv tmp_", random_number, " ", fmask)
+    message("todo run `", cmd, "` ...")
+    check <- system(cmd)
+    if (check != 0) stop("error")
+}
         
 # calc bare land
-fouti <- paste0(outpath, "/pft_fract_box_bare_land_", pid, ".nc")
+fouti <- paste0(outpath, "/pft_fract_box_bare_land_", random_number, ".nc")
 cnt <- cnt + 1
 fouts[[cnt]] <- list(lev=0,
                      cover_type=NA,
@@ -381,9 +435,7 @@ fouts[[cnt]] <- list(lev=0,
                      fout=fouti, 
                      ncells=ncells, ncells_rel=ncells_rel)
 cmd <- cdo
-if (outunit == "area") {
-    cmd <- paste0(cmd, " -mul ", farea)
-}
+if (F && outunit == "area") cmd <- paste0(cmd, " -mul ", farea) # todo: can be re-enabled when fmask*fmask*fdata issue above is solved
 cmd <- paste0(cmd,
               " -setname,cover_fract", # since multiplication with mask file would yield varname of mask file
               " -mul ", fmask, 
@@ -394,16 +446,16 @@ message("run `", cmd, "` ...")
 system(cmd)
 
 # set bare land zaxis to get merged with other pfts along lev dimension
-cmd <- paste0(cdo, " zaxisdes ", fouts[[cnt-1]]$fout, " > ", outpath, "/tmp_zaxisdes_", pid, ".txt")
+cmd <- paste0(cdo, " zaxisdes ", fouts[[cnt-1]]$fout, " > ", outpath, "/tmp_zaxisdes_", random_number, ".txt")
 message("run `", cmd, "` ...")
 system(cmd)
 cmd <- paste0(cdo, 
               " -setlevel,", fouts[[cnt]]$lev,
-              " -setzaxis,", outpath, "/tmp_zaxisdes_", pid, ".txt ", fouti, " ", 
-              outpath, "/tmp && mv ", outpath, "/tmp ", fouti)
+              " -setzaxis,", outpath, "/tmp_zaxisdes_", random_number, ".txt ", fouti, " ", 
+              outpath, "/tmp_", random_number, " && mv ", outpath, "/tmp_", random_number, " ", fouti)
 message("run `", cmd, "` ...")
 system(cmd)
-if (remove_tmp_files) file.remove(paste0(outpath, "/tmp_zaxisdes_", pid, ".txt"))
+if (remove_tmp_files) file.remove(paste0(outpath, "/tmp_zaxisdes_", random_number, ".txt"))
 
 if (remove_tmp_files) {
     message("`remove_tmp_files`=T --> rm mask file ", fmask, " ...")
@@ -419,9 +471,17 @@ atts <- paste0("@lev", sapply(fouts, "[[", "lev"), "=\"",
                "; ncells=", sapply(fouts, "[[", "ncells"), 
                "\"")
 cmd <- paste0(cdo,
+              " -setattribute,", varout, "@jsbach=", fjsbach,
               " -setattribute,", varout, "@slm_nocean=", nocean,
               " -setattribute,", varout, "@slm_nland=", nland,
-              " -setattribute,", varout, "@slm_ntotal=", ntotal,
+              " -setattribute,", varout, "@slm_ntotal=", ntotal)
+if (outunit == "area") {
+    cmd <- paste0(cmd,
+                  " -setattribute,", varout, "@slm_areaocean=", areaocean,
+                  " -setattribute,", varout, "@slm_arealand=", arealand,
+                  " -setattribute,", varout, "@slm_areatotal=", areatotal)
+}
+cmd <- paste0(cmd,
               " ", paste(rev(paste0("-setattribute,", varout, atts)), collapse=" "), 
               " -setattribute,", varout, "@long_name=\"", long_name, "\"",
               " -setunit,\"", varunit, "\"",
@@ -439,7 +499,7 @@ system(cmd)
 if (remove_tmp_files) {
     message("\n`remove_tmp_files`=T --> rm merge files ...")
     invisible(file.remove(sapply(fouts, "[[", "fout")))
-    if (outunit == "area") file.remove(farea)
+    if (outunit == "area") invisible(file.remove(c(farea, fslm)))
 }
 
 # finished

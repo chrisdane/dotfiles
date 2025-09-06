@@ -122,6 +122,25 @@ else
         fi
     }
 
+    # make broken symlinks blinking
+    if true; then
+    #if false; do
+        if [[ -z "$LS_COLORS" ]]; then # if not set
+            eval "$(dircolors -b)" # defines env variable LS_COLORS based on /etc/DIR_COLORS*
+        fi
+        if grep -q 'or=' <<<"$LS_COLORS"; then # if or= is set
+            current_or=$(echo "$LS_COLORS" | grep -o 'or=[^:]*' | cut -d= -f2)
+            echo "current_or $current_or"
+            if [[ $current_or != *";5"* ]]; then # append ";5" if not there
+                new_or="${current_or};5"
+                echo "new_or $new_or"
+                export LS_COLORS="${LS_COLORS/or=$current_or/or=$new_or}"
+            fi
+        else # if or= is not set
+            export LS_COLORS="${LS_COLORS}:or=48;5;232;38;5;9" # my: 40;31;01; levante: 48;5;232;38;5;9
+        fi
+    fi
+
     # prompt
     PS1='[\u@\h \W]\$ ' # default
     if true; then # my prompt; use `\$` to evaulate on every new line (i.e. when pressing enter)
@@ -243,6 +262,13 @@ else
     linuxhelp(){
         echo "file permissions"
         echo "r: 4, w: 2, x: 1"
+        echo wifi
+        echo "  sudo systemctl start NetworkManager.service # systemctl defaults to --system, hence sudo"
+        echo "  nmcli device wifi list"
+        echo "  nmcli device wifi connect SSID_or_BSSID password password"
+        echo "  nmcli device wifi show-password"
+        echo "  sudo cat /etc/NetworkManager/system-connections/*"
+        echo "  sudo grep -r '^psk=' /etc/NetworkManager/system-connections/"
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
         echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
@@ -267,10 +293,6 @@ else
         echo "sudoedit # not 'sudo vi'"
         echo watch
         echo "  watch -n 0.1 ls"
-        echo wifi
-        echo "  sudo cat /etc/NetworkManager/system-connections/*"
-        echo "  nmcli device wifi show-password"
-        echo "recursive soft link of directory structure: cp -Rs src dst"
         echo "get laptop size"
         echo "  unplug external monitor; 'xrandr --query' returns sth like 'eDP or LVDS ... 309mm x 174mm'"
         echo "  echo \"scale=2; sqrt((309/25.4)^2 + (174/25.4)^2)\" | bc -l # = 13.96151 ~ 14 inch"
@@ -479,7 +501,7 @@ else
             return 1
         fi
         #repofiles_vec=("${repofiles}"); # does not work if spaces in fname
-        #repofiles_vec=$(printf '%s\n' "${repofiles}") # does not work if spacecs in fname
+        #repofiles_vec=$(printf '%s\n' "${repofiles}") # does not work if spaces in fname
         #declare -a repofiles_vec=("${repofiles}") # does not work if spaces in fname
         IFS=$'\n' read -r -d '' -a repofiles_vec < <( printf '%s\n' "${repofiles}" && printf '\0' ) # works
         #printf ' %s' "${repofiles_vec[@]}"
@@ -505,6 +527,15 @@ else
         printf '%s' "--> _total_ size (including untracked, ignored, deleted) of ${repopath//$homeprefix/$repl_pat_home}: "
         du -hcs $repopath | tail -1
     } # llg
+    llg2() {
+        if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then # if in git repo
+            tracked=$(git ls-files -- "$PWD") # repo files of current dir
+            all=$(find . -maxdepth 1 -type f -printf "%f\n") # all files of current dir
+            comm -23 <(printf "%s\n" $all | sort) <(printf "%s\n" $tracked | xargs -n1 basename | sort) # files in current dir not part of git repo
+        else
+            echo "current path is not part of a git repo"
+        fi
+    }    
     gp(){ # workaround for git token
         if git rev-parse --git-dir > /dev/null 2>&1; then
             if [ -f ~/.myprofile ]; then
@@ -607,11 +638,12 @@ else
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
         echo "ncap2 -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
         echo "ncatted -O -h -a history,global,d,, mesh_core_deriv_3d_geo.nc # remove history"
-        echo "ncwa -a lev in.nc out.nc # remove dim"
+        echo "nccopy -u -w -c time/12,nodes_2d/126859 fin fout"
+        echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
+        echo "ncks -d nod3d,from-1,to-1 # or -F for 1-based indexing"
         echo "ncrename -d record,time out.nc # rename dim"
         echo "ncpdq -a time,depth in out # switch dims"
-        echo "ncks --fix_rec_dmn <dimname> <ifile> <ofile> # unlimied --> fixed dim (e.g. time)"
-        echo "nccopy -u -w -c time/12,nodes_2d/126859 fin fout"
+        echo "ncwa -a lev in.nc out.nc # remove dim"
     }
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
@@ -850,29 +882,17 @@ else
         echo "/proc/version does not exist. what crazy OS/distro is this!?"
     fi
     
-    # which desktop environment (de) is used
-    echo "pgrep -l \"gnome|kde|mate|cinnamon|lxde|xfce|jwm\":"
-    pgrep -l "gnome|kde|mate|cinnamon|lxde|xfce|jwm" | cut -d " " -f 2 | tr '\n' ';'; echo
-    if [ ! $DESKTOP_SESSION == "" ]; then
-        echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
-    fi
-    if [ ! $XDG_CURRENT_DESKTOP == "" ]; then
-        echo "\$XDG_CURRENT_DESKTOP = $XDG_CURRENT_DESKTOP"
-    fi
-    if [ ! $XDG_SESSION_TYPE == "" ]; then
-        echo "\$XDG_SESSION_TYPE = $XDG_SESSION_TYPE"
-    fi
-    if [ ! $GDMSESSION == "" ]; then
-        echo "\$GDMSESSION = $GDMSESSION"
-    fi
-    # which display manager (dm) is used
+    # which display server, display manager (dm; aka login manager), window manager (wm)
+    echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
+    echo "\$XDG_CURRENT_DESKTOP = $XDG_CURRENT_DESKTOP"
+    echo "\$XDG_SESSION_TYPE = $XDG_SESSION_TYPE"
+    echo "\$GDMSESSION = $GDMSESSION"
     tmp=$(ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$") # dm for display manager
     if [ ! $tmp == "" ]; then
         printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "
         printf "%s" $tmp; echo
         unset tmp
     fi
-    # which window manager (wm) is used
     #id=$(xprop -root -notype | awk '$1=="_NET_SUPPORTING_WM_CHECK:"{print $5}') # too slow on hpc
     #xprop -id "${id}" -notype -f _NET_WM_NAME 8t | grep "_NET_WM_NAME = " | cut --delimiter=' ' --fields=3 | cut --delimiter='"' --fields=2
 
@@ -1248,7 +1268,7 @@ else
             LP_PS1_PREFIX="\$(get_battery_capacity)\$(get_battery_status)\$(get_current_temp)"
             source liquidprompt # check ~/.liquidpromptrc
         else 
-            echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
+            echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt.git' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
         fi
     fi
     if false; then # use starship prompt

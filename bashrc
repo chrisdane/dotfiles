@@ -1179,17 +1179,17 @@ else
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do
-        if [ -f ~/dotfiles/functions/$f ]; then
+        if [ -f ~/sw/dotfiles/functions/$f ]; then
             if [ ! -f ~/bin/$f ]; then
-                echo "ln -s ~/dotfiles/functions/$f ~/bin/$f ..."
-                ln -s ~/dotfiles/functions/$f ~/bin/$f
+                echo "ln -s ~/sw/dotfiles/functions/$f ~/bin/$f ..."
+                ln -s ~/sw/dotfiles/functions/$f ~/bin/$f
             fi
         fi
     done
    
     # slurm specific stuff
-    if [ -f ~/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
-        source ~/dotfiles/functions/slurm_jobid_autocomplete.sh
+    if [ -f ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
+        source ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh
         if check_existance scontrol; then
             echo "activate slurm jobid autocomplete for scontrol and scancel"
             complete -F _cluster_jobs scontrol

@@ -22,7 +22,7 @@ if (interactive()) {
     }
 } # if interactive or not 
 
-help <- paste0("\nUsage:\n $ ", me, " ifs.stat [NODE.001_01]\n")
+help <- paste0("\nUsage:\n $ ", me, " ifs.stat [NODE.001_01] [| less]\n")
 
 # stop if help
 if (length(args) == 0 || length(args) > 2) {
@@ -192,7 +192,7 @@ if (isatty(stdout())) {
 }
 
 if (!isatty(stdout())) { # piped function call
-    print(df, row.names=F, width=300)
+    print(df, row.names=F, width=300, max=.Machine$integer.max) # Inf
 }
 
 # plot step time

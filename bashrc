@@ -1177,7 +1177,7 @@ else
         nominal_resolution.r convert_lon_360_to_180.r 
         takahashi_etal_2002.r
         precip_mm_day2month.r precip_mm_month2day.r
-        when.r kelv feet dom wind.r inertial.r
+        when.r kelv feet dom beaufort.r inertial.r
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do

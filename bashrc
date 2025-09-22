@@ -536,8 +536,10 @@ else
     llg2() {
         if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then # if in git repo
             tracked=$(git ls-files -- "$PWD") # repo files of current dir
-            all=$(find . -maxdepth 1 -type f -printf "%f\n") # all files of current dir
-            comm -23 <(printf "%s\n" $all | sort) <(printf "%s\n" $tracked | xargs -n1 basename | sort) # files in current dir not part of git repo
+            if [ -n "$tracked" ]; then # if any repo file in current dir
+                all=$(find . -maxdepth 1 -type f -printf "%f\n") # all files of current dir
+                comm -23 <(printf "%s\n" $all | sort) <(printf "%s\n" $tracked | xargs -n1 basename | sort) # files in current dir not part of git repo
+            fi
         else
             echo "current path is not part of a git repo"
         fi

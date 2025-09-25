@@ -212,6 +212,8 @@ else
     myfindpi(){ find -ipath "*$1*" 2>/dev/null ; }
     myfindis(){ find -iname "*$1*" 2>/dev/null | sort ; }
     myfindpis(){ find -ipath "*$1*" 2>/dev/null | sort ; }
+    myfindb(){ find -ipath "*$1*" -xtype l 2>/dev/null ; } # broken links
+    myfindbs(){ find -ipath "*$1*" -xtype l 2>/dev/null | sort ; }
     psme(){
         ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
     }
@@ -366,6 +368,7 @@ else
         echo "csd-wrapper script: /usr/lib/openconnect/csd-wrapper.sh"
     }
     vimhelp(){
+        echo ":w !sudo tee %"
         echo "find missing bracket: 1) cursor on open or close bracket 2) %"
         echo ". # repeats last operation"
         echo "operations ~ verbs:"
@@ -447,6 +450,9 @@ else
         echo "default branch:   cat .git/refs/remotes/origin/HEAD"
         echo "create local:     git branch -b test"
         echo "delete local:     git branch -d test"
+        echo "find and checkout to remote branch:"
+        echo "git -r | grep <name>"
+        echo "git checkout -b feat/awiesm3-v3.4-co2 origin/feat/awiesm3-v3.4-co2"
         echo "create remote:    git push origin test"
         echo "delete remote:    "
         echo "git push origin --delete bname # delete remote"
@@ -800,7 +806,7 @@ else
     configurehelp(){
         echo "./configure CFLAGS=\"-I/usr/local/include\" LDFLAGS=\"-L/usr/local/lib\""
     }
-    echomypath(){
+    mypath(){
         Rscript -e "strsplit(system('echo $PATH', intern=T), ':')[[1]]"
     }
 
@@ -885,21 +891,25 @@ else
         echo "/proc/version does not exist. what crazy OS/distro is this!?"
     fi
     
-    # which display server, display manager (dm; aka login manager), window manager (wm)
+    # x11 or wayland or not
+    echo "\$XDG_SESSION_TYPE = $XDG_SESSION_TYPE"
+    
+    # display server, display/login manager
+    if [ -f /etc/systemd/system/display-manager.service ]; then
+        printf "readlink -f /etc/systemd/system/display-manager.service = "
+        readlink -f /etc/systemd/system/display-manager.service
+    else
+        echo "/etc/systemd/system/display-manager.service does not exist. which display/login manager?"
+    fi
+    printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "
+    ps auxf | awk '{print $11}' | \grep -e dm -e slim$
+    
+    # window manager
     echo "\$DESKTOP_SESSION = $DESKTOP_SESSION"
     echo "\$XDG_CURRENT_DESKTOP = $XDG_CURRENT_DESKTOP"
-    echo "\$XDG_SESSION_TYPE = $XDG_SESSION_TYPE"
     echo "\$GDMSESSION = $GDMSESSION"
-    tmp=$(ps auxf | awk '{print $11}' | \grep -e "^/.*dm$" -e "/.*slim$") # dm for display manager
-    if [ ! $tmp == "" ]; then
-        printf "ps auxf | awk '{print \$11}' | \\grep -e dm\$ -e slim\$ = "
-        printf "%s" $tmp; echo
-        unset tmp
-    fi
-    #id=$(xprop -root -notype | awk '$1=="_NET_SUPPORTING_WM_CHECK:"{print $5}') # too slow on hpc
-    #xprop -id "${id}" -notype -f _NET_WM_NAME 8t | grep "_NET_WM_NAME = " | cut --delimiter=' ' --fields=3 | cut --delimiter='"' --fields=2
 
-    # which package manager 
+    # package manager 
     declare -A osInfo;
     osInfo[/etc/redhat-release]=yum
     osInfo[/etc/arch-release]=pacman
@@ -909,7 +919,6 @@ else
     for f in ${!osInfo[@]}; do
         if [[ -f $f ]]; then
             printf "%s" "\"$f\" exists --> package manager is ${osInfo[$f]}"
-            # arch linux specific
             if [[ ${osInfo[$f]} == "pacman" ]]; then
                 printf "%s" " --> /var/cache/pacman/pkg needs "
                 printf "%s " $(du -hc /var/cache/pacman/pkg | tail -1)

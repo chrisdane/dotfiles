@@ -661,6 +661,7 @@ else
         echo "ncview -minmax all Sample.nc"
     }
     alias ncviewa="ncview -minmax all"
+    export XAPPLRESDIR="$(readlink -f ~/sw/ncview/usr/share/X11/app-defaults)" # will read file `Ncview` there
     gribhelp(){
         echo "grib_ls fin"
         echo "grib_copy -w shortName=myname fin fout"

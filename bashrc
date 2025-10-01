@@ -130,10 +130,10 @@ else
         fi
         if grep -q 'or=' <<<"$LS_COLORS"; then # if or= is set
             current_or=$(echo "$LS_COLORS" | grep -o 'or=[^:]*' | cut -d= -f2)
-            echo "current_or $current_or"
+            #echo "current_or $current_or"
             if [[ $current_or != *";5"* ]]; then # append ";5" if not there
                 new_or="${current_or};5"
-                echo "new_or $new_or"
+                #echo "new_or $new_or"
                 export LS_COLORS="${LS_COLORS/or=$current_or/or=$new_or}"
             fi
         else # if or= is not set
@@ -273,8 +273,8 @@ else
         echo "  sudo grep -r '^psk=' /etc/NetworkManager/system-connections/"
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
-        echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf'"
-        echo "  'pdftk in1.pdf in2.pdf output out.pdf'"
+        echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf' # todo: use pdfjam instead that comes with latex package"
+        echo "  'pdftk in1.pdf in2.pdf output out.pdf'# todo: pdftk somewhat outdated and needs a lot of java stuff"
         echo "  'magick Screenshot* slides.pdf'"
         echo "  'magick *.png -auto-orient slides.pdf'"
         echo convert
@@ -448,7 +448,8 @@ else
         echo "# branch/tag"
         echo "show list:        git {branch,tag} [-av]"
         echo "default branch:   cat .git/refs/remotes/origin/HEAD"
-        echo "create local:     git branch -b test"
+        echo "create local wout switch:     git branch test"
+        echo "create local with switch:     git switch -c test"
         echo "delete local:     git branch -d test"
         echo "find and checkout to remote branch:"
         echo "git -r | grep <name>"

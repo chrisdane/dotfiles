@@ -52,6 +52,10 @@
 # sprintf("%02i", 1) --> 01; sprintf("%2s", "a") --> " a"
 # rJava pkg error: JDK is incomplete! Please make sure you have a complete JDK. JRE is *not* sufficient: sudo R CMD javareconf
 # RColorBrewer::brewer.pal(n=RColorBrewer:::maxcolors["Spectral"], name="Spectral")
+# image(z): x-axis = rows; y-axis = columns --> 2row x 3col matrix yields 3row x 2col plot:
+# 1 3 5     5 6
+# 2 4 6 --> 3 4
+#           1 2
 # print summary
 # print(format(data.frame(att=global_nc_atts$att, val=substr(global_nc_atts$val, 1, 100)), justify="left"), width=300) # left justify
 # cat(capture.output(str(dates_in_list)), sep="\n")
@@ -158,7 +162,7 @@
 if (T) { # set F for blank .Rprofile
 
     if (interactive()) { 
-        message(c(rep("*", times=(getOption("width")/2 - 6)),
+         message(c(rep("*", times=(getOption("width")/2 - 6)),
                   " ~/.Rprofile ", 
                   rep("*", times=(getOption("width")/2 - 6))))
         message(R.version.string, " on ", 

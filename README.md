@@ -31,5 +31,5 @@ The `Rprofile` results in (check the `functions` repo https://chrisdane@github.c
 
 # todo
 
-- `~/.pythonrc.py`
+- `~/.pythonrc.py`, `~/.ncviewrc`
 

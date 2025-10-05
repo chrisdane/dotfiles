@@ -204,16 +204,16 @@ else
         # word-diff=porcelain
         git diff --color=always --word-diff=color --no-index $1 $2
     }
-    myfind() { find -name "*$1*" 2>/dev/null ; }
-    myfindp() { find -path "*$1*" 2>/dev/null ; } # -path and not -name to support '/'
-    myfinds(){ find -name "*$1*" 2>/dev/null | sort ; }
-    myfindps(){ find -path "*$1*" 2>/dev/null | sort ; }
-    myfindi(){ find -iname "*$1*" 2>/dev/null ; }
-    myfindpi(){ find -ipath "*$1*" 2>/dev/null ; }
-    myfindis(){ find -iname "*$1*" 2>/dev/null | sort ; }
-    myfindpis(){ find -ipath "*$1*" 2>/dev/null | sort ; }
-    myfindb(){ find -ipath "*$1*" -xtype l 2>/dev/null ; } # broken links
-    myfindbs(){ find -ipath "*$1*" -xtype l 2>/dev/null | sort ; }
+    myfind() { find -name "*$1*" -not -path '*/.*' 2>/dev/null ; } # `-not -path '*/.*'`to ignore hidden dirs/files
+    myfindp() { find -path "*$1*" -not -path '*/.*' 2>/dev/null ; } # -path and not -name to support '/'
+    myfinds(){ find -name "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
+    myfindps(){ find -path "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
+    myfindi(){ find -iname "*$1*" -not -path '*/.*' 2>/dev/null ; }
+    myfindpi(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null ; }
+    myfindis(){ find -iname "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
+    myfindpis(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
+    myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
+    myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
     psme(){
         ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
     }
@@ -733,14 +733,19 @@ else
     }
     officehelp(){
         echo "enter line before TOC:"
-        echo "1: rightclick toc -> edit -> do not protect index against manual changes"
-        echo "2: click in upper left corner of toc"
-        echo "3: [alt+enter] twice"
+        echo "  1: rightclick toc -> edit -> do not protect index against manual changes"
+        echo "  2: click in upper left corner of toc"
+        echo "  3: [alt+enter] twice"
         echo "enter field number = page count +1:"
-        echo "1: insert -> field -> more fields"
-        echo "2: insert formula -> formula = page+1"
+        echo "  1: insert -> field -> more fields"
+        echo "  2: insert formula -> formula = page+1"
         echo "libreoffice --convert-to \"pdf\" file.txt"
         echo "copy pic from googledoc: 1: double-click pic, 2: shift+right-click on pic"
+        echo "impress don't autoplay video:"
+        echo "  Add you media to the slide"
+        echo "  Add an animation for the media"
+        echo "  Choose Category 'Misc Effects', 'Toggle Pause'; and choose Start 'with previous' (that’s a bit counterintutive, because it’s the first animation)"
+        echo "  Add another animation, Category 'Misc Effects', 'Toggle Pause'; this time choose Start 'On click'"
     }
     octavehelp(){
         echo "yay -S octave-netcdf"
@@ -1152,6 +1157,7 @@ else
     
     # set links to dotfiles-repo functions to bin
     fs=(
+        mydowngrade.r
         ntfs_fix_filenames.r
         diff_filelists.r diff_namelists.r
         cpu cpuall cpu_total mem scpd 
@@ -1200,7 +1206,7 @@ else
         fi
     done
    
-    # slurm specific stuff
+    # slurm stuff
     if [ -f ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
         source ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh
         if check_existance scontrol; then
@@ -1265,12 +1271,12 @@ else
     # load private stuff at the end to overwrite defaults from above
     if [ -f ~/.myprofile ]; then
         printf '%*s' "$ncol" | tr ' ' "-"
-        printf " ~/.myprofile start "
+        printf " source ~/.myprofile start "
         printf '%*s' "$ncol" | tr ' ' "-"
         echo ""
         source ~/.myprofile
         printf '%*s' "$ncol" | tr ' ' "-"
-        printf " ~/.myprofile finish "
+        printf " source ~/.myprofile finish "
         printf '%*s' "$ncol" | tr ' ' "-"
         echo ""
     fi

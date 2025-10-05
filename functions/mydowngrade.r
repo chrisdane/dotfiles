@@ -19,7 +19,7 @@ if (!file.exists(flog)) stop("pacman log ", flog, " does not exist")
 flog_tail <- system(paste0("\\grep \" upgraded \" ", flog, " | tail"), intern=T)
 
 oo <- options() # save old/default options
-help <- paste0("\nUsage:\n $ ", me, " [dry=T/F] [patterns=2025-10-05T15:2, upgraded ,pkgname]\n",
+help <- paste0("\nUsage:\n $ ", me, " [patterns=\"2025-10-05T15:2, upgraded ,pkgname\"] [fout=/path/to/cmd/file]\n",
                "\n",
                "`grep \" upgraded \" ", flog, " | tail`:\n",
                paste(flog_tail, collapse="\n"))
@@ -35,18 +35,6 @@ if (length(args) == 0) {
 }
 
 # check
-if (any(grepl("dry", args))) {
-    dry <- sub("dry=", "", args[grep("dry=", args)])
-    if (dry == "T") {
-        dry <- T
-    } else if (dry == "F") {
-        dry <- F
-    } else {
-        stop("`dry` must either be \"T\" or \"F\"")
-    }
-} else {
-    dry <- T # default
-}
 if (any(grepl("patterns", args))) {
     patterns <- sub("patterns=", "", args[grep("patterns=", args)]) # "2025-10-05T15:" "\" upgraded \""
     patterns <- strsplit(patterns, ",")[[1]] # "2025-10-05T15:" "\" upgraded \"" 
@@ -56,6 +44,20 @@ if (any(grepl("patterns", args))) {
     message("--> default `patterns`:")
 }
 print(patterns)
+
+if (any(grepl("fout", args))) {
+    fout <- sub("fout=", "", args[grep("fout=", args)])
+    if (file.exists(fout)) {
+        stop("provided `fout` = ", fout, " already exists")
+    }
+    dir.create(dirname(fout), recursive=T, showWarnings=F)
+    if (!dir.exists(dirname(fout))) {
+        stop("could not create dir ", dirname(fout))
+    }
+    message("\n--> provided `fout` = ", fout)
+} else {
+    fout <- NULL
+}
 
 # filter log
 # e.g. `grep -P '(?=.*2025-10-05T15:)(?=.* upgraded )' /var/log/pacman.log`
@@ -90,13 +92,13 @@ if (length(res) == 0) {
 
         # prepare downgrade cmd
         # e.g. `downgrade 'foo=1.0.0-1' 'bar>=1.2.1-1' 'baz=~^1.2'`
-        cmd <- paste0("downgrade ", paste(paste0("'", pkgs, "=", versions_prev, "'"), collapse=" "))
-        message("\n--> run `", cmd, "` ...")
-        if (dry) {
-            message("\n`dry` is true --> don't to it")
+        cmd <- paste0("sudo downgrade ", paste(paste0("'", pkgs, "=", versions_prev, "'"), collapse=" "))
+        message("\n-->\n", cmd)
+        if (is.null(fout)) {
+            message("\n`fout` not provided --> will not save cmd to file")
         } else {
-            check <- system(cmd)
-            if (check != 0) stop("some error")
+            message("\n`fout` = ", fout, " --> save cmd to that file ...")
+            write(cmd, file=fout) 
         }
 
     } # if (any(patterns == " upgraded ")) {

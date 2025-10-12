@@ -657,6 +657,13 @@ else
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
     }
+    isnc() { # use as e.g. `isnc <file> && echo yes`
+        if ncdump -k "$1" >/dev/null 2>&1; then
+            return 0 # file is nc
+        else
+            return 1 # file is not nc
+        fi 
+    }
     ncviewhelp(){
         echo "ncview -minmax all Sample.nc"
     }
@@ -1173,7 +1180,7 @@ else
         esm_tools_helpers.sh
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         jsbach_pft_wrt_box.r jsbach_tile2pft.r jsbach_plot_pft.r 
-        fesom_setgrid_regrid.r 
+        fesom_res_from_griddes.r fesom_setgrid_regrid.r 
         fesom1_get_meshinfo.r fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r
         fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
@@ -1221,10 +1228,10 @@ else
     fi
     if check_existance squeue; then
         sme() {
-            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.25j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
-            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.25j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R"
+            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R"
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.8i %.12P %.25j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R" ; }
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R" ; }
     fi
     if check_existance sacctmgr; then
         smy() {

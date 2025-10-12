@@ -71,6 +71,7 @@ if (file.exists(ofile)) {
     if (!dir.exists(outdir)) stop("could not create outdir = ", outdir)
 
     message("\nstep 1/2: run spheRlab::sl.grid.readFESOM() ...")
+    # spheRlab::sl.grid.readFESOM uses Rearth=6371000 m
     grid <- spheRlab::sl.grid.readFESOM(griddir=griddir, 
                                         rot=rot, 
                                         rot.invert=rot.invert, 

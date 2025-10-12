@@ -11,14 +11,14 @@ if (interactive()) {
     if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise",
-                  #"shifttime=-1day",
+                  #"shifttime=-1s",
                   #"settbounds=day",
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20130101.nc")
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/uo_fesom_20130101.nc")
     } else if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/post/fesom/levelwise",
-                  "shifttime=-1day",
+                  "shifttime=-1s",
                   "settbounds=day",
                   "timstat=monmean",
                   #"/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/ssp126/outdata/fesom/so_fesom_20200101.nc")
@@ -26,7 +26,7 @@ if (interactive()) {
     } else if (F) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/post/recom",
-                  "shifttime=-1mon",
+                  "shifttime=-1s",
                   "settbounds=mon",
                   "sellevel=100,1337.8,1338",
                   "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/outdata/fesom/thetao_fesom_39440101.nc")
@@ -44,7 +44,7 @@ if (interactive()) {
         args <- c("meshdir=/pool/data/AWICM/FESOM1/MESHES/core",
                   "outdir=/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/post/fesom/levelwise",
                   #"sellevel=100,1337.8,1338,1339",
-                  "shifttime=-1day",
+                  "shifttime=-1s",
                   "settbounds=day",
                   "timstat=monmean",
                   #"/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/fesom/thetao_fesom*.nc")
@@ -55,7 +55,7 @@ if (interactive()) {
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
 
-    #./fesom1_nod3d_levelwise_fast.r meshdir=/pool/data/AWICM/FESOM1/MESHES/core outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise shifttime=-1day /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20140101.nc > levelwise.log 2>&1 &
+    #./fesom1_nod3d_levelwise_fast.r meshdir=/pool/data/AWICM/FESOM1/MESHES/core outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/post/fesom/levelwise shifttime=-1s /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata/fesom/thetao_fesom_20140101.nc > levelwise.log 2>&1 &
 }
 
 usage <- paste0("\n",
@@ -65,7 +65,7 @@ usage <- paste0("\n",
                 "\nUsage:\n",
                 "[sbatch -p shared -A <account> -t 08:00:00 -o lvl.log -e lvl.log --wrap=\"]",
                 me,
-                " meshdir=/path/to/mesh outdir=/path/to/save/result [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [settbounds=day] [shifttime=-1d] [griddes=/path/to/griddes.nc] [reduce_dim=false] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc] [\" or > lvl.log 2>&1 &]\n",
+                " meshdir=/path/to/mesh outdir=/path/to/save/result [griddes=/path/to/griddes.nc] [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [settbounds=day] [shifttime=-1s] [reduce_dim=false] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc] [\" or > lvl.log 2>&1 &]\n",
                 "\n",
                 " with e.g. (albedo) meshdir=/albedo/pool/FESOM/meshes_default/core\n",
                 "                    meshdir=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2\n",
@@ -89,7 +89,8 @@ usage <- paste0("\n",
                 #"                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_elements.nc\n",
                 "\n",
                 "If `griddes` is given (not by default), this griddes will be set to the levelwise result file.\n",
-                "If `reduce_dim=false` (default), dimensions of length 1 of levelwise result file will not be dropped.\n")
+                "If `reduce_dim=false` (default), dimensions of length 1 of levelwise result file will not be dropped.\n",
+                "Get your slurm accounts and fairshre with `sshare -U -u $(whoami) --format=\"Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare\"`\n")
 
 # check
 if (length(args) < 3) { # meshdir, outdir, file1
@@ -101,6 +102,7 @@ if (length(args) < 3) { # meshdir, outdir, file1
     }
 }
 
+message("\nstart ", me, " ...")
 if (any(grepl("^meshdir=", args))) {
     ind <- which(grepl("^meshdir=", args))
     if (length(ind) != 1) stop("found ", length(ind), " args that start with \"meshdir=\". must be 1")
@@ -446,7 +448,7 @@ for (fi in seq_along(files)) {
                                                na.strings="-999", showProgress=F)
                     aux3d <- matrix(aux3d$V1, nrow=nlev_aux3d, ncol=n2)
                 } else { # use base::scan
-                    message("run `base::scan(aux3d.out)` ...")
+                    message("run `base::scan(aux3d.out)` (install `data.table` package for faster reading) ...")
                     aux3d <- base::scan(paste0(meshdir, "/aux3d.out"), skip=1, nlines=n2*nlev_aux3d,
                                         na.strings="-999", quiet=T)
                     aux3d <- matrix(aux3d, nrow=nlev_aux3d, ncol=n2)
@@ -460,18 +462,18 @@ for (fi in seq_along(files)) {
             if (!is.null(timstat)) {
                 message("\n`timstat` = \"", timstat, "\"")
                 cmd <- paste0(cdo, " -", timstat)
-                if (!is.null(settbounds)) cmd <- paste0(cmd, " -settbounds,", settbounds)
+                if (!is.null(settbounds)) cmd <- paste0(cmd, " -settbounds,", settbounds) # not needed since `timstat` sets tbounds
                 if (!is.null(shifttime)) cmd <- paste0(cmd, " -shifttime,", shifttime)
-                tmp_files_timstat[fi] <- paste0(ofile, "_", timstat)
+                tmp_files_timstat[fi] <- paste0(dirname(ofile), "/tmp_", basename(ofile), "_", timstat)
                 cmd <- paste0(cmd, " ", files[fi], " ", tmp_files_timstat[fi])
-                message("run `", cmd, "` ...")
+                message("run timstat `", cmd, "` ...") # e.g. "cdo -monmean (-settbounds) -shifttime fin"
                 check <- system(cmd)
                 if (check != 0) stop("cmd failed")
                 files[fi] <- tmp_files_timstat[fi] # continue with timstat file
             } # if timstat
 
             # step 1: select 3D nodes; they are all non-NA and of different length per level
-            message("\nstep 1: select data from ", nlev_needed, " levels ...")
+            message("\nstep 1: split nod3d data to `nlev_needed` = ", nlev_needed, " files ...")
             ofiles_lev_woutNA <- rep(NA, t=length(sellevel_needed))
             for (li in seq_len(nlev_needed)) {
                 inds <- aux3d[sellevel_needed_df$ind[li],]
@@ -479,10 +481,10 @@ for (fi in seq_along(files)) {
                 if (all(is.na(inds))) { # bottom layer in aux3d; fesom1 bug?
                     message("--> all NA. skip")
                 } else { # some non-NA values
-                    ofiles_lev_woutNA[li] <- paste0(tools::file_path_sans_ext(ofile),
+                    ofiles_lev_woutNA[li] <- paste0(dirname(ofile), "/tmp_", basename(ofile),
                                                     "_lev", sellevel_needed_df$ind[li], "_",
                                                     sellevel_needed_df$depth[li], "m_woutNA_pid",
-                                                    Sys.getpid(), "_",format(Sys.time(), "%Y-%m-%d_%H_%M_%S"), ".nc")
+                                                    Sys.getpid(), "_",format(Sys.time(), "%Y-%m-%d_%H_%M_%S"))
                     if (file.exists(ofiles_lev_woutNA[li])) stop("this should not happen")
                     cmd <- paste0(ncks, " -O", # -O: overwrite
                                   " -d ", n3dimname, ",", min(inds, na.rm=T)-1, ",", max(inds, na.rm=T)-1, # -1 since ncks starts counting from zero
@@ -508,7 +510,7 @@ for (fi in seq_along(files)) {
                         ") taking NA positions into account ...")
                 has3D <- NULL
                 for (li in seq_along(nonNAinds)) {
-                    if (is.null(has3D) ||            # 1st level
+                    if (is.null(has3D) ||             # 1st level
                         (!is.null(has3D) && has3D)) { # all other levels
                         nonNAind <- nonNAinds[li]
                         message("needed level ", li, "/", length(nonNAinds), ": ind = ", sellevel_needed_df$ind[nonNAind],
@@ -516,32 +518,33 @@ for (fi in seq_along(files)) {
                                 "--> open ", ofiles_lev_woutNA[nonNAind], " ...")
                         nc <- ncdf4::nc_open(ofiles_lev_woutNA[nonNAind])
                         if (li == 1) { # create once new file that saves levelwise data on all depths of all nod3d-variables
-                            ncvars <- vector("list", l=nc$nvars)
+                            ncvars3D <- vector("list", l=nc$nvars)
                             for (vi in seq_len(nc$nvars)) {
                                 nod_ind <- which(sapply(nc$var[[vi]]$dim, "[[", "name") == n3dimname)
                                 if (length(nod_ind) == 1) { # current variable has nod3d dimi
+                                                            # --> todo: this excludes potential variable time_bnds tbounds
                                     ncdims <- c(list(n2_dim), list(depth_dim), nc$var[[vi]]$dim[-nod_ind]) # n2, depth, all other dims
-                                    ncvars[[vi]] <- ncdf4::ncvar_def(name=names(nc$var)[vi], units=nc$var[[vi]]$units, dim=ncdims, missval=NA)
+                                    ncvars3D[[vi]] <- ncdf4::ncvar_def(name=names(nc$var)[vi], units=nc$var[[vi]]$units, dim=ncdims, missval=NA)
                                 }
                             } # for vi
-                            inds <- which(sapply(ncvars, is.null))
-                            if (length(inds) > 0) ncvars <- ncvars[-inds] # remove all non-nod3d vars
-                            if (length(ncvars) == 0) {
+                            inds <- which(sapply(ncvars3D, is.null))
+                            if (length(inds) > 0) ncvars3D <- ncvars3D[-inds] # remove all non-nod3d vars
+                            if (length(ncvars3D) == 0) {
                                 message("not a single variable has nod3d dimname = \"", n3dimname, "\". skip to next input file")
                                 has3D <- F
                             } else {
                                 has3D <- T
                                 message("current level is first level --> create ofile = ", ofile, " ...")
-                                ncout <- ncdf4::nc_create(ofile, ncvars, force_v4=T)
+                                ncout <- ncdf4::nc_create(ofile, ncvars3D, force_v4=T)
                                 ncdf4::ncatt_put(ncout, "depth", "positive", "down")
                                 ncdf4::ncatt_put(ncout, "depth", "axis", "Z")
                             }
                         } # if li == 1
                         if (has3D) { # necessary for first level
                             okinds <- which(!is.na(aux3d[sellevel_needed_df$ind[nonNAind],])) # e.g. 1:119130
-                            for (vi in seq_along(ncvars)) {
-                                message("var ", vi, "/", length(ncvars), ": ", ncvars[[vi]]$name, " ", appendLF=F)
-                                arr_woutNA <- ncdf4::ncvar_get(nc, ncvars[[vi]]$name, collapse_degen=F) # load data of current level wout NA; keep dims of length 1
+                            for (vi in seq_along(ncvars3D)) {
+                                message("var ", vi, "/", length(ncvars3D), ": ", ncvars3D[[vi]]$name, " ", appendLF=F)
+                                arr_woutNA <- ncdf4::ncvar_get(nc, ncvars3D[[vi]]$name, collapse_degen=F) # load data of current level wout NA; keep dims of length 1
                                 var_dims <- dim(arr_woutNA) # e.g. (119130,12); n2=126859
                                 nod_ind <- which(var_dims == length(okinds)) # in this loop all variables have nod3d dim
                                 if (length(nod_ind) == 0) stop("this should not happen")
@@ -551,13 +554,13 @@ for (fi in seq_along(files)) {
                                 lhsinds[nod_ind] <- "okinds"
                                 lhsinds <- paste(lhsinds, collapse="")
                                 cmd <- paste0("arr_wNA[", lhsinds, "] <- arr_woutNA")
-                                eval(parse(text=cmd)) # e.g. "arr_wNA[okinds,] <- arr_woutNA" or "arr_wNA[okinds,,,] <- arr_woutNA" depending on input dims
+                                base::eval(parse(text=cmd)) # e.g. "arr_wNA[okinds,] <- arr_woutNA" or "arr_wNA[okinds,,,] <- arr_woutNA" depending on input dims
                                 start <- c(nod2=1,  depth=li, rep(1, t=length(var_dims)-1)) # nod2, depth, all_other_dims_without_input_nod3_dim
                                 count <- c(nod2=n2, depth=1,  rep(-1, t=length(var_dims)-1)) # -1 for complete dim
                                 #stop("asd")
-                                ncdf4::ncvar_put(ncout, ncvars[[vi]], vals=arr_wNA, start=start, count=count)
+                                ncdf4::ncvar_put(ncout, ncvars3D[[vi]], vals=arr_wNA, start=start, count=count)
                                 if (li == 1) {
-                                    varatts <- ncdf4::ncatt_get(nc, ncvars[[vi]]$name) # original atts
+                                    varatts <- ncdf4::ncatt_get(nc, ncvars3D[[vi]]$name) # original atts
                                     for (ai in seq_along(varatts)) {
                                         if (names(varatts)[ai] == "_FillValue" && varatts[[ai]] >= 1e30) {
                                             # todo:
@@ -565,14 +568,14 @@ for (fi in seq_along(files)) {
                                             # Error in ncatt_put_inner(idobj$group_id, idobj$id, attname, attval, prec = prec,  :
                                             #  Error return from C call R_nc4_put_att_double for attribute _FillValue
                                         } else {
-                                            ncdf4::ncatt_put(ncout, ncvars[[vi]], names(varatts)[ai], varatts[[ai]])
+                                            ncdf4::ncatt_put(ncout, ncvars3D[[vi]], names(varatts)[ai], varatts[[ai]])
                                         }
                                     } # for ai
                                     if (!any(names(varatts) == "grid_type")) {
-                                        ncdf4::ncatt_put(ncout, ncvars[[vi]], "grid_type", "unstructured")
+                                        ncdf4::ncatt_put(ncout, ncvars3D[[vi]], "grid_type", "unstructured")
                                     }
                                 } # if li == 1
-                                if (vi == length(ncvars)) message() # last
+                                if (vi == length(ncvars3D)) message() # last
                             } # for vi
                             ncdf4::nc_close(nc)
                         } # if has3D fist level
@@ -608,5 +611,5 @@ for (fi in seq_along(files)) {
     } # if fin exists or not
 } # for fi
 
-message("\nfinished\n")
+message("\nfinished ", me, "\n")
 

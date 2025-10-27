@@ -462,7 +462,7 @@ for (fi in seq_along(files)) {
             if (!is.null(timstat)) {
                 message("\n`timstat` = \"", timstat, "\"")
                 cmd <- paste0(cdo, " -", timstat)
-                if (!is.null(settbounds)) cmd <- paste0(cmd, " -settbounds,", settbounds) # not needed since `timstat` sets tbounds
+                #if (!is.null(settbounds)) cmd <- paste0(cmd, " -settbounds,", settbounds) # not needed since `timstat` sets tbounds
                 if (!is.null(shifttime)) cmd <- paste0(cmd, " -shifttime,", shifttime)
                 tmp_files_timstat[fi] <- paste0(dirname(ofile), "/tmp_", basename(ofile), "_", timstat)
                 cmd <- paste0(cmd, " ", files[fi], " ", tmp_files_timstat[fi])

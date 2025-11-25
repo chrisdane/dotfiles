@@ -47,23 +47,29 @@ for (qi in seq_along(known_quotas)) {
             cmd <- known_quotas[qi]
             if (any(args != "")) cmd <- paste0(cmd, " ", args)
             for (ci in seq_along(cmd)) {
+                message("***************************************************\n",
+                        "run `", cmd[ci], "` ...")
                 res <- system(cmd[ci], ignore.stderr=T, intern=T)
                 inds <- which(grepl("^/", res))
                 if (length(inds) == 0) next # cmd
                 res <- res[inds]
                 res <- strsplit(res, "\\s+")
-                paths <- sapply(res, "[", 1)
-                blocks <- sapply(res, "[", 3)
-                quotas <- sapply(res, "[", 4)
+                paths <- sapply(res, "[", 1) # e.g. "/albedo/home/cdanek"
+                blocks <- sapply(res, "[", 3) # e.g. "6.546G"
+                quotas <- sapply(res, "[", 4) # e.g. "100G"
+                blocks_byte <- size2byte(string=blocks) # e.g. 7.028714e+09
+                quotas_byte <- size2byte(string=quotas) # e.g. 1.073742e+11
+                blocks_rel <- blocks_byte/quotas_byte*100
                 nfiles <- sapply(res, "[", 7)
                 file_quotas <- lapply(res, "[", 8:10)
                 file_quotas <- sapply(file_quotas, function(x) paste(x, collapse=" "))
                 df <- data.frame(path=paths,
                                  block=blocks,
                                  quota=quotas,
+                                 block_rel=paste0(round(blocks_rel, 2), "%"),
                                  nfiles=nfiles,
                                  file_quota=file_quotas)
-                print(df)
+                print(df, width=200, row.names=F)
             } # for ci
         } # which machine
     }

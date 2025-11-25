@@ -48,11 +48,20 @@ if (F) { # fesom1 core
     outdir <- griddir
     rot <- T
     rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
-} else if (T) { # fesom2 oceanpeak mesh_coast_500km_200m_10km
+} else if (F) { # fesom2 oceanpeak mesh_coast_500km_200m_10km
     fesom2 <- T
     gridname <- "mesh_coast_500km_200m_10km"
     griddir <- "/albedo/work/user/ogurses/MESHES_F2/mesh_coast_500km_200m_10km"
     outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_coast_500km_200m_10km"
+    rot <- F
+    rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
+} else if (T) { # core3 cav
+    fesom2 <- T
+    gridname <- "core3_cav"
+    #griddir <- "/albedo/work/user/sharig/mg/MT_v0.1/mesh_CORE3_cav"
+    #outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_core3_cav"
+    griddir <- "/albedo/work/user/sharig/mg/MT_v0.1/mesh_CORE3_cav/mesh_20251110"
+    outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_core3_cav/mesh_20251110"
     rot <- F
     rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
 }

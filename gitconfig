@@ -6,15 +6,15 @@
 
     # log branch:
     #lol = log --decorate --oneline --graph --abbrev-commit
-    lol = log --decorate --oneline --graph --abbrev-commit --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an)%C(reset)%C(yellow)%d%C(reset)'
+    lol = log --decorate --oneline --graph --abbrev-commit --date=format:'%Y-%m-%d %H:%M:%S' --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an: %ad)%C(reset)%C(yellow)%d%C(reset)'
     # log of current branch only: git log $branch..HEAD
     lolb = "!f() { \
         branch=$(git merge-base HEAD main); \
-        git log --decorate --oneline --graph --abbrev-commit --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an)%C(reset)%C(yellow)%d%C(reset)' \"$branch\"..HEAD; \
+        git log --decorate --oneline --graph --abbrev-commit --date=format:'%Y-%m-%d %H:%M:%S' --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an: %ad)%C(reset)%C(yellow)%d%C(reset)' \"$branch\"..HEAD; \
     }; f"
     # log of --all: Pretend as if all the refs in refs/, along with HEAD, are listed on the command line as <commit>.
     #lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
-    lola = log --all --decorate --oneline --graph --abbrev-commit --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an)%C(reset)%C(yellow)%d%C(reset)'
+    lola = log --all --decorate --oneline --graph --abbrev-commit --date=format:'%Y-%m-%d %H:%M:%S' --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an: %ad)%C(reset)%C(yellow)%d%C(reset)'
     
     # diff
     diffn = diff --name-only
@@ -25,9 +25,9 @@
         echo \"(potentially run: 'git fetch [origin \"$branch\"]')\" && \
         echo && \
         echo \"== remote commits behind origin/$branch ==\" && \
-        echo \"run 'git log --oneline --graph --decorate --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an)%C(reset)%C(yellow)%d%C(reset)' HEAD..origin/\"$branch\"'\" && \
+        echo \"run 'git log --oneline --graph --decorate --date=format:'%Y-%m-%d %H:%M:%S' --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an: %ad)%C(reset)%C(yellow)%d%C(reset)' HEAD..origin/\"$branch\"'\" && \
         echo && \
-        git log --oneline --graph --decorate --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an)%C(reset)%C(yellow)%d%C(reset)' HEAD..origin/\"$branch\" && \
+        git log --oneline --graph --decorate --date=format:'%Y-%m-%d %H:%M:%S' --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an: %ad)%C(reset)%C(yellow)%d%C(reset)' HEAD..origin/\"$branch\" && \
         echo && \
         echo \"== diff summary ==\" && \
         echo \"run 'git diff --stat HEAD..origin/\"$branch\"'\" && \

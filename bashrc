@@ -214,6 +214,9 @@ else
     myfindpis(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
     myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
     myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
+    grep2(){ # todo: grep args
+        /usr/bin/strings "$2" | /usr/bin/grep --color=always "$1"
+    }
     psme(){
         ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
     }
@@ -733,6 +736,7 @@ else
         echo "crop white space: select -> edit -> resize page to selection"
     }
     slurmhelp(){
+        echo "ncpu = \sum_model_i ( nmpi * nomp ) --> nnodes = ncpu / (X ncpu per node)"
         echo "scontrol show jobid -dd jobid"
         echo "scancel {1000..1050}"
         echo "scontrol show partition <name>"

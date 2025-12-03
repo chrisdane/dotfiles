@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 # dependencies: myfunctions.r:size2byte()
+
 if (!interactive()) source("~/scripts/r/functions/myfunctions.r")
 
 known_quotas <- c("levante"="/sw/bin/lfsquota.sh",
@@ -16,20 +17,79 @@ for (qi in seq_along(known_quotas)) {
     args <- ""
     if (file.exists(known_quotas[qi])) {
         if (known_quotas[qi] == "/sw/bin/lfsquota.sh") { # levante
-            args <- c("-p ab1095", "-p ba1103")
-            cmd <- known_quotas[qi]
-            if (any(args != "")) cmd <- paste0(cmd, " ", args)
-            for (ci in seq_along(cmd)) {
+            # /sw/bin/lfsquota.sh -u <username> | -p projectname"
+            # case -u:
+            #   basescr=20000000
+            #   uid=$(id -u)
+            #   puid=$(id -u $2 2>/dev/null)
+            #   let scrid=${basescr}+${puid}
+            #   quota -A -s -u $2
+            #   lfs quota -h -p ${scrid} /scratch
+            # case -p:
+            #   basework=30000000
+            #   gid=$(getent group $2 | cut -f3 -d":")
+            #   member=$(id -G | grep -c ${gid})
+            #   let workid=${basework}+${gid}
+            #   lfs quota -h -p ${workid} /work
+            mylfsquota <- function(arg="-u a270073") {
+                val <- substr(arg, 4, nchar(arg)) # a270073 or ba1103
+                if (substr(arg, 1, 2) == "-u") {
+                    basescr <- 20000000L
+                    uid <- as.integer(system("id -u", intern=T)) # 23263
+                    puid <- as.integer(system(paste0("id -u ", val, " 2>/dev/null"), intern=T)) # 23263
+                    scrid <- basescr + puid # 20023263
+                    cmd <- paste0("quota -A -s -u ", val) # quota -A -s -u a270073
+                    message("run `", cmd, "` ...")
+                    res <- system(cmd, intern=T)
+                    print(res)
+                    # [1] "Disk quotas for user a270073 (uid 23263): "                                     
+                    # [2] "     Filesystem   space   quota   limit   grace   files   quota   limit   grace"
+                    # [3] "10.128.13.67:/home"                                                             
+                    # [4] "                 13564M  30720M  30720M            126k       0       0        "
+                    cmd <- paste0("lfs quota -h -p ", scrid, " /scratch") # lfs quota -h -p 20023263 /scratch
+                    message("run `", cmd, "` ...")
+                    res <- system(cmd, intern=T)
+                    print(res)
+                    # [1] "Disk quotas for prj 20023263 (pid 20023263):"                                      
+                    # [2] "      Filesystem    used   bquota  blimit  bgrace   files   iquota  ilimit  igrace"
+                    # [3] "        /scratch     20k      15T     15T       -       5        0       0       -"
+                } else if (substr(arg, 1, 2) == "-p") {
+                    basework <- 30000000L
+                    gid <- as.integer(system(paste0("getent group ", val, " | cut -f3 -d\":\""), intern=T)) # 1588
+                    member <- as.integer(system(paste0("id -G | grep -c ", gid), intern=T)) # 1 if in project
+                    workid <- basework + gid # 30001588
+                    cmd <- paste0("lfs quota -h -p ", workid, " /work") # lfs quota -h -p 30001588 /work
+                    message("run `", cmd, "` ...")
+                    res <- system(cmd, intern=T)
+                    print(res)
+                    # [1] "Disk quotas for prj 30001588 (pid 30001588):"                                      
+                    # [2] "      Filesystem    used   bquota  blimit  bgrace   files   iquota  ilimit  igrace"
+                    # [3] "           /work  191.3T     255T    255T       - 8120554        0       0       -"
+                } else {
+                    stop("no")
+                }
+            } # mylfsquota
+            args <- c("-u a270073" "-p ab1095", "-p ba1103")
+            cmds <- known_quotas[qi]
+            if (any(args != "")) cmds <- paste0(cmds, " ", args)
+            for (ci in seq_along(cmds)) {
                 message("***************************************************\n",
-                        "run `", cmd[ci], "` ...")
-                #res <- system(cmd[ci], intern=T)
-                res <- base::pipe(cmd[ci])
-                df <- utils::read.fwf(res, widths=c(15, rep(8, t=7)), header=F, skip=2, n=2, stringsAsFactors=F)
-                colnames(df) <- trimws(df[1,])
-                df <- df[2,]; df[1,] <- trimws(df)
-                used <- df$used                                                       # 139.9T 
-                used_val <- as.numeric(gsub('[[:alpha:]]', "", used))                 # 139.9
-                used_unit <- Reduce(setdiff, strsplit(c(used, used_val), split = "")) # T
+                        "run cmd ", ci, "/", length(cmds), ": `", cmds[ci], "` ...")
+                if (F) {
+                    res <- system(cmds[ci], intern=T)
+                    # [1] "WORK Quota - ab1095"                                                                
+                    # [2] "Disk quotas for prj 30001560 (pid 30001560):"                                       
+                    # [3] "      Filesystem    used   bquota  blimit  bgrace   files   iquota  ilimit  igrace" 
+                    # [4] "           /work  272.7T     277T    277T       - 10230845        0       0       -"
+                } else if (T) {
+                    res <- base::pipe(cmds[ci])
+                    df <- utils::read.fwf(res, widths=c(16, 8, 9, 8, 8, 8, 9, 8, 8), header=F, skip=2, n=2, stringsAsFactors=F)
+                    colnames(df) <- trimws(df[1,])
+                    df <- df[2,]; df[1,] <- trimws(df)
+                }
+                used <- df$used                                                           # 139.9T 
+                used_val <- as.numeric(gsub('[[:alpha:]]', "", used))                     # 139.9
+                used_unit <- base::Reduce(setdiff, strsplit(c(used, used_val), split="")) # T
                 used_byte <- size2byte(val=used_val, unit=used_unit)
                 limit <- df$limit
                 limit_val <- as.numeric(gsub('[[:alpha:]]', "", limit))

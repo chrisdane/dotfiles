@@ -1,6 +1,6 @@
 # r
 
-# call spheRlab::sl.grid.writeCDO() from https://github.com/FESOM/spheRlab.git
+# call spheRlab::sl.grid.writeCDO() from sl.grid.writeCDO.R from https://github.com/FESOM/spheRlab.git
 
 rm(list=ls()); graphics.off()
 

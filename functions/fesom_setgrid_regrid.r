@@ -123,7 +123,7 @@ for (fi in seq_along(files)) {
     fin <- files[fi]
     fout <- paste0(outdir, "/", tools::file_path_sans_ext(basename(fin)), "_setgrid")
 
-    cmd <- paste0("cdo")
+    cmd <- "cdo --pedantic"
     if (!is.null(regrid)) {
         cmd <- paste0(cmd, " -P ", system("nproc", intern=T), " ", regrid)
         fout <- paste0(fout, "_", gsub("[[:punct:]]", "_", regrid))

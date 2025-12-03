@@ -17,6 +17,7 @@
     lola = log --all --decorate --oneline --graph --abbrev-commit --date=format:'%Y-%m-%d %H:%M:%S' --format=format:'%C(blue)%h%C(reset) %s %C(cyan)(%ar%  %an: %ad)%C(reset)%C(yellow)%d%C(reset)'
     
     # diff
+    ndiff = rev-list --count
     diffn = diff --name-only
     # diff wrt remote, e.g. after fetch but before merge:
     diffr = "!f() { \

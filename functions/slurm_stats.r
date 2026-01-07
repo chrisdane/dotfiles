@@ -10,7 +10,8 @@ rm(list=ls()); graphics.off()
 # from slurm logfiles (string "* StepID | JobName      NodeHours" in logfile is used for node hours detection")
 
 # assumption: mean energy transfer (or power) of node = 350 W
-energy_transfer_node <- 350 # W; from hendryk per mail
+energy_transfer_node <- 350 # W; levante; from hendryk per mail
+#energy_transfer_node <- 470 # W; albedo; https://spaces.awi.de/spaces/HELP/pages/426536812/Cost+and+Power+Consumption
 
 # for comparison
 usage <- list()
@@ -54,7 +55,8 @@ if (interactive()) {
     #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl3995_1719483239*.log"
     #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldH*.log"
     #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020*.log"
-    args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020_1719480730_job_62_of_86_62_62_script_10867554.log"
+    #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020_1719480730_job_62_of_86_62_62_script_10867554.log"
+    args <- "/albedo/home/ogurses/CLEAN/from_Sina/fesom2.7/2.7_test_Asp/slurm-out_*"
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -167,7 +169,7 @@ if (is.null(exclude)) { # default: keep all logs
 nchars <- nchar(logs)
 nchars_unique <- unique(nchars)
 message("\nprovided ", length(logs), " logfile filename patterns have ", length(nchars_unique), " different numbers of characters. where is the jobid?")
-jobids <- vector("list", l=length(nchars_unique))
+jobids <- vector("list", length=length(nchars_unique))
 names(jobids) <- paste0("nchar_", nchars_unique)
 for (nci in seq_along(nchars_unique)) {
     message("logfile pattern ", nci, "/", length(nchars_unique), ": ", nchars_unique[nci], " characters")
@@ -176,7 +178,7 @@ for (nci in seq_along(nchars_unique)) {
     if (nchars_unique[nci] < 100) collapse <- "  "
     if (nchars_unique[nci] < 10) collapse <- " "
     message(paste(strsplit(logs[inds[1]], "")[[1]], collapse=collapse), "\n",
-            paste(sprintf(paste0("%0", nchar(collapse), "i"), seq_len(nchars_unique[nci])), collapse=rep(" ", t=nchar(collapse)-1)), "\n",
+            paste(sprintf(paste0("%0", nchar(collapse), "i"), seq_len(nchars_unique[nci])), collapse=rep(" ", times=nchar(collapse)-1)), "\n",
             "Enter start and end positions between 1 and ", nchars_unique[nci], 
             " separated by space to get jobid from filename:")
     #fromto <- base::scan("stdin", character(), n=2)
@@ -356,7 +358,7 @@ elapsed_hour <- as.integer(substr(elapsed, nchar(elapsed)-7, nchar(elapsed)-6))
 elapsed_min <- as.integer(substr(elapsed, nchar(elapsed)-4, nchar(elapsed)-3))
 elapsed_sec <- as.integer(substr(elapsed, nchar(elapsed)-1, nchar(elapsed)))
 inds <- which(nchar(elapsed) > 8) # D-HH:MM:SS
-elapsed_day <- rep(0L, t=length(elapsed)) # default: jobs elapsed less than a day
+elapsed_day <- rep(0L, times=length(elapsed)) # default: jobs elapsed less than a day
 if (length(inds) > 0) {
     elapsed_day[inds] <- as.integer(substr(elapsed[inds], 1, regexpr("-", elapsed[inds])-1))
 }
@@ -371,7 +373,7 @@ queue_sec <- as.numeric(difftime(start, submit, units="sec"))
 queue_min <- as.numeric(difftime(start, submit, units="min"))
 queue_hour <- as.numeric(difftime(start, submit, units="hour"))
 # get queue time with auto format for every run
-queue <- rep(NA, t=length(logs))
+queue <- rep(NA, times=length(logs))
 for (logi in seq_along(queue)) {
     tmp <- difftime(start[logi], submit[logi], units="auto")
     queue[logi] <- paste0(round(tmp, 2), " ", attributes(tmp)$units)
@@ -381,31 +383,34 @@ for (logi in seq_along(queue)) {
 energy_kWh <- energy_transfer_node * node_hours / 1e3 # W * h / 1e3 = kWh
 
 # clean node lists
-nodes <- df$NodeList # e.g. "l40003", "l[x-y]", "l[x,y-z]"
+nodes <- df$NodeList # e.g. "l40003" "l[x-y]" "l[x,y-z]" "prod-[201-209]" "prod-[015-016,027-033]" "prod-[214-215,223,229-230,234-236,239]"
 inds <- which(nodes == "")
 if (length(inds) > 0) nodes[inds] <- NA
-nodes <- gsub("^l", "", nodes)
+message("\nused nodes:")
+print(nodes)
+nodes <- gsub("^l", "", nodes) # levante
+nodes <- gsub("^prod-", "", nodes) # albedo
 nodes <- gsub("\\[", "", nodes)
 nodes <- gsub("\\]", "", nodes)
 nodes <- strsplit(nodes, ",") # e.g. 2 entries: "40003", "40004"
-for (ni in seq_along(nodes)) { # for all jobs
-    if (!is.na(nodes[[ni]])) {
-        tmp <- vector("list", l=length(nodes[[ni]]))
-        for (nj in seq_along(tmp)) { # for every node of job
-            tmp2 <- as.integer(strsplit(nodes[[ni]][[nj]], "-")[[1]]) # e.g. 30156-30157
+for (jobi in seq_along(nodes)) { # for all jobs
+    tmp <- vector("list", length=length(nodes[[jobi]])) # e.g. 1: 40003 or 3: 214-215,223,229-230
+    for (nj in seq_along(tmp)) { # for every node/node group of job
+        if (!is.na(nodes[[jobi]][nj])) {
+            tmp2 <- as.integer(strsplit(nodes[[jobi]][[nj]], "-")[[1]]) # e.g. 30156-30157
             if (length(tmp2) == 1) {
                 tmp[[nj]] <- tmp2
             } else if (length(tmp2) == 2) {
-                tmp[[nj]] <- seq(tmp2[1], tmp2[2], b=1L)
+                tmp[[nj]] <- seq(tmp2[1], tmp2[2], by=1L)
             } else {
                 stop("should not happen")
             }
-        } # for nj
-        nodes[[ni]] <- unlist(tmp) # sort not necessary; sacct returnes nodelist already sorted
-    } # if not NA
-} # for ni
+        } # if not NA
+    } # for nj
+    nodes[[jobi]] <- unlist(tmp) # sort not necessary; sacct returnes nodelist already sorted
+} # for jobi
 nodes_unique <- sort(na.omit(unique(unlist(nodes)))) 
-nodes_cumulative_hode_hours <- nodes_cumulative_njobs <- nodes_cumulative_jobids <- rep(0, t=length(nodes_unique))
+nodes_cumulative_hode_hours <- nodes_cumulative_njobs <- nodes_cumulative_jobids <- rep(0, times=length(nodes_unique))
 for (ni in seq_along(nodes_unique)) {
     inds <- which(sapply(nodes, function(x) any(x == nodes_unique[ni])))
     if (length(inds) > 0) {
@@ -439,7 +444,7 @@ message("--> mean (median) throughput per day without queue time = 24 hours/day 
         " (", round(elapsed_per_run_hour_median, 2), ") hours/run = ", 
         round(24/elapsed_per_run_hour_mean, 2), " (", round(24/elapsed_per_run_hour_median, 2), ") ~ ", 
         floor(24/elapsed_per_run_hour_mean), " (", floor(24/elapsed_per_run_hour_median), ") runs/day")
-facs <- c(10, 15, 20, 25, 30, 50, 86, 100, 150, 165, 200, 250, seq(300, 1000, b=100))
+facs <- c(10, 15, 20, 25, 30, 50, 86, 100, 150, 165, 200, 250, seq(300, 1000, by=100))
 message(paste(paste0("--> ", facs, " runs need ", 
                      round(facs*elapsed_per_run_hour_mean, 2), " (", round(facs*elapsed_per_run_hour_median, 2), ") hours = ",
                      round(facs*elapsed_per_run_hour_mean/24, 2), " (", round(facs*elapsed_per_run_hour_median/24, 2), ") days = ",
@@ -504,7 +509,7 @@ message("for comparison:")
 for (i in seq_along(usage)) {
     message(usage[[i]]$what, ": ", appendLF=F)
     for (j in seq_along(usage[[i]]$units)) {
-        if (j > 1) message(rep(" ", t=nchar(usage[[i]]$what)), appendLF=F)
+        if (j > 1) message(rep(" ", times=nchar(usage[[i]]$what)), appendLF=F)
         message(usage[[i]]$units[[j]], " ", names(usage[[i]]$units)[j])
     }
 }
@@ -523,35 +528,35 @@ xat <- pretty(start, n=40)
 dt_at <- diff(xat)[1]
 inds <- which(xat < min(start))
 if (length(inds) > 0) xat <- xat[-inds]
-if (min(xat) > min(start)) xat <- c(seq.POSIXt(xat[1], b=-dt_at, l=2)[2], xat)
+if (min(xat) > min(start)) xat <- c(seq.POSIXt(xat[1], by=-dt_at, length.out=2)[2], xat)
 inds <- which(xat > max(start))
 if (length(inds) > 0) xat <- xat[-inds]
-if (max(xat) < max(start)) xat <- c(xat, seq.POSIXt(xat[length(xat)], b=dt_at, l=2)[2])
+if (max(xat) < max(start)) xat <- c(xat, seq.POSIXt(xat[length(xat)], by=dt_at, length.out=2)[2])
 xlab <- format(xat, "%Y-%m-%d %H")
 
-# make irregular y-axis to bring very short (seconds) and very large (hours) queue times onto one y-axis
+# make irregular y-axis to bring short (e.g. seconds) and long (e.g. hours) queue times onto one y-axis
 y <- queue_hour
-yat <- ylab <- c(min(y, na.rm=T), quantile(y, probs=seq(0.1, 0.9, b=0.1), na.rm=T), max(y, na.rm=T))
+yat <- ylab <- c(min(y, na.rm=T), quantile(y, probs=seq(0.1, 0.9, by=0.1), na.rm=T), max(y, na.rm=T))
 names(yat)[c(1, length(yat))] <- c("min", "max")
 inds <- which(yat >= 1) # >= 1 hour
 if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds], digits=3), "h")
 inds <- which(yat < 1) # < 1 hour --> minutes
 if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds]*60, digits=1), "min")
-inds <- which(yat < 1/60) # < 1min --> seconds
-if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds]*60*60, digits=0), "sec")
+inds <- which(yat < 1/60) # < 1 min --> seconds
+if (length(inds) > 0) ylab[inds] <- paste0(format(yat[inds]*60*60, digits=1), "sec")
 ylab <- paste0(names(yat), ": ", ylab)
 
 # linearly interpolate actual queue times to irregular y-axis levels
 n_interp <- 20
-yat_plot <- seq(1, b=n_interp, l=length(yat)) # hours
-y_plot <- rep(NA, t=length(y)) # hours
+yat_plot <- seq(1, by=n_interp, length.out=length(yat)) # hours
+y_plot <- rep(NA, times=length(y)) # hours
 for (yi in seq_len(length(yat)-1)) {
     if (yi == length(yat)-1) { # last
         inds <- which(y >= yat[yi] & y <= yat[yi+1])
-        ytmp <- seq(yat[yi], yat[yi+1], l=n_interp+1) # linearly interpolate hours between two wanted y-levels
+        ytmp <- seq(yat[yi], yat[yi+1], length.out=n_interp+1) # linearly interpolate hours between two wanted y-levels
     } else { # all others
         inds <- which(y >= yat[yi] & y < yat[yi+1])
-        ytmp <- seq(yat[yi], yat[yi+1], l=n_interp) # linearly interpolate hours between two wanted y-levels
+        ytmp <- seq(yat[yi], yat[yi+1], length.out=n_interp) # linearly interpolate hours between two wanted y-levels
     }
     if (length(inds) != 0) {
         for (yj in seq_along(inds)) {
@@ -563,13 +568,21 @@ for (yi in seq_len(length(yat)-1)) {
 # plot
 png(plotname, width=4/3*1500, height=1500, res=200, family="Droid Sans")
 par(mar=c(7.1, 7.1, 2.1, 4.1))
-plot(start, y_plot, t="n",
+plot(start, y_plot, type="n",
      xaxt="n", yaxt="n",
      xlab="", ylab="",
      main=jobname)
 mtext(paste0("queue time quantiles (nlogs=", length(jobids), ")"), side=2, line=6)
 axis(1, at=xat, labels=F)
-text(x=xat, y=yat_plot[1] - 0.66*yat_plot[2], labels=xlab, adj=1, srt=90, xpd=T)
+text(x=xat, 
+     #y=yat_plot[1] - 0.66*yat_plot[2], 
+     #y=min(y_plot),
+     #y=par("usr")[3],
+     y=par("usr")[3] - 0.5*(min(y_plot) - par("usr")[3]),
+     labels=xlab, 
+     #adj=0, 
+     adj=1,
+     srt=90, xpd=T)
 axis(2, at=yat_plot, labels=ylab, las=2)
 abline(h=yat_plot, col="gray", lwd=0.5)
 points(start, y_plot)
@@ -580,37 +593,37 @@ ycumsum <- cumsum(y)
 ycumsum_unit <- "hours"
 if (max(ycumsum) < 1) { # total queue < 1 hour --> minutes
     ycumsum <- ycumsum*60
-    ycumsum_unit <- "mins"
+    ycumsum_unit <- "min"
 }
 if (max(ycumsum) < 1) { # total queue < 1 min --> seconds
     ycumsum <- ycumsum*60
-    ycumsum_unit <- "secs"
+    ycumsum_unit <- "sec"
 }
 par(new=T)
-plot(start, ycumsum, t="l", col=2, axes=F, xlab="", ylab="")
+plot(start, ycumsum, type="l", col=2, axes=F, xlab="", ylab="")
 axis(4, pretty(ycumsum, n=20), las=2, col=2, col.ticks=2, col.axis=2)
 mtext(paste0("cumulative queue time [", ycumsum_unit, "]"), side=4, line=3, col=2)
 
 # add mean queue
 queue_mean <- mean(y, na.rm=T)
-queue_mean_unit <- "hours"
+queue_mean_unit <- "hour"
 if (queue_mean < 1) { # mean queue < 1 h --> min
     queue_mean <- queue_mean*60
-    queue_mean_unit <- "mins"
+    queue_mean_unit <- "min"
 }
 if (queue_mean < 1) { # mean queue < 1 min --> seconds
     queue_mean <- queue_mean*60
-    queue_mean_unit <- "secs"
+    queue_mean_unit <- "sec"
 }
 queue_median <- median(y, na.rm=T)
-queue_median_unit <- "hours"
+queue_median_unit <- "hour"
 if (queue_median < 1) { # median queue < 1 h --> min
     queue_median <- queue_median*60
-    queue_median_unit <- "mins"
+    queue_median_unit <- "min"
 }
 if (queue_median < 1) { # median queue < 1 min --> seconds
     queue_median <- queue_median*60
-    queue_median_unit <- "secs"
+    queue_median_unit <- "sec"
 }
 legend("topleft", 
        paste0(c("mean", "median"), " queue: ", format(c(queue_mean, queue_median), digits=3), " ", c(queue_mean_unit, queue_median_unit)),
@@ -618,13 +631,13 @@ legend("topleft",
 invisible(dev.off())
 
 if (F) { # scatter
-    plot(nodes_unique, nodes_cumulative_hode_hours_mean, t="n",
+    plot(nodes_unique, nodes_cumulative_hode_hours_mean, type="n",
          xlab="node", ylab="mean node hours", xaxt="n", yaxt="n")
     axis(1, pretty(nodes_unique, n=10))
     axis(2, pretty(nodes_cumulative_hode_hours_mean, n=20), las=2)
     mtext("blue/red ~ start/end of experiment", 3)
     cols <- rev(RColorBrewer::brewer.pal(10, "Spectral"))
-    colvec <- seq(min(nodes_cumulative_jobids_mean), max(nodes_cumulative_jobids_mean), l=10)
+    colvec <- seq(min(nodes_cumulative_jobids_mean), max(nodes_cumulative_jobids_mean), length.out=10)
     colvec <- findInterval(nodes_cumulative_jobids_mean, colvec, all.inside=T)
     points(nodes_unique, nodes_cumulative_hode_hours_mean, pch=16, col=cols[colvec])
 }

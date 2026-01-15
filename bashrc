@@ -156,6 +156,10 @@ else
     # check if program exists also if its masked by alias
     # if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
     # https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
+    #mytop() {
+    top() {
+        /usr/bin/top -d 1
+    }
     mygroups(){
         groups | tr " " "\n" | sort
     }
@@ -276,6 +280,7 @@ else
         echo "  sudo grep -r '^psk=' /etc/NetworkManager/system-connections/"
         echo cat
         echo "  'gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile=out.pdf in1.pdf in2.pdf'"
+        echo "  'pdfjam file1.pdf 1-3 file2.pdf 2-5 --outfile out.pdf'"
         echo "  'pdftk in.pdf cat 1-12 14-end output out.pdf' # todo: use pdfjam instead that comes with latex package"
         echo "  'pdftk in1.pdf in2.pdf output out.pdf'# todo: pdftk somewhat outdated and needs a lot of java stuff"
         echo "  'magick Screenshot* slides.pdf'"
@@ -301,6 +306,8 @@ else
         echo "get laptop size"
         echo "  unplug external monitor; 'xrandr --query' returns sth like 'eDP or LVDS ... 309mm x 174mm'"
         echo "  echo \"scale=2; sqrt((309/25.4)^2 + (174/25.4)^2)\" | bc -l # = 13.96151 ~ 14 inch"
+        echo "anonymize pdf:"
+        echo "   exiftool -all= -o review2.pdf review.pdf"
     }
     archhelp(){
         echo "debug"
@@ -327,6 +334,7 @@ else
         echo "mate-session-properties"
     }
     bashhelp(){
+        echo "stop script: return 0"
         echo "find . -name "*.bak" -type f -delete"
         echo "./script > script.log 2>&1 &"
         echo "nohup sh -c './script arg1 arg2' > script.log 2>&1 &"
@@ -339,6 +347,7 @@ else
         echo "arr=(\$(ls -F historical2_185012* | grep -v codes))"
         echo "printf '%s\\n' '\${arr[@]}'"
         echo "for f in \${arr[@]}; do echo \$f; cdo ntime \$f; done"
+        echo "for cnt in {4..20}; do echo $cnt; esm_runscripts co2_read_from_lpjg_and_recom.yaml -e \"i${cnt}\" > \"i${cnt}.log\" 2>&1 & done"
         echo "remove carets: sed -i -e 's/\\r$//'"
         echo "sed -i \"s|ResultPath.*|ResultPath='${out_dir}/'|g\" \"${out_dir}/namelist.config\""
         echo "lsof +D /path \# list open files"
@@ -475,8 +484,8 @@ else
         echo "git push origin -f # update remote"
         echo "# clone"
         echo "git clone --branch=test url"
-        echo "# diff
-        echo "git diff [from] to"
+        echo "# diff"
+        echo "git diff [from] to # = all commits reachable from [to] that are not reachable from [from]"
         echo "git diff --name-only"
         echo "git diff 6843db8 -- '*.functions'"
         echo "git -c core.fileMode=false diff # temporarily exclude file mode changes"
@@ -590,7 +599,7 @@ else
     svnhelp(){
         echo "colored diff: svn diff | vi -R - # or vim"
     }
-    cdohgrep(){
+    cdohelpgrep(){
         cdo -h 2>&1 | grep --color=auto -i $1
     }
     cdohelp(){
@@ -656,6 +665,7 @@ else
         echo "ncrename -d record,time out.nc # rename dim"
         echo "ncpdq -a time,depth in out # switch dims"
         echo "ncwa -a lev in.nc out.nc # remove dim"
+        echo "ncap2 -s 'defdim(\"lon_bnds\",2); lon_bnds=make_bounds(lon,\$lon_bnds,\"lon_bnds\"); defdim(\"lat_bnds\",2); lat_bnds=make_bounds(lat,\$lat_bnds,\"lat_bnds\")' remap bnds"
     }
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
@@ -758,6 +768,15 @@ else
         echo "  Choose Category 'Misc Effects', 'Toggle Pause'; and choose Start 'with previous' (that’s a bit counterintutive, because it’s the first animation)"
         echo "  Add another animation, Category 'Misc Effects', 'Toggle Pause'; this time choose Start 'On click'"
     }
+    gdochelp(){
+        echo "single page landscape:"
+        echo "  insert _section_ break"
+        echo "  format -> page -> this section"
+    }
+    firefoxhelp(){
+        echo "search for tab: ctrl+l, %, <search>"
+        echo "go to last tab: tab+9"
+    }
     octavehelp(){
         echo "yay -S octave-netcdf"
         echo "pkg install -forge -verbose netcdf"
@@ -828,24 +847,28 @@ else
     }
 
     # aliase (check with 'type alias')
+    # -F --classify: append indicator (one of */=>@|) to entries WHEN
+    # -b --escape: print C-style escapes for nongraphic characters
     alias ls='ls --color=auto -F' # default from /etc/skel/.bashrc: ls='ls --color=auto'
-    alias ll='ls --color=auto -lFh'
-    alias la='ls --color=auto -alFh'
-    alias llxl='ll -I "xios*" -I "lucia*"'
-    # ls only files excluding dotfiles
-    alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls'
-    # ls only files including dotfiles
-    alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls'
+    if ls --group-directories-first &> /dev/null; then
+        alias ls="ls --color=auto --group-directories-first -Fh"
+        alias ll='ls --color=auto --group-directories-first -lFh'
+    else
+        alias ls="ls --color=auto -Fh"
+        alias ll='ls --color=auto -lFh'
+    fi
+    alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls' # ls only files excluding dotfiles
+    alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls' # ls only files including dotfiles
     #alias grep="grep --color=auto"
     alias grep="grep --color=always" # keeps color when piped to less 
-    alias R='R --quiet'
-    alias R0='unalias R 2>/dev/null; R --no-init-file'
     alias vi='vim'
     if check_existance vimx; then
         alias vi='vimx' # for +clipboard
         alias vim='vimx'
     fi
     alias less="less -i -R" # ignore case; escape colors
+    alias R='R --quiet'
+    alias R0='unalias R 2>/dev/null; R --no-init-file'
 
     # own variables
     export VISUAL=vim
@@ -1348,19 +1371,21 @@ else
             echo "--> set PIP_PREFIX = ${pip_prefix}"
             export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
         fi # true/false
-        #if true; then
-        if false; then
-            pythonuserbase="${mywork}/sw/pip"
-            pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
-            pyversion=${pyversion%.*} # e.g. 3.10
-            pythonpath="${pythonuserbase}/lib/python${pyversion}/site-packages"
-            echo "--> set PYTHONUSERBASE = $pythonuserbase"
-            echo "            PYTHONPATH = $pythonpath"
-            echo "-->         add to PATH: ${pythonuserbase}/bin"
-            export PYTHONUSERBASE="${pythonuserbase/#\~/$HOME}"
-            export PYTHONPATH="${pythonpath/#\~/$HOME}"
-            export PATH=${PYTHONUSERBASE}/bin:$PATH
-            echo "--> install with 'pip install [-v] --user [-e .]'"
+        if true; then
+        #if false; then
+            pythonuserbase="${mywork}/sw/py/pkgs"
+            mkdir -p ${pythonuserbase/#\~/$HOME} # mkdir does not understand ~
+            echo "--> run 'export PYTHONUSERBASE=$pythonuserbase' # using absolute path"
+            echo "--> run 'PATH=$pythonuserbase/bin:\$PATH' # using absolute path"
+            export PYTHONUSERBASE="${pythonuserbase/#\~/$HOME}" # pythonuserbase does not understand ~
+            export PATH="${pythonuserbase/#\~/$HOME}/bin:$PATH" # does path understand ~?
+            # pythonpath not needed?:
+            #pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
+            #pyversion=${pyversion%.*} # e.g. 3.10
+            #pythonpath="${pythonuserbase}/lib/python${pyversion}/site-packages"
+            #echo "--> run 'export PYTHONPATH=$pythonupath' # using absolute path"
+            #export PYTHONPATH="${pythonpath/#\~/$HOME}"
+            echo "--> install package with 'pip install [-v] --user [-e .]'"
         fi
         conda_deactivate(){
             echo "---------------- conda_deactivate() ----------------"

@@ -38,6 +38,12 @@
         echo \"run e.g. 'git diff HEAD..origin/\"$branch\" -- <file>'\" && \
         echo ; \
     }; f"
+
+    # blame for file creator; todo: does not work why
+    blamef = "!sh -c ' \
+        #echo $1 && \
+        git log --diff-filter=A --format=\"%ad %an <%ae> %s\" --date=short -- \"$1\" \
+        ' -"
 [color]
     branch = auto
     diff = auto

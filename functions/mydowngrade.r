@@ -92,13 +92,15 @@ if (length(res) == 0) {
 
         # prepare downgrade cmd
         # e.g. `downgrade 'foo=1.0.0-1' 'bar>=1.2.1-1' 'baz=~^1.2'`
-        cmd <- paste0("sudo downgrade ", paste(paste0("'", pkgs, "=", versions_prev, "'"), collapse=" "))
+        cmd <- paste0("sudo downgrade --latest --prefer-cache --ignore never " # non-interactive mode
+                      , paste(paste0("'", pkgs, "=", versions_prev, "'"), collapse=" "))
         message("\n-->\n", cmd)
         if (is.null(fout)) {
             message("\n`fout` not provided --> will not save cmd to file")
         } else {
             message("\n`fout` = ", fout, " --> save cmd to that file ...")
             write(cmd, file=fout) 
+            message("e.g. run `cmd=$(cat ", fout, "); eval $cmd` ...")
         }
 
     } # if (any(patterns == " upgraded ")) {

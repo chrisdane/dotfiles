@@ -1,5 +1,32 @@
 # tex template
 
+- reference across documents with:
+```
+@paper.tex
+
+% reference across files
+\usepackage{xr}
+\externaldocument[supp:]{supp}
+
+Fig. \ref{supp:fig:supp:a} is in another document, the supplement!
+```
+and
+```
+@supp.tex
+
+% reference across files
+\usepackage{xr}
+\externaldocument{paper}
+
+Fig. \ref{fig:supp:a} is here, in the supp document.
+
+\begin{figure}[H]
+\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
+\caption{Example A-figure.}
+\label{fig:supp:a}
+\end{figure}
+```
+
 - compile with:
 ```
 pdflatex supp

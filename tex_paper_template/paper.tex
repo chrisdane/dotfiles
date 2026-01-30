@@ -43,6 +43,10 @@
 \linenumbers
 \usepackage[round]{natbib}
 
+% reference across files
+\usepackage{xr}
+\externaldocument[supp:]{supp}
+
 \begin{document}
 
 \thispagestyle{empty} % first page without page number
@@ -69,7 +73,7 @@ This is the abstract.
 
 \section{Introduction}
 
-Fig. \ref{fig:a} is the A-figure by \citet{einstein}.
+Fig. \ref{fig:a} is latex' built-in example A-figure by \citet{einstein}. This is common knowledge \cite{einstein}.
 
 \begin{figure}[H]
 \centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
@@ -77,25 +81,9 @@ Fig. \ref{fig:a} is the A-figure by \citet{einstein}.
 \label{fig:a}
 \end{figure}
 
-Fig. \ref{fig:b} is the B-figure \citep{einstein}.
+Here is a reference to appendix Fig. \ref{fig:appendix1} in the same document, whereas Fig. \ref{supp:fig:supp:a} is in another document, the supplement!
 
-\begin{figure}[H]
-\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-b}
-\caption{Example B-figure.}
-\label{fig:b}
-\end{figure}
-
-Here is a reference to appendix Fig. \ref{fig:appendix1}.
-
-\subsection{This is a section title with an equation in it; namely \texorpdfstring{$\delta^{18}$}{d}O}
-
-Fig. \ref{fig:a2} is the A-figure again.
-
-\begin{figure}[H]
-\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
-\caption{Example A-figure again.}
-\label{fig:a2}
-\end{figure}
+\subsection{This is a section title containing symbols: \texorpdfstring{$\delta^{18}$}{d}O}
 
 Tab. \ref{tab:table} is a table example.
 
@@ -134,7 +122,7 @@ Armadillo & frozen & 8.99\\
 \bottomrule
 \end{longtable}
 
-\bibliography{paper} % also creates the section header ``References''
+\bibliography{paper_refs} % also creates the section header ``References''
 \bibliographystyle{ametsoc2014}
 \addcontentsline{toc}{section}{References}
 

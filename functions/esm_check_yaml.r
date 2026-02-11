@@ -54,7 +54,9 @@ if (!is.null(user_sections)) {
 } # if !is.null(user_sections)
 
 # order of appearance
-include <- c("account",
+include <- c("original_command",
+             "runscript",
+             "account",
              "compute_time",
              "esm_function_dir",
              "esm_namelist_dir",

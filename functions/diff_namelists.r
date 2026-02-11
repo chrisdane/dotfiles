@@ -24,6 +24,8 @@ if (!interactive()) {
               "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr/esm-piControl/run_19500101-19500131/work/namelist.echam")
     args <- c("/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_oezguer_nml/namelist.echam",
               "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl/run_19500101-19501231/work/namelist.echam")
+    args <- c("/work/ba1103/a270073/out/fesom-2.7-recom3.1/2p3z2d_c1/run_19580101-19581231/work/namelist.io",
+              "/work/ba1103/a270073/esm/fesom-2.7-recom3.1//config//namelist.io")
 }
 
 # check
@@ -31,7 +33,7 @@ if (!file.exists(args[1])) stop("file ", args[1], " does not exist")
 if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
 args <- normalizePath(args)
 
-options(width=3000) # increase length per print line from default 80
+options(width=300) # increase length per print line from default 80
 
 if (T) {
     #install.packages("devtools")
@@ -41,10 +43,18 @@ if (T) {
     source("~/scripts/r/packages/src/nml/R/utils.R")
     source("~/scripts/r/packages/src/nml/R/read.R")
 }
-cat("read nml1 ", args[1], " ...\n", sep="")
-nml1 <- suppressWarnings(read_nml(args[1])) # suppress non-".nml" file ending warning
-cat("read nml2 ", args[2], " ...\n", sep="")
-nml2 <- suppressWarnings(read_nml(args[2])) # nml::read_nml() takes care of multi-line entries and white spaces etc.
+
+for (i in seq_along(args)) {
+    cat("\nrun `nml::read_nml(\"", args[i], "\")` ...\n",
+        "(possible printed lines contain non-ASCII characers from `nml:::ascii_only --> nml:::what_ascii --> tools::showNonASCIIfile --> tools:::showNonASCII --> base::iconv`)\n", sep="")
+    # - nml::read_nml takes care of multi-line entries and white spaces etc.
+    # - suppress non-".nml" file ending warning
+    # - printed lines contain non-ASCII characers from `tools::showNonASCIIfile`
+    # - do not use `nml::` in actual call to use own files if needed (T/F-case above)
+    nml <- suppressWarnings(read_nml(args[i]))
+    if (i == 1) nml1 <- nml
+    if (i == 2) nml2 <- nml
+} # for i
 
 # lower all capitals for better comparison
 names(nml1) <- tolower(names(nml1))
@@ -63,6 +73,7 @@ chapters_unique <- unique(c(chapters1, chapters2))
 
 # check all nml1 variables if they also occur in nml2 (case 1/3) or if they are unique to nml1 (case 2/3)
 nml1_and_nml2 <- nml1_but_not_nml2 <- nml2_but_not_nml1 <- list()
+cat("\ncheck ", length(chapters_unique), " unique nml chapters ...\n", sep="") 
 for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
 #for (i in 5) { 
 

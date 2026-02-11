@@ -156,10 +156,6 @@ else
     # check if program exists also if its masked by alias
     # if [ -x "$(command -v vi)" ]; then will not work if vi is aliased
     # https://unix.stackexchange.com/questions/85249/why-not-use-which-what-to-use-then/85250#85250
-    #mytop() {
-    top() {
-        /usr/bin/top -d 1
-    }
     mygroups(){
         groups | tr " " "\n" | sort
     }
@@ -224,10 +220,13 @@ else
     psme(){
         ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
     }
+    top() {
+        /usr/bin/top -d 1
+    }
     topme(){
-        top -u $(whoami)
-        #top -u $(whoami) -b -n 1 -c -w 512
-        #top -u $(whoami) -b -n 1 -c -o %CPU -w 512 | awk 'NR>6 { printf "%6s %-4s %-4s %-4s %s\n",$1,$2,$9,$10,$12}'
+        /usr/bin/top -d 1 -u $(whoami)
+        #/usr/bin/top -d 1 -u $(whoami) -b -n 1 -c -w 512
+        #/usr/bin/top -d 1 -u $(whoami) -b -n 1 -c -o %CPU -w 512 | awk 'NR>6 { printf "%6s %-4s %-4s %-4s %s\n",$1,$2,$9,$10,$12}'
     }
     pgrepme(){
         pgrep -u $(whoami) -ai $1
@@ -1189,7 +1188,7 @@ else
         export PYTHONSTARTUP=~/.pyprofile
     fi
     
-    # set links to dotfiles-repo functions to bin
+    # set softlinks to dotfiles-repo functions to bin
     fs=(
         mydowngrade.r
         ntfs_fix_filenames.r
@@ -1208,7 +1207,7 @@ else
         echam_get_mvstreams_from_atmout.r echam_set_time_weight.r
         jsbach_pft_wrt_box.r jsbach_tile2pft.r jsbach_plot_pft.r 
         fesom_res_from_griddes.r fesom_setgrid_regrid.r 
-        fesom1_get_meshinfo.r fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r
+        fesom1_get_meshinfo.r fesom1_echo_awi_fesom_yaml.r fesom1_shifttime_-1dt.r fesom1_nod3d_levelwise.r fesom1_nod3d_levelwise_fast.r
         fesom1_plot_2d.r fesom1_landice2nodes_plot.r
         recom_calc_pCO2a.r
         oasis_get_B_grid.sh oasis_split_grids.sh oasis_plot_mask.r
@@ -1270,6 +1269,24 @@ else
         sshareme() {
             echo "sshare -U -u \$(whoami) --format=\"Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare\""
             sshare -U -u $(whoami) --format="Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare"
+        }
+        sshareme2() {
+            output=$(sshare -U -u $(whoami) -o Account,FairShare,RawUsage,RawShares -P 2>/dev/null)
+            # Skip the header line and filter out the root account
+            # Sort by FairShare in descending order (higher fairshare = better priority)
+            echo "Projects sorted by priority (best priority first):"
+            echo "=================================================="
+            printf "%-20s %-15s %-15s %-15s\n" "PROJECT" "FAIRSHARE" "RAW_USAGE" "RAW_SHARES"
+            echo "--------------------------------------------------"
+            echo "$output" | tail -n +2 | grep -v "^root|" | sort -t'|' -k2 -rn | while IFS='|' read -r account fairshare rawusage rawshares; do
+                if [ -z "$account" ]; then # Skip empty lines
+                    continue
+                fi
+                printf "%-20s %-15s %-15s %-15s\n" "$account" "$fairshare" "$rawusage" "$rawshares"
+            done
+            echo ""
+            echo "Note: Higher FairShare = Better priority = Less queue wait time"
+            echo "      Lower RawUsage = Less recent usage = Better priority"
         }
     fi
     if check_existance scontrol; then

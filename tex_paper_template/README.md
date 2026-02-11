@@ -1,18 +1,43 @@
-# notes to this minimalistic latex paper template
+# tex template
 
-This minimalistic Latex paper template supports
-- proper page and figure/table numbering
-- distinguishes between figure/table numbering in the main versus appendix parts
-- properly lists all sections as TOC entries in pdf viewer also if a section has no number
-- supports longtables
-- tries to be as minimal as possible
-
-# todo
-
+- reference across documents with:
 ```
-\externaldocument[supp-]{<file>[.tex]}
+@paper.tex
+
+% reference across files
+\usepackage{xr}
+\externaldocument[supp:]{supp}
+
+Fig. \ref{supp:fig:supp:a} is in another document, the supplement!
 ```
---> can be used as `Fig. \ref{supp-<myname>}`
+and
+```
+@supp.tex
+
+% reference across files
+\usepackage{xr}
+\externaldocument{paper}
+
+Fig. \ref{fig:supp:a} is here, in the supp document.
+
+\begin{figure}[H]
+\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
+\caption{Example A-figure.}
+\label{fig:supp:a}
+\end{figure}
+```
+
+- compile with:
+```
+pdflatex supp
+bibtex supp
+pdflatex supp
+pdflatex supp
+pdflatex paper
+bibtex paper
+pdflatex paper
+pdflatex paper
+```
 
 # Change font
 

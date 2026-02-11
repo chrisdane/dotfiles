@@ -1,0 +1,88 @@
+\documentclass[11pt]{article} % default font size: 10pt 
+\usepackage[margin=1in]{geometry} % 0.7in
+\usepackage[parfill]{parskip}
+%\usepackage[utf8]{inputenc} % utf8 or latin1; default: utf8 
+\usepackage[english]{babel} % USenglish, english or german
+\usepackage{float} % for [H] position
+\usepackage{lmodern}
+\usepackage{setspace} % \singlespacing, \onehalfspacing, \doublespacing
+\doublespacing
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{makecell} % \thead
+% overwrite \thead for nicer vertical orientation in multi-line table headers:
+\newcommand*{\mythead}[1]{\multicolumn{1}{c}{\bfseries\begin{tabular}{@{}c@{}}#1\end{tabular}}}
+\newcommand*{\mytheadl}[1]{\multicolumn{1}{l}{\bfseries\begin{tabular}{@{}c@{}}#1\end{tabular}}}
+\usepackage{caption} % for \captionsetup and appendix Fig/Tab cross-referencing
+\usepackage[pdfpagelabels,plainpages=false,hypertexnames=false]{hyperref}
+\hypersetup{
+    colorlinks = true,
+    allcolors = blue % all links same color
+    %linkcolor = red
+    %anchorcolor = black
+    %citecolor = green
+    %filecolor = cyan
+    %menucolor = red
+    %runcolor = cyan % same as file color
+    %urlcolor = magenta
+    %allbordercolors = blue % all border same color
+    %citebordercolor = rgb 0 1 0
+    %filebordercolor = rgb 0 .5 .5
+    %linkbordercolor = rgb 1 0 0
+    %menubordercolor = rgb 1 0 0
+    %urlbordercolor = rgb 0 1 1
+    %runbordercolor = rgb 0 .7 .7
+    %breaklinks = true
+    %hidelinks = true % good for latexdiff result
+}
+\usepackage{lineno}
+\linenumbers
+\usepackage[round]{natbib}
+
+% reference across files
+\usepackage{xr}
+\externaldocument{paper}
+
+\begin{document}
+
+\thispagestyle{empty} % first page without page number
+\begin{center}
+
+\vspace*{2cm}
+\LARGE{\textbf{Supplement}}\\
+\vspace{2cm}
+
+\normalsize
+My Name
+
+\end{center}
+\vfill
+\textit{Corresponding author}: My Name, \href{mailto:me.de}{myname@myprovider.org}
+
+\newpage
+\pagenumbering{arabic} % page numbers for rest of the document
+
+\renewcommand\thefigure{S\arabic{figure}}
+\setcounter{figure}{0}
+\renewcommand{\thetable}{S\arabic{table}}
+\setcounter{table}{0}
+
+\section{Supplement}
+
+Fig. \ref{fig:supp:a} is the supplement A-figure by \citet{einstein} it is referenced in the main document paper.tex!
+
+\begin{figure}[H]
+\centering\noindent\includegraphics[width=0.25\textwidth]{example-image-a}
+\caption{Example A-figure.}
+\label{fig:supp:a}
+\end{figure}
+
+\bibliography{supp_refs} % also creates the section header ``References''
+\bibliographystyle{ametsoc2014}
+\addcontentsline{toc}{section}{References}
+
+\end{document}

@@ -365,7 +365,7 @@ for (tilei in seq_len(ntiles)) {
         # todo: issue mask(t=1) * mask(t=1) * data(t=n) = result(t=1)
         # but this works: mask(t=1) * data(t=n) = result(t=n)
         if (T && outunit == "area") {
-            cmd <- paste0(cdo, " mul ", fmask, " ", farea, " tmp_", random_number, " && mv tmp_", random_number, " ", fmask)
+            cmd <- paste0(cdo, " mul ", fmask, " ", farea, " ", outpath, "/tmp_", random_number, " && mv ", outpath, "/tmp_", random_number, " ", fmask)
             message("todo run `", cmd, "` ...")
             check <- system(cmd)
             if (check != 0) stop("error")
@@ -439,7 +439,7 @@ ncdf4::nc_close(outnc)
 # todo: issue mask(t=1) * mask(t=1) * data(t=n) = result(t=1)
 # but this works: mask(t=1) * data(t=n) = result(t=n)
 if (T && outunit == "area") {
-    cmd <- paste0(cdo, " mul ", fmask, " ", farea, " tmp_", random_number, " && mv tmp_", random_number, " ", fmask)
+    cmd <- paste0(cdo, " mul ", fmask, " ", farea, " ", outpath, "/tmp_", random_number, " && mv ", outpath, "/tmp_", random_number, " ", fmask)
     message("todo run `", cmd, "` ...")
     check <- system(cmd)
     if (check != 0) stop("error")
@@ -513,14 +513,16 @@ message("run `", cmd, "` ...")
 system(cmd)
 
 # rename generic dim- amd varname sfc from `cdo merge` to pft
+message("\nrename generic dim- amd varname sfc from `cdo merge` to pft ...")
 cmd <- paste0(ncrename, " -O -d sfc,pft -v sfc,pft ", fout)
-message("\nrun `", cmd, "` ...")
+message("run `", cmd, "` ...")
 system(cmd)
 
 # set proper pft dim values
+message("\nset proper pft dim values ...")
 # --> todo: overwriting -O does not work; results in `ncap2: ERROR ncap_cst_mk(): Unrecognized dimension "pft" in LHS subscripts`
 cmd <- paste0(ncap2, " -s 'pft[$pft]={", paste(seq_len(npfts), collapse=","), "}' ", fout, " ", fout, "_tmp && mv ", fout, "_tmp ", fout)
-message("\nrun `", cmd, "` ...")
+message("run `", cmd, "` ...")
 system(cmd)
 
 # remove tmp files

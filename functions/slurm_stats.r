@@ -56,7 +56,9 @@ if (interactive()) {
     #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldH*.log"
     #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020*.log"
     #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020_1719480730_job_62_of_86_62_62_script_10867554.log"
-    args <- "/albedo/home/ogurses/CLEAN/from_Sina/fesom2.7/2.7_test_Asp/slurm-out_*"
+    #args <- "/albedo/home/ogurses/CLEAN/from_Sina/fesom2.7/2.7_test_Asp/slurm-out_*"
+    #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-ssp370/log/esm-ssp370_awicm_compute_20150101-20151231_4226354.log"
+    args <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-ssp370/log/*_compute_*-*_*.log"
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -197,8 +199,8 @@ for (nci in seq_along(nchars_unique)) {
     message(jobid, " ok")
     jobids[[nci]] <- data.frame(log=logs[inds], jobid=substr(logs[inds], fromto[1], fromto[2]))
 } # for nci
-logs <- unlist(sapply(jobids, "[[", "log"))#[,1]     # why did I 
-jobids <- unlist(sapply(jobids, "[[", "jobid"))#[,1] # put the [,1]?
+logs <- unlist(sapply(jobids, "[[", "log"))[,1] # (nx1) matrix to (n) vector
+jobids <- unlist(sapply(jobids, "[[", "jobid"))[,1]
 
 if (length(logs) == 0) { # exclude removed all log files
     message("--> exclude removed all logfiles")
@@ -301,9 +303,8 @@ if (nrow(df) != length(jobids)) {
                 tmp <- suppressWarnings(system(cmd, intern=T)) # e.g. "* Nodelist         : l40003 (1)                    " 
                 tmp <- strsplit(tmp, "\\* Nodelist         : ")[[1]][2] # e.g. "l40003 (1)                     "
                 tmp <- trimws(tmp) # e.g. "l40003 (1)"
-                tmp <- substr(tmp, regexpr("\\(", tmp)+1, nchar(tmp)-1) # e.g. "(1)" --> "1"
-                row$nnodes <- as.integer(tmp)
-                row$NodeList <- substr(tmp, 1, regexpr("\\(", tmp)-2) # e.g. "l40003"
+                row$nnodes <- as.integer(substr(tmp, regexpr("\\(", tmp)+1, nchar(tmp)-1)) # e.g. "(1)" --> "1"
+                row$NodeList <- substr(tmp, 1, regexpr("\\(", tmp)-2) # e.g. "l40003" or "l[20151,20153,20156,20158-20159,20162-20164,20168,"
                 df <- rbind(df, row)
             } # if dkrz job summary available or not
             utils::setTxtProgressBar(pb, value=jobi) # update progress bar
@@ -386,8 +387,10 @@ energy_kWh <- energy_transfer_node * node_hours / 1e3 # W * h / 1e3 = kWh
 nodes <- df$NodeList # e.g. "l40003" "l[x-y]" "l[x,y-z]" "prod-[201-209]" "prod-[015-016,027-033]" "prod-[214-215,223,229-230,234-236,239]"
 inds <- which(nodes == "")
 if (length(inds) > 0) nodes[inds] <- NA
-message("\nused nodes:")
-print(nodes)
+if (T) {
+    message("\nused nodes:")
+    print(nodes)
+}
 nodes <- gsub("^l", "", nodes) # levante
 nodes <- gsub("^prod-", "", nodes) # albedo
 nodes <- gsub("\\[", "", nodes)
@@ -409,6 +412,7 @@ for (jobi in seq_along(nodes)) { # for all jobs
     } # for nj
     nodes[[jobi]] <- unlist(tmp) # sort not necessary; sacct returnes nodelist already sorted
 } # for jobi
+names(nodes) <- jobids
 nodes_unique <- sort(na.omit(unique(unlist(nodes)))) 
 nodes_cumulative_hode_hours <- nodes_cumulative_njobs <- nodes_cumulative_jobids <- rep(0, times=length(nodes_unique))
 for (ni in seq_along(nodes_unique)) {

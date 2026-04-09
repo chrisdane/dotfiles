@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# quasi-conservative (i.e. fldsums of input and remapped fields as equal as possible) remapping from source to target grid
+# quasi-conservative (i.e. fldsums of input and remapped fields as equal as possible) remapping from source to cdo_target grid
 # https://github.com/FESOM/spheRlab/issues/10
 
 rm(list=ls()); graphics.off()
@@ -14,8 +14,8 @@ rm(list=ls()); graphics.off()
 #method <- "default" # "default" or "R14"
 method <- "R14"
 cdo_remap <- "remapycon"
-target_grid <- "global_1"
-target_grid_file <- NULL
+cdo_target_grid <- "global_1"
+cdo_target_grid_file <- NULL
 if (interactive()) { # rest
     if (F) {
         fin <- "/work/ba1103/a270073/bc/input4MIPs/wfo_input4MIPs_surfaceFluxes_FAFMIP_NCAS-2-1-0_gn.nc"
@@ -24,30 +24,30 @@ if (interactive()) { # rest
     } else if (F) {
         fin <- "/work/ba1103/a270073/bc/FESOM1/oae/core/lime_mask_cao_2040-high.nc_timestep_1030-1032"
         varname <- "lime_mask"
-        target_grid <- "fesom1_core"
-        target_grid_file <- "/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc"
+        cdo_target_grid <- "fesom1_core"
+        cdo_target_grid_file <- "/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc"
         outdir <- "/work/ba1103/a270073/bc/FESOM1/fwf/core"
     } else if (F) {
         fin <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl2/outdata/post/fesom/setgrid/wnet_fesom_18500101_setgrid_shifttime_1day.nc"
         varname <- "wnet"
-        target_grid <- "global_1"
+        cdo_target_grid <- "global_1"
         outdir <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl2/outdata/post/fesom/remap_quasi_conservative"
     } else if (F) {
         fin <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/fwf_01/outdata/post/fesom/setgrid/fwf_fesom_18700101_setgrid_shifttime_1day.nc"
         varname <- "fwf"
-        target_grid <- "global_1"
+        cdo_target_grid <- "global_1"
         outdir <- "/work/ab1095/a270073/out/awicm-1.0-recom/sofia/fwf_01/outdata/post/fesom/remap_quasi_conservative"
     } else if (T) {
         fin <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/post/fesom/levelwise/so_fesom_20140101_levelwise_0-5900m.nc"
         varname <- "so"
-        target_grid <- "global_1"
+        cdo_target_grid <- "global_1"
         outdir <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical3/outdata/post/cmor/sofia/CMIP6/CMIP/AWI/AWI-ESM-1-REcoM/historical/r1i2p1f1/Omon/so/gr1adj/v20240107"
     }
 
 } else if (!interactive()) {
     me <- "remap_quasi_conservative.r"
     help <- paste0("Usage:\n",
-                   " $ ", me, " --fin=/file/to/remap --varname=varname --outdir=/path/to/out [--method=R14] [--cdo_remap=remapycon] [--target_grid=global_1] [--target_grid_file]\n")
+                   " $ ", me, " --fin=/file/to/remap --varname=varname --outdir=/path/to/out [--method=R14] [--cdo_remap=remapycon] [--cdo_target_grid=global_1] [--cdo_target_grid_file]\n")
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
@@ -78,11 +78,11 @@ if (interactive()) { # rest
     if (any(grepl("--cdo_remap", args))) {
         cdo_remap <- sub("--cdo_remap=", "", args[grep("--cdo_remap=", args)])
     }
-    if (any(grepl("--target_grid", args))) {
-        target_grid <- sub("--target_grid=", "", args[grep("--target_grid=", args)])
+    if (any(grepl("--cdo_target_grid", args))) {
+        cdo_target_grid <- sub("--cdo_target_grid=", "", args[grep("--cdo_target_grid=", args)])
     }
-    if (any(grepl("--target_grid_file", args))) {
-        target_grid_file <- sub("--target_grid_file=", "", args[grep("--target_grid_file=", args)])
+    if (any(grepl("--cdo_target_grid_file", args))) {
+        cdo_target_grid_file <- sub("--cdo_target_grid_file=", "", args[grep("--cdo_target_grid_file=", args)])
     }
 
 } # if interactive
@@ -100,10 +100,10 @@ if (!file.exists(fin)) stop("`fin` ", fin, " does not exist")
 if (file.access(fin, mode=4) == -1) stop("`fin` ", fin, " is not readable")
 dir.create(outdir, recursive=T, showWarnings=F)
 if (!dir.exists(outdir)) stop("could not create outdir ", outdir)
-if (!is.null(target_grid_file)) {
-    if (file.info(target_grid_file)$isdir) stop("`target_grid_file` ", target_grid_file, " is directory and not a file")
-    if (!file.exists(target_grid_file)) stop("`target_grid_file` ", target_grid_file, " does not exist")
-    if (file.access(target_grid_file, mode=4) == -1) stop("`target_grid_file` ", target_grid_file, " is not readable")
+if (!is.null(cdo_target_grid_file)) {
+    if (file.info(cdo_target_grid_file)$isdir) stop("`cdo_target_grid_file` ", cdo_target_grid_file, " is directory and not a file")
+    if (!file.exists(cdo_target_grid_file)) stop("`cdo_target_grid_file` ", cdo_target_grid_file, " does not exist")
+    if (file.access(cdo_target_grid_file, mode=4) == -1) stop("`cdo_target_grid_file` ", cdo_target_grid_file, " is not readable")
 }
 #message("load ncdf4 package ...")
 library(ncdf4)
@@ -115,15 +115,15 @@ clean <- T
 message("\nget quasi-conservative remapped field with method = ", method, " ...")
 if (method == "default") {
 
-    # remap input field to target grid
+    # remap input field to cdo_target grid
     message("\nremap input field with cdo_remap = ", cdo_remap, " ...")
-    fout <- paste0(outdir, "/", basename(fin), "_", cdo_remap, "_", target_grid)
+    fout <- paste0(outdir, "/", basename(fin), "_", cdo_remap, "_", cdo_target_grid)
     if (!file.exists(fout)) {
         cmd <- paste0(cdo, " --pedantic -s -P ", nproc, " -", cdo_remap, ",")
-        if (!is.null(target_grid_file)) {
-            cmd <- paste0(cmd, target_grid_file)
+        if (!is.null(cdo_target_grid_file)) {
+            cmd <- paste0(cmd, cdo_target_grid_file)
         } else {
-            cmd <- paste0(cmd, target_grid)
+            cmd <- paste0(cmd, cdo_target_grid)
         }
         cmd <- paste0(cmd," -select,name=", varname, " ", fin, " ", fout)
         message("run `", cmd, "` ...")
@@ -297,15 +297,15 @@ if (method == "default") {
 
 } else if (method == "R14") { # original R14 method
     
-    # remap input field to target grid
+    # remap input field to cdo_target grid
     message("\nremap input field with cdo_remap = ", cdo_remap, " ...")
-    fout <- paste0(outdir, "/", basename(fin), "_", cdo_remap, "_", target_grid)
+    fout <- paste0(outdir, "/", basename(fin), "_", cdo_remap, "_", cdo_target_grid)
     if (!file.exists(fout)) {
         cmd <- paste0(cdo, " --pedantic -s -P ", nproc, " -", cdo_remap, ",")
-        if (!is.null(target_grid_file)) {
-            cmd <- paste0(cmd, target_grid_file)
+        if (!is.null(cdo_target_grid_file)) {
+            cmd <- paste0(cmd, cdo_target_grid_file)
         } else {
-            cmd <- paste0(cmd, target_grid)
+            cmd <- paste0(cmd, cdo_target_grid)
         }
         cmd <- paste0(cmd, " -select,name=", varname, " ", fin, " ", fout)
         message("run `", cmd, "` ...")
@@ -328,7 +328,7 @@ if (method == "default") {
 
         # get fldint of remapped field for residual 
         message("\nget fldint of remapped field (R14:2.48) ...")
-        fldint_fout <- paste0(outdir, "/", basename(fin), "_", cdo_remap, "_", target_grid, "_fldint")
+        fldint_fout <- paste0(outdir, "/", basename(fin), "_", cdo_remap, "_", cdo_target_grid, "_fldint")
         if (!file.exists(fldint_fout)) {
             cmd <- paste0(cdo, " --pedantic -s fldint ", fout, " ", fldint_fout)
             message("run `", cmd, "` ...")
@@ -338,9 +338,9 @@ if (method == "default") {
 
         # get residual of fldints
         message("\nget residual of fldints (R14:2.49; switch order to keep target grid) ...")
-        fldint_residual_orig_minus_remap <- paste0(outdir, "/", basename(fin), "_fldint_minus_", target_grid, "_fldint_residual")
+        fldint_residual_orig_minus_remap <- paste0(outdir, "/", basename(fin), "_fldint_minus_", cdo_target_grid, "_fldint_residual")
         if (!file.exists(fldint_residual_orig_minus_remap)) {
-            # (interp minus remap)*-1 and not (orig minus remap) to get lon/lat from target_grid
+            # (interp minus remap)*-1 and not (orig minus remap) to get lon/lat from cdo_target_grid
             cmd <- paste0(cdo, " -s -mulc,-1 -sub ", fldint_fout, " ", fldint_fin, " ", fldint_residual_orig_minus_remap) 
             message("run `", cmd, "` ...")
             check <- system(cmd)
@@ -359,41 +359,41 @@ if (method == "default") {
 
         # calc and apply weights for every time step
         message("\ncalc and apply weights for ", ntime, " time steps (R14:2.51 and 2.50) ...")
-        fouts_adjusted <- fouts_target_grid_weights <- rep(NA, t=ntime)
+        fouts_adjusted <- fouts_cdo_target_grid_weights <- rep(NA, t=ntime)
         for (ti in seq_len(ntime)) {
 
             message("********************** ti ", ti, "/", ntime, " **********************")
             
             # get weights
-            fout_target_grid_weights <- paste0(fout, "_target_weights_ti_", ti, "_of_", ntime, "_pid_", Sys.getpid())
-            fouts_target_grid_weights[ti] <- fout_target_grid_weights
-            if (!file.exists(fout_target_grid_weights)) {
+            fout_cdo_target_grid_weights <- paste0(fout, "_cdo_target_weights_ti_", ti, "_of_", ntime, "_pid_", Sys.getpid())
+            fouts_cdo_target_grid_weights[ti] <- fout_cdo_target_grid_weights
+            if (!file.exists(fout_cdo_target_grid_weights)) {
 
-                # get fldint of absolute flux on target grid
+                # get fldint of absolute flux on cdo_target grid
                 cmd <- paste0(cdo, " --pedantic -s -output -fldint -abs -seltimestep,", ti, " ", fout)
-                message("get fldint of absolute flux on target grid: run `", cmd, "` ...")
-                fldint_abs_target_num <- system(cmd, intern=T)
-                fldint_abs_target_num <- gsub(" ", "", fldint_abs_target_num, fixed=T) # remove all white space
+                message("get fldint of absolute flux on cdo_target grid: run `", cmd, "` ...")
+                fldint_abs_cdo_target_num <- system(cmd, intern=T)
+                fldint_abs_cdo_target_num <- gsub(" ", "", fldint_abs_cdo_target_num, fixed=T) # remove all white space
                 # e.g. (for all depths)
                 # [1] "1.29268e+16" "1.29289e+16" "1.29404e+16" "1.292e+16"   "1.29053e+16"
                 # [6] "1.28909e+16" "1.27472e+16" "1.26813e+16" "1.26539e+16" "1.26295e+16"
-                message("--> fldint[ abs( X_target(t=", ti, ") ) ] = \"", paste(fldint_abs_target_num, collapse=" "), "\"")
+                message("--> fldint[ abs( X_cdo_target_grid(t=", ti, ") ) ] = \"", paste(fldint_abs_cdo_target_num, collapse=" "), "\"")
                 message("convert to numeric ... ", appendLF=F)
-                options(warn=2); fldint_abs_target_num <- as.numeric(fldint_abs_target_num); options(warn=warn)
-                message("ok: ", paste(fldint_abs_target_num, collapse=" "))
+                options(warn=2); fldint_abs_cdo_target_num <- as.numeric(fldint_abs_cdo_target_num); options(warn=warn)
+                message("ok: ", paste(fldint_abs_cdo_target_num, collapse=" "))
 
-                if (any(fldint_abs_target_num != 0)) { # R14:2.51 case 1
-                    if (length(fldint_abs_target_num) != 1) stop("3D case not implemented")
-                    cmd <- paste0(cdo, " --pedantic -s -divc,", fldint_abs_target_num, " -abs -seltimestep,", ti, " ", fout, " ", fout_target_grid_weights)
+                if (any(fldint_abs_cdo_target_num != 0)) { # R14:2.51 case 1
+                    if (length(fldint_abs_cdo_target_num) != 1) stop("3D case not implemented")
+                    cmd <- paste0(cdo, " --pedantic -s -divc,", fldint_abs_cdo_target_num, " -abs -seltimestep,", ti, " ", fout, " ", fout_cdo_target_grid_weights)
                     message("calc weight case 1: run `", cmd, "` ...")
                     check <- system(cmd)
                     if (check != 0) stop("cmd not successful")
 
-                } else if (all(fldint_abs_target_num == 0)) { # R14:2.51 case 2
+                } else if (all(fldint_abs_cdo_target_num == 0)) { # R14:2.51 case 2
                     stop("not implemented")
                 } # if R14:2.51 case 1 or 2
 
-            } # if target_grid_weights already exists or not
+            } # if cdo_target_grid_weights already exists or not
         
             # apply weights 
             fout_adjusted_ti <- paste0(fout, "_adjusted_", method, "_ti_", ti, "_of_", ntime, "_pid_", Sys.getpid())
@@ -411,7 +411,7 @@ if (method == "default") {
                 message("ok: ", fldint_residual_num)
 
                 # get adjusted fout
-                cmd <- paste0(cdo, " --pedantic -s -add -seltimestep,", ti, " ", fout, " [ -mulc,", fldint_residual_num, " ", fout_target_grid_weights, " ] ", fout_adjusted_ti)
+                cmd <- paste0(cdo, " --pedantic -s -add -seltimestep,", ti, " ", fout, " [ -mulc,", fldint_residual_num, " ", fout_cdo_target_grid_weights, " ] ", fout_adjusted_ti)
                 message("apply weights: run `", cmd, "` ...")
                 check <- system(cmd)
                 if (check != 0) stop("cmd not successful")
@@ -433,7 +433,7 @@ if (method == "default") {
         
         if (clean) {
             message("\n`clean` = true --> rm tmp files ...")
-            invisible(file.remove(c(fouts_target_grid_weights,
+            invisible(file.remove(c(fouts_cdo_target_grid_weights,
                                     fouts_adjusted,
                                     fldint_fin,
                                     fldint_fout,

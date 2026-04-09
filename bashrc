@@ -74,12 +74,12 @@ else
     #git config --global color.ui auto
     
     # my bins (doing this recursively is not recommended; security)
-    if [ -d ~/bin ]; then
+    #if [ -d ~/bin ]; then
         export PATH=~/bin:$PATH
-    fi
-    if [ -d ~/.local/bin ]; then
+    #fi
+    #if [ -d ~/.local/bin ]; then
         export PATH=~/.local/bin:$PATH
-    fi
+    #fi
     
     # get battery capacity percentage if available
     get_battery_capacity(){ 
@@ -618,8 +618,8 @@ else
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "nohup sh -c 'for y in {2081..2100}; do ...; done' > test.log 2>&1 &"
-        echo "setgrid,global_1 in out --> lon from 0"
-        echo "setgrid,r360x180 in out --> lon from -180"
+        echo "setgrid,global_1 in out --> lon from -180"
+        echo "setgrid,r360x180 in out --> lon from 0"
         echo "cdo setmissval,nan"
         echo "cdo daymean: 1,2,miss,3 --> (1+2+3)/3      = 6/3    = 2"
         echo "cdo dayavg:  1,2,miss,3 --> (1+2+miss+3)/4 = miss/4 = miss"
@@ -856,6 +856,7 @@ else
         alias ls="ls --color=auto -Fh"
         alias ll='ls --color=auto -lFh'
     fi
+    alias lld='ll -d */ .*/' # list all non-hidden and hidden dirs
     alias lsf='find . -maxdepth 1 -type f -a ! -iname '\''.*'\'' -print0 | xargs -0r ls' # ls only files excluding dotfiles
     alias lsf2='find . -maxdepth 1 -type f -print0 | xargs -0r ls' # ls only files including dotfiles
     #alias grep="grep --color=auto"

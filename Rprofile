@@ -14,6 +14,7 @@
 # options("warnPartialMatchAttr"=T) # logical.  If true, warns if partial matching is used in extracting attributes via ‘attr’.
 # options("warnPartialMatchDollar"=T) # logical.  If true, warns if partial matching is used for extraction by ‘$’.
 # save output to file: sink("file.txt"); <do stuff>; sink()
+#data <- abind::asub(data, idx=seq_len(npfts)[-mapinds], dims=pftind) # arbitrary subsetting arbitrary indexing
 # file.edit()
 # options(prompt="R> ", digits=4, show.signif.stars=FALSE)
 # getSrcDirectory

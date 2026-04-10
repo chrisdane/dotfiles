@@ -607,6 +607,7 @@ else
         echo "cdo --argument_groups"
         echo "cdo -h [operator] # e.g. cdo -h after"
         echo "-b F32: to float; F64: to double"
+        echo "-L: lock all I/O calls; neccessary if external I/O libraries like  netCDF4 (HDF5) were installed without thread-safe support"
         echo "cdo -b f32 copy  infile ofile \# convert short to float with add_offset and scale_factor" 
         echo "cdo [-t echam6] -f nc copy file.grb file.nc"
         echo "cdo -f nc -t ecmwf -setgridtype,regular"
@@ -1228,7 +1229,7 @@ else
         nominal_resolution.r convert_lon_360_to_180.r 
         takahashi_etal_2002.r
         precip_mm_day2month.r precip_mm_month2day.r
-        when.r kelv feet dom beaufort.r inertial.r
+        when.r kelvin.sh fahrenheit.sh feet.sh dom beaufort.r inertial.r
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do

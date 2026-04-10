@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-phi <- c(0.1, 1, 2, 3, 4, 5, 7.5, seq(10, 90, b=5)) # absolute latitute; °
+phi <- c(0.1, 1, 2, 3, 4, 5, 6, 7, 7.5, 8, 9, seq(10, 90, b=5)) # absolute latitute; °
 omega <- 2*pi/86400 # one rotation per day; s-1
 f <- 2*omega*sin(phi*pi/180) # coriolis frequency (or parameter)
 inertial_period_sec <- 2*pi/f # period = 2pi/frequency

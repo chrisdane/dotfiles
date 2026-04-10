@@ -618,6 +618,7 @@ for (vari in seq_len(nit)) {
                                 p_val <- lms$coefficients[2,"Pr(>|t|)"]
                                 if (mode == "var_vs_time") {
                                     dt_day <- as.numeric(difftime(posixct_vari[inds[ninds]], posixct_vari[inds[1]], units="days"))
+                                    # total trend or drift:
                                     slope_day_a <- slope*dt_day*86400
                                     #slope_day_b <- lm$fitted.values[ninds] - lm$fitted.values[1]
                                     # diff(a,b) = slope_day_a - slope_day_b ~ O(1e-13)

@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
 rm(list=ls()); graphics.off()
-#options(warn=2) # stop on warnings    
-options(warn=0) # do not stop on warnings    
+options(warn=2) # stop on warnings    
+#options(warn=0) # do not stop on warnings    
 
 plottype <- "png" # "png" "pdf"
 
@@ -74,18 +74,22 @@ if (interactive()) {
     #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_piControl_and_esm-piControl_jsbach_fldsum_pft_fract_box_global_annual_1950-3945.nc"
     #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_piControl_and_esm-piControl_jsbach_fldsum_pft_fract_box_global_annual_1950-4527.nc"
     #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_fract_box/awi-esm-1-1-lr_kh800_historical2_jsbach_fldsum_pft_fract_box_global_Jan-Dec_1850-2014.nc"
-    args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_area_box/awi-esm-1-1-lr_kh800_historical2_jsbach_fldsum_pft_area_box_global_Jan-Dec_1850-2014.nc"
+    #args <- "/work/ba1103/a270073/post/jsbach/fldsum/pft_area_box/awi-esm-1-1-lr_kh800_historical2_jsbach_fldsum_pft_area_box_global_Jan-Dec_1850-2014.nc"
+    args <- "/work/ab1095/a270073/post/jsbach/fldsum/pft_area_box/awi-esm-1-1-lr_kh800_piControl_and_esm-piControl_jsbach_fldsum_pft_area_box_global_annual_1950-4527.nc"
 
 } else {
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
     args <- commandArgs(trailingOnly=T)
 
+    message("not interactive: `source(\"~/scripts/r/functions/myfunctions.r\")` for my_maxempty() ...")
+    source("~/scripts/r/functions/myfunctions.r")
+
 } # if interactive or not
 
 # checks
 help <- paste0("Usage:\n",
-               " $ ", me, " <fldsum_of_jsbach_select_pft_wrt_box.r>\n")
+               " $ ", me, " <fldsum_of_jsbach_select_pft_area_box.r>\n")
 if (length(args) != 1) {
     message(help)
     quit()
@@ -110,7 +114,7 @@ known_varnames <- c("pft_fract_box", "pft_area_box")
 ind <- na.omit(match(known_varnames, names(nc$var)))
 if (length(ind) != 1) stop("must find exactly one of allowed varnames: ", paste(known_varnames, collapse=", "))
 varname <- names(nc$var)[ind]
-atts <- ncdf4::ncatt_get(nc, varname)
+atts <- suppressWarnings(ncdf4::ncatt_get(nc, varname)) # ncdf4 partial matching issue
 message("--> found variable ", varname, ":")
 cat(capture.output(str(atts)), sep="\n")
 units <- atts$units
@@ -144,7 +148,7 @@ inds <- which(vardimlengths != 1)
 attributes(data)$dimname <- names(vardimlengths)[inds]
 message("data:")
 cat(capture.output(str(data)), sep="\n")
-if (length(dim(data)) != 2) stop("data must have 2 dims") # (pft, time) (or (time, pft))
+if (length(dim(data)) != 2) stop("data must have 2 dims") # (pft, time) or (time, pft)
 pftind <- na.omit(match(attributes(data)$dimname, "pft"))
 if (length(pftind) != 1) stop("this should not happen")
 dimnames(data)[[pftind]] <- pfts
@@ -178,7 +182,7 @@ message("time:")
 time <- as.POSIXct(strsplit(trimws(system(paste0("cdo -s showtimestamp ", fin), intern=T)), "  ")[[1]], tz="UTC")
 cat(capture.output(str(time)), sep="\n")
 xlab <- "year"
-if (F) { # piControl time
+if (T) { # piControl time
     message("\nspecial: set new time ...")
     time <- as.POSIXlt(time)
     if (F) {
@@ -189,6 +193,7 @@ if (F) { # piControl time
         time$year <- time$year - 3000
         xlab <- "piControl/esm-piControl year"
     }
+    time <- as.POSIXct(time)
 }
 
 # exclude certain pfts
@@ -222,7 +227,7 @@ if (length(mapping) > 0) {
         if (anyNA(inds)) stop("some of `mapping[[", mi, "]]$pfts_in` are not defined in `pfts` = \n", paste(pfts, collapse=", "))
         mapinds[[mi]] <- inds 
         message("aggregate (sum) ", length(inds), " PFTs (", paste(pfts[inds], collapse=", "), ") to new PFT ", mapping[[mi]]$pft_out, " ...")
-        tmp <- apply(data[inds,], seq_len(2)[-pftind], sum) # sum over pft dim = keep non-pft dim
+        tmp <- apply(data[inds,], seq_len(2)[-pftind], base::sum) # sum over pft dim = keep non-pft dim
         data2[mi,] <- tmp
         pfts2[mi] <- mapping[[mi]]$pft_out
         cols2[mi] <- mapping[[mi]]$col
@@ -313,7 +318,8 @@ plot(time, rep(NA, times=length(time)),
 if (F) {
     axis.POSIXct(1, at=pretty(time, n=10))
 } else if (T) {
-    axis.POSIXct(1, at=pretty(time, n=10), format="%Y")
+    #axis.POSIXct(1, at=pretty(time, n=10), format="%Y")
+    axis.POSIXct(1, at=pretty(time, n=25), format="%Y")
 }
 axis(2, pretty(ylim, n=10), las=2)
 for (pfti in seq_len(npfts)) {
@@ -321,8 +327,22 @@ for (pfti in seq_len(npfts)) {
     lines(time, tmp, lty=ltys[pfti], col=cols[pfti])
     if (F) points(time, tmp, col=cols[pfti])
 }
-legend("topright", dimnames(data)[[pftind]], lty=ltys, col=cols,
-       bty="n", x.intersp=0.2, cex=1, ncol=1)
+if (T) { # add legend
+    pos <- "topright"
+    if (T) {
+        x <- y <- vector("list", length=npfts)
+        for (pfti in seq_len(npfts)) {
+            x[[pfti]] <- time
+            y[[pfti]] <- abind::asub(data, idx=pfti, dims=pftind) # arbitrary subsetting
+        }
+        #cat(capture.output(str(x)), sep="\n")
+        #cat(capture.output(str(y)), sep="\n")
+        pos <- my_maxempty(x, y, method="adagio::maxempty")
+        message("--> pos$x = ", as.POSIXct(pos$x, origin="1970-1-1", tz="UTC"))
+    }
+    legend(pos, dimnames(data)[[pftind]], lty=ltys, col=cols,
+           bty="n", x.intersp=0.2, cex=1, ncol=1)
+} # add legend
 invisible(dev.off())
 
 message("\nfinished\n")

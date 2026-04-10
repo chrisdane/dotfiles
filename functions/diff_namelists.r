@@ -1,5 +1,12 @@
 #!/usr/bin/env Rscript
 
+# todo: multi-line entries such as
+# nml_tracer_list =
+# 1  , 'MFCT', 'QR4C', 'FCT ', 0., 1.,
+# 2  , 'MFCT', 'QR4C', 'FCT ', 0., 1.,
+# !101, 'UPW1', 'UPW1', 'NON ', 0., 0.
+# /
+
 if (!interactive()) {
     args <- commandArgs(trailingOnly=F)
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -26,7 +33,30 @@ if (!interactive()) {
               "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl/run_19500101-19501231/work/namelist.echam")
     args <- c("/work/ba1103/a270073/out/fesom-2.7-recom3.1/2p3z2d_c1/run_19580101-19581231/work/namelist.io",
               "/work/ba1103/a270073/esm/fesom-2.7-recom3.1//config//namelist.io")
-}
+    if (F) { # 2.6.12 vs 2.7.0
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.6.12/config/namelist.config",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.config")
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.6.12/config/namelist.dyn",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.dyn")
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.6.12/config/namelist.ice",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.ice")
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.6.12/config/namelist.oce",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.oce")
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.6.12/config/namelist.tra",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.tra")
+    } else if (T) { # 2.7.0 vs main
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.config",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2/config/namelist.config")
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.dyn",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2/config/namelist.dyn")
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.ice",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2/config/namelist.ice")
+        #args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.oce",
+        #          "/home/mozi/awi/models/fesom/fesom2/fesom2/config/namelist.oce")
+        args <- c("/home/mozi/awi/models/fesom/fesom2/fesom2-2.7.0/config/namelist.tra",
+                   "/home/mozi/awi/models/fesom/fesom2/fesom2/config/namelist.tra")
+    }
+} # interactive
 
 # check
 if (!file.exists(args[1])) stop("file ", args[1], " does not exist")
@@ -35,7 +65,7 @@ args <- normalizePath(args)
 
 options(width=300) # increase length per print line from default 80
 
-if (T) {
+if (F) {
     #install.packages("devtools")
     #devtools::install_github("jsta/nml")
     library(nml) # https://github.com/jsta/nml
@@ -48,9 +78,10 @@ for (i in seq_along(args)) {
     cat("\nrun `nml::read_nml(\"", args[i], "\")` ...\n",
         "(possible printed lines contain non-ASCII characers from `nml:::ascii_only --> nml:::what_ascii --> tools::showNonASCIIfile --> tools:::showNonASCII --> base::iconv`)\n", sep="")
     # - nml::read_nml takes care of multi-line entries and white spaces etc.
-    # - suppress non-".nml" file ending warning
+    # - nml::read_nml --> nml:::nml_path_norm --> nml:::is_nml_file --> tools::file_ext(x) == "nml" --> raises warning if file ext is not ".nml"
     # - printed lines contain non-ASCII characers from `tools::showNonASCIIfile`
     # - do not use `nml::` in actual call to use own files if needed (T/F-case above)
+    options(warn=2)
     nml <- suppressWarnings(read_nml(args[i]))
     if (i == 1) nml1 <- nml
     if (i == 2) nml2 <- nml

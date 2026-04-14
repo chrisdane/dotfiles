@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-nstep <- 500:5
+nstep <- 1500:2
 inds <- which(86400 %% nstep == 0)
 nstep <- nstep[inds]
 dt_sec <- 86400/nstep

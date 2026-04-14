@@ -144,8 +144,8 @@ else
     # prompt
     PS1='[\u@\h \W]\$ ' # default
     if true; then # my prompt; use `\$` to evaulate on every new line (i.e. when pressing enter)
-        #PS1='\[\033[0;34m\]\h:$(pwd)/>\[\033[0m\] ' 
-        PS1='\[\033[0;34m\]\h:$(get_battery_capacity)$(get_battery_status)$(get_current_temp):$(pwd)/>\[\033[0m\] '
+        #PS1='\[\033[0;34m\]\u@\h:$(pwd)/>\[\033[0m\] '
+        PS1='\[\033[0;34m\]\u@\h:$(get_battery_capacity)$(get_battery_status)$(get_current_temp):$(pwd)/>\[\033[0m\] '
     fi
 
     # enable make autocomplete:
@@ -699,7 +699,10 @@ else
         echo "pip install [-e .] # --editable runs 'python setup.py develop' and not the default 'python setup.py install'"
     }
     condahelp(){
+        echo "add -y --> continue wout asking"
         echo "conda info"
+        echo "conda config --show envs_dirs"
+        echo "conda config --show pkgs_dirs"
         echo "conda config --show-sources"
         echo "conda config --describe"
         echo "conda shell.bash activate"
@@ -751,6 +754,7 @@ else
         echo "scancel {1000..1050}"
         echo "scontrol show partition <name>"
         echo "sacctmgr -s show user name=\$USER format=Account%30"
+        echo "salloc -p <partition -A <project> --qos 12h -t 8:00:00"
     }
     officehelp(){
         echo "enter line before TOC:"

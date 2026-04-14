@@ -69,7 +69,7 @@ for (qi in seq_along(known_quotas)) {
                     stop("no")
                 }
             } # mylfsquota
-            args <- c("-u a270073" "-p ab1095", "-p ba1103")
+            args <- c("-u a270073", "-p ab1095", "-p ba1103")
             cmds <- known_quotas[qi]
             if (any(args != "")) cmds <- paste0(cmds, " ", args)
             for (ci in seq_along(cmds)) {

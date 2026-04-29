@@ -214,12 +214,8 @@ else
     myfindpis(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
     myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
     myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
-<<<<<<< Updated upstream
-    greplib(){ # todo: grep args
-=======
     myfindh() { find -name "*$1*" 2>/dev/null ; } # hidden files
-    grep2(){ # todo: grep args
->>>>>>> Stashed changes
+    greplib(){ # todo: grep args
         /usr/bin/strings "$2" | /usr/bin/grep --color=always "$1"
     }
     greppara(){ # parallel 

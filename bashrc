@@ -214,7 +214,12 @@ else
     myfindpis(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
     myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
     myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
+<<<<<<< Updated upstream
     greplib(){ # todo: grep args
+=======
+    myfindh() { find -name "*$1*" 2>/dev/null ; } # hidden files
+    grep2(){ # todo: grep args
+>>>>>>> Stashed changes
         /usr/bin/strings "$2" | /usr/bin/grep --color=always "$1"
     }
     greppara(){ # parallel 
@@ -459,7 +464,9 @@ else
         echo "get hash: git rev-parse --short HEAD"
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
-        echo "git config core.fileMode false \# ignore file permission changes" 
+        echo "git config core.fileMode false # ignore file permission changes" 
+        echo "# fetch"
+        echo "git fetch myremote # get from non-default remote"
         echo "# branch/tag"
         echo "show list:        git {branch,tag} [-av]"
         echo "default branch:   cat .git/refs/remotes/origin/HEAD"
@@ -478,10 +485,12 @@ else
         echo "git >= 2.23:"
         echo "  if one remote:       git switch test"
         echo "  if multiple remotes: git switch -c test {origin[/remote],tags}/test"
+        echo "  git switch --detach v1.2.0"
         echo "check if a branch exists on server: git ls-remote --heads origin refs/heads/test"
         echo "get latest tag: tag=\$(git describe --tags \$(git rev-list --tags --max-count=1))"
         echo "compare: https://github.com/user/repo/compare"
         echo " # commit"
+        echo "show parent: git show abc123^"
         echo "git reset --hard HEAD^ # remove last commit; also deletes unstaged changes!"
         echo "git reset --hard HEAD~2 # remove last 2 commits; also deletes unstaged changes!"
         echo "git push origin -f # update remote"
@@ -618,6 +627,7 @@ else
         echo "for f in *01.grb; do echo \$f; cdo -t echam6 -f nc copy \$f \$f.nc; done"
         echo "cdo -select,name=temp2 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
         echo "cdo -select,name=var167 *echam6_echam_* tmp1 && cdo fldmean tmp1 tmp2 && ncview tmp2" 
+        echo "make a copy preserving nans: cdo ifthenc,31337 temp.fesom.1900.nc ~/foo"
         echo "merge different variables: cdo merge"
         echo "cdo chname,var1,var2 in.nc out.nc"
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
@@ -685,7 +695,7 @@ else
         echo "ncview -minmax all Sample.nc"
     }
     alias ncviewa="ncview -minmax all"
-    export XAPPLRESDIR="$(readlink -f ~/sw/ncview/usr/share/X11/app-defaults)" # will read file `Ncview` there
+    export XAPPLRESDIR="$(readlink -f ~/sw/ncview/usr/share/X11/app-defaults)" # ncview will use defaults from file `Ncview`
     gribhelp(){
         echo "grib_ls fin"
         echo "grib_copy -w shortName=myname fin fout"
@@ -783,6 +793,7 @@ else
     }
     firefoxhelp(){
         echo "search for tab: ctrl+l, %, <search>"
+        echo "ctrl+tab through tabs"
         echo "go to last tab: tab+9"
     }
     octavehelp(){

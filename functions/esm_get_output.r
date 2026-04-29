@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-    
+
 rm(list=ls()); graphics.off()
 
 models <- libpaths <- NULL
@@ -63,20 +63,20 @@ if (interactive()) {
     year <- 1950
     outname <- "~/awicm1-recom_PICTRL3.ods"
 
-    #models <- c("echam", "jsbach", "fesom", "recom") # recom and fesom double
-    #models <- c("echam", "jsbach", "fesom")
+    #models <- c("echam", "jsbach", "fesom1", "recom2") # recom and fesom double
+    #models <- c("echam", "jsbach", "fesom1")
     #models <- "echam"
-    #models <- "fesom"
+    #models <- "fesom1"
     models <- "jsbach"
-    #models <- "recom"
+    #models <- "recom2"
     #models <- c("echam", "jsbach")
-    #models <- c("fesom", "recom")
+    #models <- c("fesom1", "recom2")
 
 # not interactive
 } else {
-    
+
     #./get_esm_output_vars.r /work/ba0989/a270077/CMIP6_PMIP4/a270073/CMIP6/CMIP_PMIP/dynveg_true/hist ~/cmip6/hist_output.ods > log 2>&1 &
-    
+
     me <- basename(sub(pattern=".*=", replacement="", commandArgs()[4]))
     usage <- paste0("\nUsage: ", me, " arg1 arg2 arg3 [--models=] [--libpaths=] or\n",
                     "       ", me, " arg1 arg2 arg3 [--models=] [--libpaths=] > output.log 2>&1 &\n",
@@ -84,7 +84,7 @@ if (interactive()) {
                     "   unnamed arg1: /path/that/contains/outdata/dir\n",
                     "   unnames arg2: year\n",
                     "   unnamed arg3: filename/of/output_table.ods (must have ending \".ods\", \".xlsx\" or \".txt\")\n",
-                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam,jsbach,fesom,recom)\n",
+                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam,jsbach,fesom1,fesom2,oifs,recom2,recom3)\n",
                     "   optional named arg --libpaths=/add/path/where/R/packages/are/installed,/separated/by/comma/if/more/than/one\n",
                     "\n",
                     "Dependencies:\n",
@@ -102,14 +102,14 @@ if (interactive()) {
     expidpath <- args[1]
     year <- args[2]
     outname <- args[3]
-    
+
     # check models if provided
     if (any(grepl("--models", args))) { # user provided models
         models <- sub("--models=", "", args[grep("--models=", args)])
         models <- strsplit(models, ",")[[1]]
     }
 
-    # check libpaths if provided 
+    # check libpaths if provided
     if (any(grepl("--libpaths", args))) {
         libpaths <- sub("--libpaths=", "", args[grep("--libpaths=", args)])
         libpaths <- strsplit(libpaths, ",")[[1]]
@@ -129,12 +129,18 @@ known_models <- list("echam"=list(interval_files="monthly",
                      "jsbach"=list(interval_files="monthly",
                                    #pattern="_<year>12.01"),
                                    pattern="_<year>12"),
-                     "fesom"=list(interval_files="annual",
-                                  pattern="(_|.)<year>01.*01"), # aggc_fesom_19640101.nc or aggc.fesom.196401.01.nc
-                     "recom"=list(interval_files="annual",
-                                  pattern="(_|.)<year>01.*01"),
+                     "fesom1"=list(interval_files="annual",
+                                   pattern="(_|.)fesom(_|.)<year>01.*01"), # aggc_fesom_19640101.nc or aggc.fesom.196401.01.nc
+                     "fesom2"=list(interval_files="annual",
+                                   pattern=".fesom.<year>"), # aggc.fesom.1964.nc
                      "oifs"=list(interval_files="monthly",
-                                 pattern="_<year>-<year+1>.nc_<year>0131-<year+1>0131")) # known models so far
+                                 #pattern="_<year>-<year+1>.nc_<year>0131-<year+1>0131"
+                                 pattern="atm_remapped_.*_<year>-<year>.nc"),
+                     "recom2"=list(interval_files="annual",
+                                   pattern="(_|.)fesom(_|.)<year>01.*01"),
+                     "recom3"=list(interval_files="annual",
+                                   pattern=".fesom.<year>")
+                     ) # known models so far
 if (F) { # adjust manually depending on output
     message("\nspecial: adjust echam+jsbach fpatterns\n")
     known_models$echam$interval_files="annual"
@@ -149,23 +155,23 @@ known_rm_vars <- vector("list", l=length(known_models))
 names(known_rm_vars) <- names(known_models)
 known_rm_vars[["echam"]] <- c("hyai", "hyam", "hybi", "hybm", "time_bnds")
 known_rm_vars[["jsbach"]] <- known_rm_vars[["echam"]] # same as echam
-known_rm_vars[["oifs"]] <- c("time_instant", "time_instant_bounds", 
-                             "time_centered", "time_centered_bounds", 
+known_rm_vars[["oifs"]] <- c("time_instant", "time_instant_bounds",
+                             "time_centered", "time_centered_bounds",
                              "time_counter", "time_counter_bounds")
 
 # known dimensions
-# !!! time dim must be named 
+# !!! time dim must be named
 known_dims <- vector("list", l=length(known_models))
 names(known_dims) <- names(known_models)
 known_dims[["echam"]] <- c("stream", "operator", "nml_entry", "code", "table", "time"="time", "lon", "lat", "lev", "plev", "nsp", "nc2", "soil_layer")
 known_dims[["jsbach"]] <- c("stream", "operator", "nml_entry", "code", "table", "time"="time", "lon", "lat", "depth", "lev", "tiles", "soil_layer", "belowsurface")
-known_dims[["fesom"]] <- c("time"="time", 
-                           # fesom1:
-                           "nodes", "nodes_2d", "nodes_3d", "depth",
-                           # fesom2:
+known_dims[["fesom1"]] <- c("time"="time",
+                            "nodes", "nodes_2d", "nodes_3d", "depth")
+known_dims[["fesom2"]] <- c("time"="time",
                            "ndens", "nod2", "nz", "nz1", "elem")
-known_dims[["recom"]] <- known_dims[["fesom"]]
 known_dims[["oifs"]] <- c("time"="time_counter", "lon", "lat", "axis_nbounds", "pressure_levels")
+known_dims[["recom2"]] <- known_dims[["fesom1"]]
+known_dims[["recom3"]] <- known_dims[["fesom2"]]
 for (mi in seq_along(known_dims)) {
     if (is.null(names(known_dims[[mi]])) ||
         !any(names(known_dims[[mi]]) == "time")) {
@@ -216,7 +222,7 @@ for (mi in seq_along(known_models)) {
 
 if (any(is.na(match(models, names(known_models))))) {
     inds <- which(is.na(match(models, names(known_models))))
-    message("\nprovided `models` = \"", paste(models[inds], collapse="\", \""), 
+    message("\nprovided `models` = \"", paste(models[inds], collapse="\", \""),
             "\" are not defined in `known_models`. remove and continue ...")
     models <- models[-inds]
 }
@@ -253,7 +259,7 @@ outpath <- normalizePath(outpath)
 outname <- basename(outname)
 
 namelists <- list("namelist.echam"=paste0(expidpath, "/config/echam/namelist.echam"))
-op_patterns <- list(detect=c( "mean", "inst", "min", "max", "asis", "none", "sqrmean"),
+op_patterns <- list(detect= c("mean", "inst", "min", "max", "asis", "none", "sqrmean"),
                     meaning=c("mean", "inst", "min", "max", "asis", "none", "sqrmean"))
 not_mentioned_nml_entry <- "not mentioned"
 
@@ -272,9 +278,9 @@ message("libpaths = ", paste(libpaths, collapse=", "))
 # check if already existing output table should be replaced
 outputfile_names <- rep(NA, t=length(models))
 for (i in seq_along(models)) {
-    outputfile_names[i] <- paste0(outpath, "/", 
-                                  tools::file_path_sans_ext(outname), "_", 
-                                  models[i], ".", 
+    outputfile_names[i] <- paste0(outpath, "/",
+                                  tools::file_path_sans_ext(outname), "_",
+                                  models[i], ".",
                                   tools::file_ext(outname))
     if (file.exists(outputfile_names[i])) {
         message("outputfile = \"", outputfile_names[i], "\" already exists.")
@@ -329,27 +335,27 @@ message("*****************")
 for (i in seq_along(models)) {
 
     options(width=80) # default
-    
+
     # model output path
     path <- paste0(expidpath, "/outdata/", models[i])
     message("\n*****************************************************\n",
             "model ", i, "/", length(models), ": ", models[i], "\n",
             "*****************************************************")
-    
+
     # find model output files of year
-    outfiles <- NULL 
+    outfiles <- NULL
     pattern <- known_models[[models[i]]]$pattern
-    if (grepl("<year>", pattern)) pattern <- sub("<year>", year, pattern)
-    if (grepl("<year+1>", pattern)) pattern <- sub("<year+1>", year+1, pattern)
+    if (grepl("<year>", pattern)) pattern <- gsub("<year>", year, pattern)
+    if (grepl("<year+1>", pattern)) pattern <- gsub("<year+1>", year+1, pattern)
     message("\ngrep files for `", path, "/*", pattern, "*` ...")
     outfiles <- list.files(path=path, pattern=pattern, full.names=T)
-    
+
     if (length(outfiles) > 0) { # found files
         # keep only files with ".nc", ".grb" or "" extensions
         exts <- tools::file_ext(outfiles)
-        message("check ", length(outfiles), " found files for \"nc\", \"grb\" or \"\" extensions ...") 
+        message("check ", length(outfiles), " found files for \"nc\", \"grb\" or \"\" extensions ...")
         keepinds <- which(exts == "nc" | exts == "grb" | exts == "")
-        
+
         if (length(keepinds) > 0) { # found valid files
             message("--> ", length(keepinds), " files have valid extensions")
             rminds <- seq_along(outfiles)[-keepinds]
@@ -357,7 +363,7 @@ for (i in seq_along(models)) {
                 message("remove ", length(rminds), " files having neither \"nc\", \"grb\" or \"\" file extensions ...")
                 outfiles <- outfiles[-rminds]
             }
-        
+
         } else if (length(keepinds) == 0) { # no valid files found
             message("--> found zero files with valid extensions --> skip to next model")
         }
@@ -367,7 +373,7 @@ for (i in seq_along(models)) {
         #stop("asd")
         next # model i
     }
-    
+
     # remove any duplicated
     outfiles <- unique(outfiles)
 
@@ -379,10 +385,10 @@ for (i in seq_along(models)) {
 
     # filenames:
     # echam: hist_echam6_tdiagmon_185012.nc, hist_echam6_tdiagmon_185002.nc -> monthly
-    # jsbach: hist_jsbach_yassoyr_185005.nc -> monthly 
+    # jsbach: hist_jsbach_yassoyr_185005.nc -> monthly
     # fesom: hist_fesom_wo_18500101.nc -> annual
-    
-    # 
+
+    #
     #files_wout_year <- sub(year, "", outfiles)
     #files_wout
 
@@ -394,15 +400,15 @@ for (i in seq_along(models)) {
         message("\n############################################################\n",
                 models[i], " file ", j, "/", length(outfiles), ": ", file, "\n",
                 "n############################################################")
-        
+
         # try to determine stream if echam or jsbach
         stream <- NULL
         inds <- gregexpr(models[i], known_stream_models) # add models strings that use streams here if necessary
         if (any(sapply(inds, ">", -1))) {
 
             message("\ncurrent model \"", models[i], "\" uses streams --> try to determine stream ...")
-            # e.g. hist_echam6_accw_201412.grb 
-            #      test4_195012.01_aclcim.nc 
+            # e.g. hist_echam6_accw_201412.grb
+            #      test4_195012.01_aclcim.nc
             #      test_jsbach_jsbach_268512.grb
             #      test_jsbach_driving_1860.grb
             #      SR_output_echam6_accw_200001.grb
@@ -427,29 +433,29 @@ for (i in seq_along(models)) {
             }
 
             # try different patterns to remove; order matters!
-            pattern_to_remove <- paste0(year, "12.01_") # case: test4_195012.01_aclcim.nc 
-            if (grepl(pattern_to_remove, file)) { 
+            pattern_to_remove <- paste0(year, "12.01_") # case: test4_195012.01_aclcim.nc
+            if (grepl(pattern_to_remove, file)) {
                 stream <- sub(pattern_to_remove, "", stream)
                 # aclcim
             }
             pattern_to_remove <- paste0("_", year, "12") # case: hist_echam6_accw_201412.grb
-            if (grepl(pattern_to_remove, file)) { 
+            if (grepl(pattern_to_remove, file)) {
                 stream <- sub(pattern_to_remove, "", stream)
                 # accw
                 # jsbach
             }
             pattern_to_remove <- paste0("_", year, "01") # case: SR_output_echam6_accw_200001.grb
-            if (grepl(pattern_to_remove, file)) { 
+            if (grepl(pattern_to_remove, file)) {
                 stream <- sub(pattern_to_remove, "", stream)
                 # accw
             }
             pattern_to_remove <- paste0("_", year) # case: test_jsbach_driving_1860.grb
-            if (grepl(pattern_to_remove, file)) { 
+            if (grepl(pattern_to_remove, file)) {
                 stream <- sub(pattern_to_remove, "", stream)
                 # driving
             }
             pattern_to_remove <- paste0(year, "01.01_") # case: esm-hist_185001.01_accw
-            if (grepl(pattern_to_remove, file)) { 
+            if (grepl(pattern_to_remove, file)) {
                 stream <- sub(pattern_to_remove, "", stream)
                 # accw
             }
@@ -466,16 +472,16 @@ for (i in seq_along(models)) {
                 message("--> is this stream correct!?")
             }
         } # if echam jsbach
-        
-        # determine file type 
+
+        # determine file type
         message("\nget filetype ...")
         convert_to_nc_tag <- F # default
         #if (tools::file_ext(file) == "grb") { # does not cover cases of file names without ending
         ftype <- ncdump_get_filetype(fin=paste0(path, "/", file))
-        
+
         # convert from grb to nc if necessary
         if (ftype == "non-nc") {
-            
+
             # check if cdo module is loaded
             cdo <- Sys.which("cdo")
             if (cdo == "") {
@@ -488,18 +494,18 @@ for (i in seq_along(models)) {
                 stop("could not find or module load cdo")
             }
 
-            # construct cdo grb->nc conversion command 
+            # construct cdo grb->nc conversion command
             cmd <- paste0(cdo, " ")
             if (cdo_silent) cmd <- paste0(cmd, "-s ")
-            
+
             ## find and apply code table if present
             # try 1/4: new esm tools: codes file same pattern as data file
-            code_pattern <- paste0(file, ".codes") 
+            code_pattern <- paste0(file, ".codes")
             message("\ncheck for .codes file with pattern \"", path, "/", code_pattern, "\" ... ", appendLF=F)
             codesfile <- list.files(path, pattern=code_pattern, full.names=T)
             message("found ", length(codesfile), " files")
             if (length(codesfile) == 0) {
-                if (!is.null(stream)) { 
+                if (!is.null(stream)) {
                     # try 2/4: old esm tools (echam/jsbach only)
                     code_pattern <- paste0("*", year, "12.01_", stream, ".codes")
                     message("check for .codes file with pattern \"", path, "/", code_pattern, "\" ... ", appendLF=F)
@@ -523,7 +529,7 @@ for (i in seq_along(models)) {
                 }
             }
             if (length(codesfile) > 1) {
-                warning(paste(codesfile, collapse="\n"), 
+                warning(paste(codesfile, collapse="\n"),
                         "\ndont know which to use --> use first --> is this first file correct?!?!")
                 codesfile <- codesfile[1]
             }
@@ -535,17 +541,17 @@ for (i in seq_along(models)) {
                     message("current model is \"", models[i], " --> use its default code table")
                     cmd <- paste0(cmd, "-t ", models[i])
                 } else {
-                    warning("neither found .codes-file nor is models[", i, "] = ", 
-                            models[i], " included in cdo default codetabels ", 
+                    warning("neither found .codes-file nor is models[", i, "] = ",
+                            models[i], " included in cdo default codetabels ",
                             paste(cdo_known_codetables, collapse=", "), "\n",
                             "--> conversion to nc will probably yield silly files")
                 }
             }
-            
+
             # run grb->cdo conversion
             fout <- paste0(outpath, "/", file, ".nc")
             cmd <- paste0(cmd, "-f nc copy ", path, "/", file, " ", fout)
-            message("\nconvert ", utils:::format.object_size(file.info(paste0(path, "/", file))$size, "Mb"), 
+            message("\nconvert ", utils:::format.object_size(file.info(paste0(path, "/", file))$size, "Mb"),
                     " file to nc ...")
             message("run `", cmd, "` ...")
             if (grepl("mlogin", Sys.info()["nodename"])) {
@@ -559,7 +565,7 @@ for (i in seq_along(models)) {
             file <- paste0(file, ".nc")
             path <- outpath
             convert_to_nc_tag <- T
-        
+
         } # first convert to nc if .grb file
 
         # try to get meta info of file file
@@ -572,7 +578,7 @@ for (i in seq_along(models)) {
         ndims <- dim(dims)[1]
         nvars <- dim(vars)[1]
         if (ndims == 0 || nvars == 0) {
-            msg <- paste0("could not determine any dim or variable name from file ", 
+            msg <- paste0("could not determine any dim or variable name from file ",
                           path, "/", file, ". skip to next file")
             warning(msg, .immediate=T)
             warning(msg, .immediate=F)
@@ -587,7 +593,7 @@ for (i in seq_along(models)) {
         print(dims)
         message("\nFound ", nvars, " vars:")
         print(vars, row.names=F)
-        
+
         # throw out some variables
         if (any(!is.na(match(vars[,"name"], known_rm_vars[[models[i]]])))) {
             message("\nthrow out some known ", models[i], " variables to remove ...")
@@ -600,7 +606,7 @@ for (i in seq_along(models)) {
             }
             nvars <- dim(vars)[1]
         } # if variale was found to remove
-        
+
         # array to save all meta data per variable of file file
         tmp <- data.frame(array(NA, c(nvars, length(known_dims[[models[i]]]) + 1)), stringsAsFactors=F)
         colnames(tmp) <- c("name", known_dims[[models[i]]])
@@ -633,7 +639,7 @@ for (i in seq_along(models)) {
                     tmp[k,"longname"] <- atts[longname_ind,"value"]
                     #message("found \"description\" attribute: ", tmp[k,"longname"])
                 } else {
-                    message("no attribute named either \"long_name\" or \"description\" found for variable ", 
+                    message("no attribute named either \"long_name\" or \"description\" found for variable ",
                             vars[k,"name"], " of outfiles[", j, "] = ", file, "\n")
                     tmp[k,"longname"] <- NA
                 }
@@ -649,7 +655,7 @@ for (i in seq_along(models)) {
                 tmp[k,"table"] <- as.integer(atts[table_ind,"value"])
             }
         } # for k
-        
+
         if (F) {
             ff = "/work/ba0989/a270077/CMIP6_PMIP4/a270073/CMIP6/CMIP_PMIP/dynveg_true/hist/outdata/fesom/hist_fesom_wo_18500101.nc"
             fdims <- ncdf.tools::infoNcdfDims(ff)
@@ -687,7 +693,7 @@ for (i in seq_along(models)) {
         dt <- dt[which(grepl(" Increment           :", dt))] # e.g. " Increment           :  10 years"
         message("--> \"", dt, "\"")
         dt <- strsplit(dt, ":")[[1]][2] # e.g. "  10 years"
-        dt <- gsub(" ", "", dt) # e.g. "10years" 
+        dt <- gsub(" ", "", dt) # e.g. "10years"
         message("--> dt = ", dt)
         if (dt == "0seconds") { # `cdo tinfo` only 1 timestep or no success
             if (known_models[[models[i]]]$interval_files == "monthly") {
@@ -702,7 +708,7 @@ for (i in seq_along(models)) {
         for (k in seq_len(nvars)) {
             ntime_per_var <- as.integer(tmp[k,known_dims[[models[i]]]["time"]])
             if (is.na(ntime_per_var)) { # nc file has no time dimension
-                message("variable ", vars[k,"name"], 
+                message("variable ", vars[k,"name"],
                         " has no time dim, e.g. X=X(lon,lat) -> only 1 step per file -> set ntime_per_var to 1")
                 ntime_per_var <- 1
                 tmp[k,known_dims[[models[i]]]["time"]] <- 1
@@ -721,32 +727,32 @@ for (i in seq_along(models)) {
                 } else {
                     stop("not yet")
                 }
-                message("--> try to get stream infos based on models[", i, "] = ", models[i], 
+                message("--> try to get stream infos based on models[", i, "] = ", models[i],
                         " namelist mapping name \"", nml_to_check, "\" ...")
                 nmlind <- which(names(namelists) == nml_to_check)
-                
+
                 # no namelist found
                 if (length(nmlind) == 0) {
                     warning("could not find this namelist mapping name \"", nml_to_check, "\" in `namelists`. skip.")
-                
+
                 # namelist found
                 } else {
-                    
+
                     # if special stream
                     if (grepl("[[:punct:]]", stream)) { # still some special symbols left
                         message("ignore this task for special stream \"", stream, "\"")
-                    
+
                     # if not special stream
                     } else {
 
                         if (file.exists(namelists[[nmlind]])) {
-                            
+
                             message("read namelist ", namelists[[nmlind]], " ...")
                             nml <- readLines(namelists[[nmlind]])
-                            
+
                             # for all variables in file
                             for (vari in seq_len(nvars)) {
-                                
+
                                 # check for so far known cases:
                                 var2check <- tmp[vari,"name"]
                                 code2check <- tmp[vari,"code"]
@@ -761,12 +767,12 @@ for (i in seq_along(models)) {
                                                    paste0(">", code2check, "=")) # ">temp2="
                                 names(determined_codepatterns) <- code_patterns
 
-                                message("\nTry do find stream \"", stream, "\" variable ", vari, "/", nvars, ": \"", 
-                                        var2check, "\" (interval: ", tmp[vari,"interval"], ", code: ", code2check, 
+                                message("\nTry do find stream \"", stream, "\" variable ", vari, "/", nvars, ": \"",
+                                        var2check, "\" (interval: ", tmp[vari,"interval"], ", code: ", code2check,
                                         ") in whole nml based on var_patterns:")
-                                
+
                                 for (varpatterni in seq_along(var_patterns)) {
-                                    message("   ", varpatterni, "/", length(var_patterns), ": \"", 
+                                    message("   ", varpatterni, "/", length(var_patterns), ": \"",
                                             var_patterns[varpatterni], "\" ", appendLF=F)
                                     if (any(regexpr(var_patterns[varpatterni], nml) != -1)) {
                                         message("-> yes")
@@ -779,13 +785,13 @@ for (i in seq_along(models)) {
                                 # none of the above cases were found
                                 if (all(determined_varpatterns == F)) {
                                     if (!is.na(code2check)) {
-                                        message("None of the var_patterns \"", 
-                                                paste0(var_patterns, collapse=paste0("\", \"")), 
+                                        message("None of the var_patterns \"",
+                                                paste0(var_patterns, collapse=paste0("\", \"")),
                                                 "\" were found in the namelist\n",
                                                 namelists[[nmlind]], "\n",
                                                 "Try with code_patterns ...")
                                         for (codepatterni in seq_along(code_patterns)) {
-                                            message(codepatterni, "/", length(code_patterns), ": \"", 
+                                            message(codepatterni, "/", length(code_patterns), ": \"",
                                                     code_patterns[codepatterni], "\" ", appendLF=F)
                                             if (any(regexpr(code_patterns[codepatterni], nml) != -1)) {
                                                 message("-> yes")
@@ -811,7 +817,7 @@ for (i in seq_along(models)) {
                                                           paste0(">", var2check, "=")) # ">temp2="
                                         names(determined_varpatterns) <- var_patterns
                                         for (varpatterni in seq_along(var_patterns)) {
-                                            message(varpatterni, "/", length(var_patterns), ": \"", 
+                                            message(varpatterni, "/", length(var_patterns), ": \"",
                                                     var_patterns[varpatterni], "\" ", appendLF=F)
                                             if (any(regexpr(var_patterns[varpatterni], nml) != -1)) {
                                                 message("-> yes")
@@ -830,8 +836,8 @@ for (i in seq_along(models)) {
                                             "assume nml_entry = \"", not_mentioned_nml_entry, "\"\n",
                                             "Skip to next variable ...")
                                     tmp[vari,"nml_entry"] <- not_mentioned_nml_entry
-                                
-                                # any of "runoff'" "'runoff:" ">runoff=" was found 
+
+                                # any of "runoff'" "'runoff:" ">runoff=" was found
                                 } else if (any(determined_varpatterns)) {
 
                                     # loop through all found patterns
@@ -839,7 +845,7 @@ for (i in seq_along(models)) {
                                     op_per_pattern <- rep(NA, t=length(found_varpatterns))
                                     nml_entry_per_pattern <- op_per_pattern
                                     for (patterni in seq_along(found_varpatterns)) {
-                                        
+
                                         # check stupid case
                                         #if (tmp[vari,"name"] == "lsp_2" && tmp[vari,"interval"] == "6hr") stop("asd")
                                         if (paste0(var2check, "_2") == paste0(tmp[vari,"name"])) { # lsp_2 was replaced by lsp
@@ -847,20 +853,20 @@ for (i in seq_along(models)) {
                                                 if (patterni == 1) {
                                                     message("Special case for var \"", var2check, "\"",
                                                             " (actually tmp[", vari, ",\"name\"] = \"", tmp[vari,"name"], "\").\n",
-                                                            "Use var_pattern ", patterni+1, " \"", 
+                                                            "Use var_pattern ", patterni+1, " \"",
                                                             names(found_varpatterns)[patterni+1], "\" instead of the current var_pattern \"",
                                                             names(found_varpatterns)[patterni], "\".")
                                                     next # use the pattern
                                                 }
                                             } # only 2 cases defined yet
                                         } # special case
-                                        
+
                                         var_pattern <- names(found_varpatterns)[patterni]
                                         #if (tmp[vari,"name"] == "lsp_2" && tmp[vari,"interval"] == "6hr") stop("asd")
                                         stop("update: without echam_time and echam_interval")
-                                        time_echam <- known_intervals[which(known_intervals[,"interval"] == 
+                                        time_echam <- known_intervals[which(known_intervals[,"interval"] ==
                                                                             tmp[vari,"interval"]),"echam_time"]
-                                        interval_echam <- known_intervals[which(known_intervals[,"interval"] == 
+                                        interval_echam <- known_intervals[which(known_intervals[,"interval"] ==
                                                                                 tmp[vari,"interval"]),"echam_interval"]
                                         interval_pattern <- paste0(time_echam, ",'", interval_echam, "',") # 6, 'hours',
                                         stream_pattern <- paste0("'", stream, "'")
@@ -873,7 +879,7 @@ for (i in seq_along(models)) {
                                                 break # this loop trying to find matching var_patterns in nml blocks
                                             }
 
-                                            # find all arguments of current block in the namelist: 
+                                            # find all arguments of current block in the namelist:
                                             # -> find first occurences of "&" before and "/" after current line containing the pattern "temp2"
                                             upper_et_ind <- lower_slash_ind <- NA
                                             cnt <- 0
@@ -909,24 +915,24 @@ for (i in seq_along(models)) {
                                                 # check if the current nml block is the correct one depending on
                                                 # current variable and its output frequency
                                                 current_block <- nml[upper_et_ind:lower_slash_ind]
-                                                message("\nCheck if current &mvstreamctl nml block nml[", 
-                                                        upper_et_ind, ":", lower_slash_ind, "] containing var_pattern ", 
+                                                message("\nCheck if current &mvstreamctl nml block nml[",
+                                                        upper_et_ind, ":", lower_slash_ind, "] containing var_pattern ",
                                                         patterni, "/", length(found_varpatterns), ": \"", var_pattern, "\" also contains\n",
                                                         "the interval_pattern \"", interval_pattern, "\"\n",
                                                         "basename(outfiles[", j, "]) = ", basename(outfiles[j]), "...")
                                                 message(paste(current_block, collapse="\n"))
-                                              
+
                                                 # 1st check: current interval_pattern not found in current nml block
                                                 interval_inds <- regexpr(interval_pattern, gsub(" ", "", current_block))
                                                 if (!any(interval_inds != -1)) {
-                                                    message("interval_pattern \"", interval_pattern, 
-                                                            "\" not found in this var_pattern ", patterni, "/", 
+                                                    message("interval_pattern \"", interval_pattern,
+                                                            "\" not found in this var_pattern ", patterni, "/",
                                                             length(found_varpatterns), " \"", var_pattern, "\" nml block.")
                                                     if (linei == length(var_pattern_inds)) {
                                                         message("Reached end of nml.")
-                                                        message("Did not find the combination of \"", stream, "\" \"", 
-                                                                tmp[vari,"interval"], "\" var_pattern ", patterni, "/", 
-                                                                length(found_varpatterns), ": \"", 
+                                                        message("Did not find the combination of \"", stream, "\" \"",
+                                                                tmp[vari,"interval"], "\" var_pattern ", patterni, "/",
+                                                                length(found_varpatterns), ": \"",
                                                                 var_pattern, "\" in the whole nml.\n")
                                                         if (patterni == length(found_varpatterns)) {
                                                             message("Reached end of found_varpatterns\n",
@@ -942,35 +948,35 @@ for (i in seq_along(models)) {
                                                     stream_inds <- regexpr(stream_pattern, gsub(" ", "", current_block))
                                                     # apply this condition only in special cases
                                                     #if (stream == "echamdaymax") stop("asd")
-                                                    if (any(stream == c("echamdaymin", "echamdaymax")) && 
-                                                        !any(stream_inds != -1)) { 
-                                                        message("Found but apply special condition: stream_pattern \"", stream_pattern, 
-                                                                "\" not found in this var_pattern ", patterni, "/", 
+                                                    if (any(stream == c("echamdaymin", "echamdaymax")) &&
+                                                        !any(stream_inds != -1)) {
+                                                        message("Found but apply special condition: stream_pattern \"", stream_pattern,
+                                                                "\" not found in this var_pattern ", patterni, "/",
                                                                 length(found_varpatterns), " \"", var_pattern, "\" nml block.")
                                                         if (linei == length(var_pattern_inds)) {
                                                             message("Reached end of nml.")
-                                                            message("Did not find the combination of \"", stream, "\" \"", 
+                                                            message("Did not find the combination of \"", stream, "\" \"",
                                                                     tmp[vari,"stream"], "\" var_pattern ", patterni, "/",
-                                                                    length(found_varpatterns), ": \"", 
+                                                                    length(found_varpatterns), ": \"",
                                                                     var_pattern, "\" in the whole nml. Skip to next variable.")
                                                         }
-                                            
+
                                                     # current stream_pattern found in current nml block
-                                                    } else { 
+                                                    } else {
 
                                                         message("Success\n",
-                                                                "-> Assume that this is the correct \"", 
-                                                                tmp[vari,"interval"], "\" \"", stream, "\" \"", var2check, 
+                                                                "-> Assume that this is the correct \"",
+                                                                tmp[vari,"interval"], "\" \"", stream, "\" \"", var2check,
                                                                 "\" block in the nml -> is this output frequency-varname-stream block correct?")
 
-                                                        
+
                                                         op <- NA # default in this block
 
                                                         #if (stream == "echamdaymax") stop("asd")
 
-                                                        # case1: "'runoff'" 
+                                                        # case1: "'runoff'"
                                                         if (var_pattern == paste0("'", var2check, "'")) {
-                                                            
+
                                                             testpattern <- paste0("'", var2check, "'")
                                                             message("check case 1 testpattern = \"", testpattern, "\" Found!")
                                                             nml_entry <- testpattern
@@ -981,7 +987,7 @@ for (i in seq_along(models)) {
 
                                                             # check operator cases
                                                             for (opi in seq_along(op_patterns$detect)) {
-                                                                testpattern <- paste0(var_pattern, op_patterns$detect[opi]) 
+                                                                testpattern <- paste0(var_pattern, op_patterns$detect[opi])
                                                                 message("check case 2 testpattern = \"", testpattern, "\" ... ", appendLF=F)
                                                                 testpattern_ind <- which(regexpr(testpattern, current_block) != -1)
                                                                 if (length(testpattern_ind) == 1) {
@@ -1009,9 +1015,9 @@ for (i in seq_along(models)) {
 
                                                         # case 3: ">runoff=" 'temp2:inst>temp2_pt=167'
                                                         } else if (var_pattern == paste0(">", var2check, "=")) {
-                                                               
+
                                                             # get detected nml entry with testpattern
-                                                            testpattern <- var_pattern 
+                                                            testpattern <- var_pattern
                                                             nml_entry <- current_block[which(regexpr(testpattern, current_block) != -1)]
                                                             # e.g. "\tvariables = 'dmc', 'irld>rld=3', 'irldcs>rldcs=7', 'irlu>rlu=1',"
                                                             nml_entry_ind <- regexpr(testpattern, nml_entry)
@@ -1026,7 +1032,7 @@ for (i in seq_along(models)) {
 
                                                             # if any ":mean>aclcov=" ":inst>aclcov=" ":min>aclcov=" ":max>aclcov="
                                                             # else: ">aclcov=" -> mean
-                                                            message("check case 3 nml_entry = \"", nml_entry, "\" for ") 
+                                                            message("check case 3 nml_entry = \"", nml_entry, "\" for ")
                                                             for (opi in seq_along(op_patterns$detect)) {
                                                                 testpattern2 <- paste0(":", op_patterns$detect[opi], testpattern)
                                                                 message("check case 3 testpattern2 = \"", testpattern2, "\" ... ", appendLF=F)
@@ -1048,33 +1054,33 @@ for (i in seq_along(models)) {
                                                         } # which case
 
                                                         if (is.na(op)) {
-                                                            stop("None of the above testpatterns were detected for this var_pattern ", 
+                                                            stop("None of the above testpatterns were detected for this var_pattern ",
                                                                     patterni, "/", length(var_patterns), ": \"", var_pattern, "\" nml block.")
                                                         } else {
-                                                            message("Determined nml_entry: \"", 
+                                                            message("Determined nml_entry: \"",
                                                                     nml_entry, "\" -> is this nml entry correct?")
-                                                            message("Determined op: \"", 
+                                                            message("Determined op: \"",
                                                                     op, "\" -> is this operation correct?")
                                                             nml_entry_per_pattern[patterni] <- nml_entry
                                                             op_per_pattern[patterni] <- op
                                                         }
                                                     } # if current stream_pattern was found in current nml block
-                                                } # if current interval_pattern was found in current nml block 
+                                                } # if current interval_pattern was found in current nml block
                                             }  # if &mvstreamctl nml block
                                         } # for all found linei var2check "temp2" occurences in whole nml
                                     } # for all found patterni var_patterns, e.g. "'lsp'" "'lsp:"
                                     #if (stream == "echamdaymax") stop("asd")
 
                                     message()
-                                    
+
                                     # any testpattern was successful
                                     if (any(!is.na(op_per_pattern))) {
-                                        
-                                        # if there are more than 1 testpatterns associated with the current variable 
+
+                                        # if there are more than 1 testpatterns associated with the current variable
                                         if (length(which(!is.na(op_per_pattern))) > 1) {
 
-                                            message("There are ", length(which(!is.na(op_per_pattern))), 
-                                                    " found var_pattern for the \"", tmp[vari,"interval"], 
+                                            message("There are ", length(which(!is.na(op_per_pattern))),
+                                                    " found var_pattern for the \"", tmp[vari,"interval"],
                                                     "\" \"", stream, "\" variable \"", var2check, "\".")
                                             message("nml_entry_per_pattern:")
                                             print(nml_entry_per_pattern)
@@ -1082,7 +1088,7 @@ for (i in seq_along(models)) {
                                             print(op_per_pattern)
                                             message("vars[,\"name\"]:")
                                             print(vars[,"name"])
-                                            
+
                                             # special case: nml_entry "'tau_aero_550:mean>tau_aero_550=11'"
                                             # was found more than once in one nml block due to two patterns
                                             # were found
@@ -1092,7 +1098,7 @@ for (i in seq_along(models)) {
 
                                             # decide about special cases when the same variable was
                                             # written into the same file with different operators (e.g. mean and inst)
-                                            } else { 
+                                            } else {
 
                                                 # find all occurences of varname in file
                                                 varinds_per_file <- grep(var2check, tmp[,"name"])
@@ -1102,7 +1108,7 @@ for (i in seq_along(models)) {
                                                     vars_per_file <- tmp[,"name"][varinds_per_file]
                                                     current_var_ind <- which(vars_per_file == var2check)
                                                     if (length(current_var_ind) == 1) {
-                                                        message("\nCurrent var2check is \"", var2check, "\": identified the ", 
+                                                        message("\nCurrent var2check is \"", var2check, "\": identified the ",
                                                                 current_var_ind, "th case:")
                                                         op_ind <- current_var_ind
                                                     } else {
@@ -1112,15 +1118,15 @@ for (i in seq_along(models)) {
 
                                                 # more than 1 nml entries but only 1 fitting variable in file
                                                 } else {
-                                                    message("\nHowever, there is only 1 entry of var2check \"", 
+                                                    message("\nHowever, there is only 1 entry of var2check \"",
                                                             var2check, "\" in the current file.\n",
                                                             "Try to find special operator patterns that match ...")
-                                                   
+
                                                     var2check_with_op <- rep(F, t=length(op_patterns$detect))
                                                     for (opi in seq_along(op_patterns$detect)) {
                                                         if (regexpr(op_patterns$detect[opi], var2check) != -1) {
-                                                            message("found op ", op_patterns$detect[opi], 
-                                                                    " in var2check ", var2check, ".") 
+                                                            message("found op ", op_patterns$detect[opi],
+                                                                    " in var2check ", var2check, ".")
                                                             var2check_with_op[opi] <- T
                                                         }
                                                     }
@@ -1135,7 +1141,7 @@ for (i in seq_along(models)) {
                                                         }
                                                         nml_entry_per_pattern_with_op[[nml_entry_i]] <- tmp2
                                                     }
-                                                    # if no ops were found in var2check (e.g. "rh2m") but in found 
+                                                    # if no ops were found in var2check (e.g. "rh2m") but in found
                                                     # nml_entry_per_pattern (e.g. "'rh2m'" "'rh2m:max'")
                                                     # -> remove the one with the op_pattern match
                                                     if (!any(var2check_with_op) &&
@@ -1144,11 +1150,11 @@ for (i in seq_along(models)) {
                                                         nml_entry_per_pattern2 <- nml_entry_per_pattern
                                                         for (foundi in seq_along(found_op_at_entries)) {
                                                             which_found_op <- which(nml_entry_per_pattern_with_op[[found_op_at_entries[foundi]]])
-                                                            message("found op modes\n", 
-                                                                    "\"", 
+                                                            message("found op modes\n",
+                                                                    "\"",
                                                                     paste0(op_patterns$detect[which_found_op], collapse=paste0("\", \"")),
-                                                                    "\"\n", 
-                                                                    "in nml_entry ", found_op_at_entries[foundi], " \"", 
+                                                                    "\"\n",
+                                                                    "in nml_entry ", found_op_at_entries[foundi], " \"",
                                                                     nml_entry_per_pattern[found_op_at_entries[foundi]], ". Remove ...")
                                                             nml_entry_per_pattern2 <- nml_entry_per_pattern[-found_op_at_entries[foundi]]
                                                         }
@@ -1159,8 +1165,8 @@ for (i in seq_along(models)) {
                                                     } else {
                                                         stop("omgggg")
                                                     }
-                                                
-                                                } # 
+
+                                                } #
                                             }
 
                                         # default case: only one pattern was found and successfully matched with testpattern
@@ -1170,12 +1176,12 @@ for (i in seq_along(models)) {
 
                                         tmp[vari,"nml_entry"] <- nml_entry_per_pattern[op_ind]
                                         tmp[vari,"operator"] <- op_per_pattern[op_ind]
-                                        message("Summary variable ", vari, "/", nvars, ": \"", 
-                                                tmp[vari,"interval"], "\" \"", var2check, "\" (tmp[", vari, ",\"name\"] = ", 
+                                        message("Summary variable ", vari, "/", nvars, ": \"",
+                                                tmp[vari,"interval"], "\" \"", var2check, "\" (tmp[", vari, ",\"name\"] = ",
                                                 tmp[vari,"name"], "):\n",
                                                 "nml_entry: \"", tmp[vari,"nml_entry"], "\" -> is this nml_entry correct?\n",
                                                 "op: \"", tmp[vari,"operator"], "\" -> is this operation correct?")
-                                    
+
                                     # not a single testpattern could be matched to current variable
                                     } else {
 
@@ -1183,14 +1189,14 @@ for (i in seq_along(models)) {
                                                 "Assume that the variable was not mentioned in the respective nml block\n",
                                                 " -> assume nml_entry = \"", not_mentioned_nml_entry, "\" -> is this assumed nml_entry correct?")
                                         tmp[vari,"nml_entry"] <- not_mentioned_nml_entry
-                                        
+
                                     } # if any patterns were found in the correct nml block and 1 or more testpatterns were also found
 
                                 # not any of var_patterns was detected
                                 } else {
 
                                     stop("not any of var_patterns was detected.")
-                                    
+
                                 } # if any var_patterns detected
 
                             } # for all vars
@@ -1202,7 +1208,7 @@ for (i in seq_along(models)) {
                 } # mapping namelist defined for current model
             } # if nml_check
         } # if echam or jsbach
-        
+
         # append new entry to table
         if (j == 1) {
             table <- tmp
@@ -1210,7 +1216,7 @@ for (i in seq_along(models)) {
             table <- rbind(table, tmp)
         }
 
-        # remove temporary nc file from grb convert 
+        # remove temporary nc file from grb convert
         if (convert_to_nc_tag) {
             cmd <- paste0("rm ", outpath, "/", file)
             message("\n", cmd, " ...")
@@ -1225,7 +1231,7 @@ for (i in seq_along(models)) {
     # remove any columns with all NA
     inds <- apply(table, 2, function(x) all(is.na(x)))
     if (any(inds)) {
-        message("All ", paste0(names(which(inds)), collapse=", "), 
+        message("All ", paste0(names(which(inds)), collapse=", "),
                 " are NA for ", models[i], " model. Remove columns ...")
         table <- table[,-which(inds)]
     }
@@ -1256,7 +1262,7 @@ for (i in seq_along(models)) {
     table <- cbind(table[,seq_len(ncol(table))[-match(c("longname", "file"), names(table))]], longname=table$longname, file=table$file)
 
     message("Done.")
-    
+
     # add index as first column and put to front
     table$no <- 1:dim(table)[1]
     table <- table[c("no", colnames(table)[-which(colnames(table) == "no")])]
@@ -1281,21 +1287,21 @@ if (all(sapply(table_list, length) == 0)) {
 
 # save table
 for (i in seq_along(models)) {
-    
+
     if (!is.null(table_list[[i]])) {
 
         message("\nSave ", outputfile_names[i], " ...")
-        
+
         # .ods
         if (regexpr(".ods", outname) != -1) {
             Sys.setenv("R_ZIPCMD"=system("which zip", intern=T)) # necessary for utils::zip(..., zip=Sys.getenv("R_ZIPCMD", "zip"))
             readODS::write_ods(table_list[[i]], path=outputfile_names[i])
-        
+
         # .xlsx
         } else if (regexpr(".xlsx", outname) != -1) {
             xlsx::write.xlsx(table_list[[i]], outputfile_names[i], row.names=F, sheetName=models[i])
-        
-        # .txt    
+
+        # .txt
         } else {
             if (dim(table_list[[i]])[1] == 1) {
                 max_nchars <- apply(table_list[[i]], 2, nchar)
@@ -1306,7 +1312,7 @@ for (i in seq_along(models)) {
         }
 
     } else { # if current model is not NULL
-        warning("found no output for model ", models[i]) 
+        warning("found no output for model ", models[i])
     }
 
 } # for i

@@ -214,8 +214,12 @@ else
     myfindpis(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
     myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
     myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
-    grep2(){ # todo: grep args
+    greplib(){ # todo: grep args
         /usr/bin/strings "$2" | /usr/bin/grep --color=always "$1"
+    }
+    greppara(){ # parallel 
+        find . -type f -print0 | parallel -0 -j0 -N 251 /usr/bin/grep --color=always "$1" {}
+        #find dir -type f -print0 | parallel -0 -X grep -H "pattern" --> -X: chunk files
     }
     psme(){
         ps -u $(whoami) # todo: ps -u $whoami -F > ps_out
@@ -847,7 +851,7 @@ else
         echo "./configure CFLAGS=\"-I/usr/local/include\" LDFLAGS=\"-L/usr/local/lib\""
     }
     mypath(){
-        Rscript -e "strsplit(system('echo $PATH', intern=T), ':')[[1]]"
+        Rscript -e "sort(strsplit(system('echo $PATH', intern=T), ':')[[1]])"
     }
 
     # aliase (check with 'type alias')
@@ -1194,7 +1198,7 @@ else
         export PYTHONSTARTUP=~/.pyprofile
     fi
     
-    # set softlinks to dotfiles-repo functions to bin
+    # set softlinks from dotfiles repo functions to bin
     fs=(
         mydowngrade.r
         ntfs_fix_filenames.r
@@ -1228,6 +1232,7 @@ else
         myeof.r plotmyeof.r
         myncrcat.r
         mycat_moc.r
+        ncap2_make_lonlat_bnds.sh
         my_gsw_O2sol_SP_pt.r calc_DIC_remin.r
         rechunk.r remap_quasi_conservative.r
         nominal_resolution.r convert_lon_360_to_180.r 

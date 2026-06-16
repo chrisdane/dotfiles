@@ -272,6 +272,9 @@ else
         convert $fout -gravity East -chop ${right}x0 $fout
         convert $fout -gravity North -chop 0x$top $fout
     }
+    calchelp(){
+        echo "x % of y = x/10 * y/10"
+    }
     linuxhelp(){
         echo "file permissions"
         echo "r: 4, w: 2, x: 1"
@@ -461,8 +464,6 @@ else
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
         echo "git config core.fileMode false # ignore file permission changes" 
-        echo "# fetch"
-        echo "git fetch myremote # get from non-default remote"
         echo "# branch/tag"
         echo "show list:        git {branch,tag} [-av]"
         echo "default branch:   cat .git/refs/remotes/origin/HEAD"
@@ -482,6 +483,9 @@ else
         echo "  if one remote:       git switch test"
         echo "  if multiple remotes: git switch -c test {origin[/remote],tags}/test"
         echo "  git switch --detach v1.2.0"
+        echo "add remote:"
+        echo "git remote add <name> <url>"
+        echo "git fetch <name> # get from non-default remote"
         echo "check if a branch exists on server: git ls-remote --heads origin refs/heads/test"
         echo "get latest tag: tag=\$(git describe --tags \$(git rev-list --tags --max-count=1))"
         echo "compare: https://github.com/user/repo/compare"
@@ -629,6 +633,7 @@ else
         echo "for f in *.nc; do echo \$f; ncrename -v XXX,YYY \$f; done"
         echo "for f in *.nc; do echo \$f; ncdump -h \$f | grep var167; done"
         echo "nohup sh -c 'for y in {2081..2100}; do ...; done' > test.log 2>&1 &"
+        echo "cdo settaxis,1800-01-01,00:00:00,1mon fin fout # monthly time dim vals"
         echo "setgrid,global_1 in out --> lon from -180"
         echo "setgrid,r360x180 in out --> lon from 0"
         echo "cdo setmissval,nan"
@@ -666,6 +671,7 @@ else
     # --> it seems to be independet of the number of input files provided (29355 in this example)
     ncohelp(){
         echo "ncap2 -s 'time=time-1999;' in.nc foo.nc"
+        echo "ncap2 -s 'time=array(0,1,time); time@units=\"months since 1800-01-01\"; time@calendar=\"gregorian\"' fin fout"
         echo "ncap2 -O -s 'TEMP=double(TEMP)' in.nc out.nc"
         echo "ncap2 -O -s 'defdim(\"bnds\",2); time_bnds=make_bounds(time,\$bnds,\"time_bnds\");' in.nc out.nc"
         echo "ncatted -O -h -a history,global,d,, mesh_core_deriv_3d_geo.nc # remove history"

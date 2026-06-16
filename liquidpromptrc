@@ -6,6 +6,7 @@
 # inside their current shell, and this will display "2".
 # --> $SHLVL > 1 may happen due to shell opened display manager
 
+LP_PATH_KEEP=3 # number of leading path components to keep before abbreviating (~ counts as one)
 LP_HOSTNAME_ALWAYS=1 # 0: show the hostname, except when locally connected; 1: always show the hostname; -1: never
 LP_COLOR_HOST="$BLUE" # color for hostname
 LP_ENABLE_PERM=0 # no write permission in currenct dir

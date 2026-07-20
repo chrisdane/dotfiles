@@ -381,6 +381,11 @@ else
         echo "mirror -R [-P nfiles_in_parallel] dirlocal dirremote # -R for reverse"
         echo "lftp -c 'open ftp://ouruser:ourpassword@ftp.remotehost.com; mirror ...' # non-interactive mode"
     }
+    pinge(){
+        ping "${1:-example.com}" | while IFS= read -r line; do
+            echo "$(date +'%a %Y-%m-%d %H:%M:%S'): $line"
+        done
+    }
     vpnhelp(){
         echo "sudo openconnect -v --background --certificate=cert --csd-wrapper=script --timestamp --printcookie -u <name> <server>"
         echo "certificate: deutsche-telekom-root-ca-2.pem"
@@ -459,11 +464,13 @@ else
         echo "..."
         echo "</details>"
     }
+    export GIT_OPTIONAL_LOCKS=0 # ignore some hidden files on git status; maybe faster?
     githelp(){
         echo "get hash: git rev-parse --short HEAD"
         echo "git lol = git log --graph --decorate --pretty=oneline --abbrev-commit"
         echo "git lola = git log --graph --decorate --pretty=oneline --abbrev-commit --all"
         echo "git config core.fileMode false # ignore file permission changes" 
+        echo "find closest tag: git describe --tags ec4e797f"
         echo "# branch/tag"
         echo "show list:        git {branch,tag} [-av]"
         echo "default branch:   cat .git/refs/remotes/origin/HEAD"
@@ -862,6 +869,9 @@ else
     }
     configurehelp(){
         echo "./configure CFLAGS=\"-I/usr/local/include\" LDFLAGS=\"-L/usr/local/lib\""
+    }
+    claudehelp(){
+        echo "if /login does not work --> logout and login in browser session --> try again /login"
     }
     mypath(){
         Rscript -e "sort(strsplit(system('echo $PATH', intern=T), ':')[[1]])"

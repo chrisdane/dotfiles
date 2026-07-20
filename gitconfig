@@ -53,3 +53,5 @@
     helper = cache --timeout=10
 [safe]
     directory = *
+[core]
+	pager = less -i # used by `git blame`

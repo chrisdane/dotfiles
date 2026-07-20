@@ -159,6 +159,8 @@
 # bookdown::render_book("index.Rmd", "bookdown::gitbook")
 # available data set from packages: data()
 # remove dir: check <- base::unlink(unknowndir, recursive=T)
+# better utils::write.csv(df, "file.csv", quote=F, row.names=F): 
+# data.table::fwrite(df, "file.csv"[, quote="auto", row.names=F]) -> faster and sets quotes only if necessary and does not have rownames
 
 if (T) { # set F for blank .Rprofile
 

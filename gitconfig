@@ -55,3 +55,5 @@
     directory = *
 [core]
 	pager = less -i # used by `git blame`
+[init]
+	defaultBranch = main

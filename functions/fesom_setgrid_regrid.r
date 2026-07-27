@@ -20,7 +20,7 @@ if (interactive()) {
     #fesom_setgrid_regrid.r griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc outdir=. *_levelwise_0-5900m.nc > setgri.log 2>&1 &
 }
 
-usage <- paste0("\nUsage:\n $ ", me, 
+usage <- paste0("\nUsage:\n $ ", me,
                 " griddes=/path/to/griddes.nc [regrid=-remapycon,global_1] [cmd_before_regrid=-shifttime,-1day] outdir=/path/to/save/result file1 [file2 filen]\n",
                 "\n",
                 " with e.g. (albedo) griddes=/albedo/pool/FESOM/meshes_default/core/griddes.nc\n",
@@ -33,6 +33,8 @@ usage <- paste0("\nUsage:\n $ ", me,
                 "                     griddes=/work/ab0246/a270092/input//fesom2//core3/mesh.nc # nodes\n",
                 "                     griddes=/work/ab0246/a270092/input//fesom2//core3/mesh_cavity.nc # nodes\n",
                 "                     griddes=/work/ab0246/a270092/input/fesom2/dars2/mesh.nc # nodes\n",
+                "                     griddes=/work/ab1095/a270073/mesh/fesom2/dars2/griddes_dars2_node.nc # nodes\n",
+                "                     griddes=/work/ab1095/a270073/mesh/fesom2/dars2/griddes_dars2_elem.nc # elem\n",
                 "                     griddes=/work/ab0246/a270073/mesh/fesom/LSea2/griddes_LSea2.nc\n",
                 "           (ollie) griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n",
                 "                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_nodes.nc\n",
@@ -111,7 +113,7 @@ if (length(args) == 0) {
     quit()
 }
 files <- args
-files <- normalizePath(files, mustWork=T) # full path 
+files <- normalizePath(files, mustWork=T) # full path
 message("\nprocess ", length(files), " files:")
 options(width=1000)
 print(data.frame(file=files))

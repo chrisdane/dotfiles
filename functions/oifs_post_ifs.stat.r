@@ -8,7 +8,8 @@ rm(list=ls()); graphics.off()
 if (interactive()) {
     me <- "oifs_post_ifs.stat.r"
     #args <- "/work/ab1095/a270073/out/awiesm3-develop-cc/5yr2/run_19000101-19041231/work/ifs.stat"
-    args <- c("/work/ab1095/a270073/out/awiesm3-develop-cc/5yr2/run_19000101-19041231/work/ifs.stat", "/work/ab1095/a270073/out/awiesm3-develop-cc/5yr2/run_19000101-19041231/work/NODE.001_01") 
+    #args <- c("/work/ab1095/a270073/out/awiesm3-develop-cc/5yr2/run_19000101-19041231/work/ifs.stat", "/work/ab1095/a270073/out/awiesm3-develop-cc/5yr2/run_19000101-19041231/work/NODE.001_01")
+    args <- c("/work/ab1095/a270073/out/awiesm3-develop-cc/xco26/run_19000101-19001231/work/ifs.stat", "/work/ab1095/a270073/out/awiesm3-develop-cc/xco26/run_19000101-19001231/work/NODE.001_01")
 
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
@@ -20,7 +21,7 @@ if (interactive()) {
         print(stdout())
         stop("asd")
     }
-} # if interactive or not 
+} # if interactive or not
 
 help <- paste0("\nUsage:\n $ ", me, " ifs.stat [NODE.001_01] [| less]\n")
 
@@ -62,7 +63,7 @@ stat <- utils::read.table(fstat)
 # AVNRMDIV: i guess it's average of norm of divergence
 # IGETHWM: !-- Approximate max heap usage on *this* MPI task
 # IGETSTK: !-- Approximate max stack size on *this* MPI task's master thread
-# IGETVMP: !-- Virtual memory peak on *this* MPI-task 
+# IGETVMP: !-- Virtual memory peak on *this* MPI-task
 # IENERGY: ! In kJoules (values are per node -- not per task [Cray])
 if (ncol(stat) == 15) {
                        # 09:09:36    000000000   CNT3        -999     17.115  17.115 19.011 0:00    0:01      0.00000000000000E+00 898MB      5772KB     2256MB     0kJ        0W
@@ -99,23 +100,28 @@ if (isatty(stdout())) {
 }
 
 # read NODE.001_01
+# --> file NODE.001_01 = NODE.001_01: data
+# --> grep -a: Process a binary file as if it were text; this is equivalent to the --binary-files=text option.
 if (!is.null(fnode)) {
     # get start time --> todo: which one?
     if (F) { # The initial date of the run is : 1900  1  1
-        cmd <- paste0("grep \"^ The initial date of the run is  \" ", fnode)
+        cmd <- paste0("grep -a \"^ The initial date of the run is  \" ", fnode)
         message("\nrun `", cmd, "` ...")
         time_init <- suppressWarnings(system(cmd, intern=T)) # " The initial date of the run is : 1900  1  1"
         if (length(time_init) == 0) stop("could not find this line in this NODE file. never happened before")
+        message("--> ", time_init)
         time_init <- strsplit(time_init, " : ")[[1]][2] # " The initial date of the run is" "1900  1  1"
         time_init <- strsplit(time_init, "\\s+")[[1]] # "1900" "1"    "1"
-        time_init <- as.POSIXct(paste0(time_init[1], "-", time_init[2], "-", time_init[3]))
+        time_init <- as.POSIXct(paste0(time_init[1], "-", time_init[2], "-", time_init[3]), tz="UTC")
     } else if (T) { # XIOSFPOS: TIME_ORIGIN IS 1900-01-01 00:00:00
-        cmd <- paste0("grep \"^ XIOSFPOS: TIME_ORIGIN IS \" ", fnode)
+        cmd <- paste0("grep -a \"^ XIOSFPOS: TIME_ORIGIN IS \" ", fnode)
         message("\nrun `", cmd, "` ...")
-        time_init <- suppressWarnings(system(cmd, intern=T)) # " XIOSFPOS: TIME_ORIGIN IS 1900-01-01 00:00:00 "
+        #time_init <- suppressWarnings(system(cmd, intern=T)) # " XIOSFPOS: TIME_ORIGIN IS 1900-01-01 00:00:00 "
+        time_init <- system(cmd, intern=T) # " XIOSFPOS: TIME_ORIGIN IS 1900-01-01 00:00:00 "
         if (length(time_init) == 0) stop("could not find this line in this NODE file. never happened before")
+        message("--> \"", time_init, "\"")
         time_init <- substr(time_init, 27, nchar(time_init)-1) # "1900-01-01 00:00:00"
-        time_init <- as.POSIXct(time_init)
+        time_init <- as.POSIXct(time_init, tz="UTC")
     } else if (F) { # XIOSFPOS: START_TIME IS 1900-01-01 00:00:00
         stop("asdsada")
     }
@@ -124,10 +130,11 @@ if (!is.null(fnode)) {
 
     # get dt
     if (T) { #  XIOSFPOS: TIME_STEP IS 2400s
-        cmd <- paste0("grep \"^ XIOSFPOS: TIME_STEP IS \" ", fnode)
+        cmd <- paste0("grep -a \"^ XIOSFPOS: TIME_STEP IS \" ", fnode)
         message("\nrun `", cmd, "` ...")
         dt_sec <- suppressWarnings(system(cmd, intern=T)) # " XIOSFPOS: TIME_STEP IS 2400s               "
         if (length(dt_sec) == 0) stop("could not find this line in this NODE file. never happened before")
+        message("--> \"", dt_sec, "\"")
         dt_sec <- substr(dt_sec, 25, nchar(dt_sec)) # "2400s               "
         dt_sec <- strsplit(dt_sec, "s")[[1]][1] # "2400"            "               "
     } else {
@@ -145,7 +152,7 @@ if (length(inds) > 0) stop("unknown CDCONF: ", paste(unique(stat$CDCONF[inds]), 
 inds <- which(is.na(match(stat$CDCALLER, c("CNT3", "CNT0", "DYNFPOS", "STEPO"))))
 if (length(inds) > 0) stop("unknown CDCALLER: ", paste(unique(stat$CDCALLER[inds]), collapse="\n"))
 
-# remove header/footer lines: 000000000 CNT3, 000000000 CNT0 
+# remove header/footer lines: 000000000 CNT3, 000000000 CNT0
 inds <- which(stat$CDCONF == "000000000")
 if (length(inds) > 0) stat <- stat[-inds,]
 
@@ -180,7 +187,7 @@ if (!is.null(fnode)) {
 if (is.null(fnode)) {
     df <- data.frame(JSTEP=stat$JSTEP, PRT=stat$PRT, CLTIME=stat$CLTIME, CLTIMEMOD=stat$CLTIMEOD)
 } else {
-    df <- data.frame(JSTEP=stat$JSTEP, time=time, PRT=stat$PRT, CLTIME=stat$CLTIME, 
+    df <- data.frame(JSTEP=stat$JSTEP, time=time, PRT=stat$PRT, CLTIME=stat$CLTIME,
                      dt_min=dt_calendar_min, dt_hour=dt_calendar_hour, dt_day=dt_calendar_day, dt_yr_365=dt_calendar_yr_365, dt_yr_36525=dt_calendar_yr_36525,
                      CLTIMEMOD=stat$CLTIMEOD)
 }
@@ -201,11 +208,11 @@ if (isatty(stdout())) {
     plotname <- "~/models/oifs/ifs.stat"
     if (!dir.exists(plotname)) dir.create(plotname, recursive=T, showWarnings=F)
     if (!dir.exists(plotname)) stop("could not create dir ", plotname)
-    title <- strsplit(fstat, "/")[[1]] 
+    title <- strsplit(fstat, "/")[[1]]
     # e.g.:
-    # [1] ""                      "work"                  "ab1095"               
-    # [4] "a270073"               "out"                   "awiesm3-develop-cc"   
-    # [7] "5yr2"                  "run_19000101-19041231" "work"                 
+    # [1] ""                      "work"                  "ab1095"
+    # [4] "a270073"               "out"                   "awiesm3-develop-cc"
+    # [7] "5yr2"                  "run_19000101-19041231" "work"
     #[10] "ifs.stat"
     title <- paste(title[(length(title) - 4):(length(title) - 2)], collapse="_")
     plotname <- paste0(plotname, "/ifs.stat_PRT_", title, "_max_JSTEP_", max(stat$JSTEP))
@@ -276,7 +283,7 @@ if (isatty(stdout())) {
     y_mean_unit <- "sec"
     y_median <- median(y, na.rm=T)
     y_median_unit <- "sec"
-    legend("topleft", 
+    legend("topleft",
            paste0(c("mean", "median"), " PRT: ", format(c(y_mean, y_median), digits=3), " ", c(y_mean_unit, y_median_unit)),
            col=NA, lty=NA, pch=NA, lwd=NA, bty="n", x.intersp=-2)
     invisible(dev.off())

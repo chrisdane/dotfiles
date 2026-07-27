@@ -188,21 +188,18 @@ else
         lfs getstripe --mdt-index .
     }
     diffc(){ # colored diff
-        diff --color=always -u $1 $2 | less -i -R # `always` when piped
+        diff --color=always -u $1 $2 | less -i -R # --color=always for piped
     }
-    diffcc(){ # colored character-wise diff with git
-        git diff --no-index --word-diff-regex=. $1 $2
-    }
-    diffc2(){ # colored diff with vi
+    diffcv(){ # colored diff with vim
         diff $1 $2 | vim -R -
         #diff $1 $2 | colordiff # needs colordiff
     }
-    diffcg(){ # colored diff of non-git files with git
-        git diff --color=always --no-index $1 $2
+    diffcg(){ # colored diff with git
+        git diff --no-index --color=always $1 $2
     }
-    diffcgw(){ # colored diff of non-git files with git
-        # word-diff=porcelain
-        git diff --color=always --word-diff=color --no-index $1 $2
+    diffcgw(){ # colored diff with git character-wise
+        #git diff --no-index --color=always --word-diff-regex=. $1 $2
+        git diff --no-index --color=always --word-diff-regex='[[:alnum:]_]+|[^[:space:]]' $1 $2 # works better
     }
     myfind() { find -name "*$1*" -not -path '*/.*' 2>/dev/null ; } # `-not -path '*/.*'`to ignore hidden dirs/files
     myfindp() { find -path "*$1*" -not -path '*/.*' 2>/dev/null ; } # -path and not -name to support '/'
@@ -215,6 +212,7 @@ else
     myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
     myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
     myfindh() { find -name "*$1*" 2>/dev/null ; } # hidden files
+    alias grepa="grep -a" # to grep in binary files as if were text files
     greplib(){ # todo: grep args
         /usr/bin/strings "$2" | /usr/bin/grep --color=always "$1"
     }
@@ -1231,7 +1229,7 @@ else
         checkall check_nc_integrity.r 
         myquota.r 
         myfinger myfinger.r finduser.r 
-        get_timestep.r get_dir_sizes.sh 
+        get_timestep.r get_dz.r get_dir_sizes.sh 
         ping_wait
         slurm_wait slurm_check.r slurm_stats.r slurm_get_npes.r
         esm_check_yaml.r esm_check_err.r esm_check_paths.r esm_get_output.r

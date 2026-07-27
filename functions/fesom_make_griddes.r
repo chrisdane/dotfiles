@@ -6,18 +6,26 @@ rm(list=ls()); graphics.off()
 
 #remotes::install_github("FESOM/spheRlab")
 message("load spheRlab package ...")
-if (F) {
-    library(spheRlab)
-} else if (F) { # ollie
-    #library(spheRlab, lib="/global/AWIsoft/R/4.1.0/lib/R/library") # 1.1.5
-    library(spheRlab, lib="/home/ollie/cdanek/scripts/r/packages/bin/r_4.1") # 1.1.5
+if (F) { # load package
+    if (T) { # default
+        library(spheRlab) # 1.1.5
+    } else if (F) { # ollie
+        #library(spheRlab, lib.loc="/global/AWIsoft/R/4.1.0/lib/R/library") # 1.1.5
+        library(spheRlab, lib.loc="~/scripts/r/packages/bin/r_4.1") # 1.1.5
+    }
+    message("\nloaded spheRlab version ", packageVersion("spheRlab"),
+            " from path ", attr(packageDescription("spheRlab"), "file"))
+} else if (T) { # use functions directly
+    if (T) { # levante
+        for (f in list.files("~/models/fesom/spheRlab/R", pattern=".*.r",full.names=T, ignore.case=T)) source(f)
+    }
 }
-message("\nloaded spheRlab version ", packageVersion("spheRlab"), 
-        " from path ", attr(packageDescription("spheRlab"), "file"))
 
-#fesom2velocities <- T # elem-space
-fesom2velocities <- F # node-space
+fesom2velocities <- T # elem-space
+#fesom2velocities <- F # node-space
 remove.emptylev <- T
+verbose <- T
+
 if (F) { # fesom1 core
     fesom2 <- F
     gridname <- "core"
@@ -55,7 +63,7 @@ if (F) { # fesom1 core
     outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_coast_500km_200m_10km"
     rot <- F
     rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
-} else if (T) { # core3 cav
+} else if (F) { # core3 cav
     fesom2 <- T
     gridname <- "core3_cav"
     #griddir <- "/albedo/work/user/sharig/mg/MT_v0.1/mesh_CORE3_cav"
@@ -64,13 +72,20 @@ if (F) { # fesom1 core
     outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_core3_cav/mesh_20251110"
     rot <- F
     rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
+} else if (T) { # dars2 cav
+    fesom2 <- T
+    gridname <- "dars2"
+    griddir <- "/work/ab0246/a270092/input/fesom2/dars2"
+    outdir <- "/work/ab1095/a270073/mesh/fesom2/dars2"
+    rot <- F
+    rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
 }
 
 #######################################################
 
-ofile <- paste0(outdir, "/griddes_", gridname, "_", 
+ofile <- paste0(outdir, "/griddes_", gridname, "_",
                 ifelse(fesom2velocities, "elem", "node"), ".nc")
-message("\ncreate griddes for mesh files in\n   ", griddir, 
+message("\ncreate griddes for mesh files in\n   ", griddir,
         "\nand save result to\n   ", ofile, "\n...")
 
 if (file.exists(ofile)) {
@@ -81,17 +96,18 @@ if (file.exists(ofile)) {
 
     message("\nstep 1/2: run spheRlab::sl.grid.readFESOM() ...")
     # spheRlab::sl.grid.readFESOM uses Rearth=6371000 m
-    grid <- spheRlab::sl.grid.readFESOM(griddir=griddir, 
-                                        rot=rot, 
-                                        rot.invert=rot.invert, 
-                                        rot.abg=rot.abg, 
-                                        remove.emptylev=remove.emptylev, 
-                                        fesom2=fesom2)
+    grid <- sl.grid.readFESOM(griddir=griddir,
+                              rot=rot,
+                              rot.invert=rot.invert,
+                              rot.abg=rot.abg,
+                              remove.emptylev=remove.emptylev,
+                              fesom2=fesom2,
+                              verbose=verbose)
 
     message("\nstep 2/2: run spheRlab::sl.grid.writeCDO() ...")
-    spheRlab::sl.grid.writeCDO(grid, 
-                               ofile=ofile, 
-                               fesom2velocities=fesom2velocities)
+    sl.grid.writeCDO(grid,
+                     ofile=ofile,
+                     fesom2velocities=fesom2velocities)
 }
 
 message("\nfinished\n")

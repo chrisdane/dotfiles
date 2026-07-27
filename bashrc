@@ -80,7 +80,10 @@ else
     #if [ -d ~/.local/bin ]; then
         export PATH=~/.local/bin:$PATH
     #fi
-    
+    if [ -d ~/.opencode/bin ]; then # opencode
+        export PATH=~/.opencode/bin:$PATH 
+    fi
+
     # get battery capacity percentage if available
     get_battery_capacity(){ 
         if [ -f /sys/class/power_supply/BAT0/capacity ]; then
@@ -1345,12 +1348,6 @@ else
     # esm_tools stuff
     if [ -f ~/bin/esm_tools_helpers.sh ]; then
         source ~/bin/esm_tools_helpers.sh
-    fi
-    if [ -f ~/esm/awicm3-v3.1.1/oasis/util/lucia/lucia ]; then
-        alias lucia='~/esm/awicm3-v3.1.2/oasis/util/lucia/lucia'
-    fi
-    if [ -f ~/esm/awicm3-v3.1.2/oasis/util/lucia/lucia ]; then
-        alias lucia='~/esm/awicm3-v3.1.2/oasis/util/lucia/lucia'
     fi
 
     # load private stuff at the end to overwrite defaults from above

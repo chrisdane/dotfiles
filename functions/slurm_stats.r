@@ -58,7 +58,8 @@ if (interactive()) {
     #args <- "/home/a/a270073/scripts/r/mldHT09/calc_mldHT09_loop_logs/calc_mldHT09_ctrl4020_1719480730_job_62_of_86_62_62_script_10867554.log"
     #args <- "/albedo/home/ogurses/CLEAN/from_Sina/fesom2.7/2.7_test_Asp/slurm-out_*"
     #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-ssp370/log/esm-ssp370_awicm_compute_20150101-20151231_4226354.log"
-    args <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-ssp370/log/*_compute_*-*_*.log"
+    #args <- "/work/ab1095/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-ssp370/log/*_compute_*-*_*.log"
+    args <- "/work/ab1095/a270073/out/awiesm3-develop-cc/an_restart_4_lucia_omp_4_2/run_19000101-19001231/log/an_restart_4_lucia_omp_4_2_awiesm3_compute_26498150.log"
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F) # internal and user args
     me <- basename(sub("--file=", "", args[grep("--file=", args)]))
@@ -199,8 +200,10 @@ for (nci in seq_along(nchars_unique)) {
     message(jobid, " ok")
     jobids[[nci]] <- data.frame(log=logs[inds], jobid=substr(logs[inds], fromto[1], fromto[2]))
 } # for nci
-logs <- unlist(sapply(jobids, "[[", "log"))[,1] # (nx1) matrix to (n) vector
-jobids <- unlist(sapply(jobids, "[[", "jobid"))[,1]
+logs <- unlist(sapply(jobids, "[[", "log"))
+if (!is.null(dim(logs))) logs <- logs[,1] # (nx1) matrix to (n) vector
+jobids <- unlist(sapply(jobids, "[[", "jobid"))
+if (!is.null(dim(jobids))) jobids <- jobids[,1]
 
 if (length(logs) == 0) { # exclude removed all log files
     message("--> exclude removed all logfiles")
@@ -431,7 +434,7 @@ message("\n****************************************************************\n",
         "results of ", length(jobids), " successfull / ", length(jobids) + length(missing_jobid_inds),
         " provided jobids (rerun with `--exclude=1,2,3-5` if needed):\n")
 options(width=1000)
-df <- data.frame(log=logs, jobid=jobids, elapsed_h=elapsed_hour, node_hours=node_hours, nnodes=nnodes, queue=queue, energy_kWh=energy_kWh)
+df <- data.frame(log=logs, jobid=jobids, elapsed_min=elapsed_min, elapsed_h=elapsed_hour, node_hours=node_hours, nnodes=nnodes, queue=queue, energy_kWh=energy_kWh)
 print(df, row.names=rownames, digits=3)
 options(width=oo$width)
 message("(", length(jobids), " successfull / ", length(jobids) + length(missing_jobid_inds), " provided)")

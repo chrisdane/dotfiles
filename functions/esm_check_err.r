@@ -4,11 +4,11 @@
 args <- commandArgs(trailingOnly=F)
 me <- basename(sub("--file=", "", args[grep("--file=", args)]))
 default_logs <- c(# echam6
-                  "echam6.log", "atmout", "echam.stderr", "echam.stdout" 
+                  "echam6.log", "atmout", "echam.stderr", "echam.stdout"
                   # lpjg
                   , "guess.log"
                   # oasis
-                  , "debug.", "debug.root.", "debug.notroot.", "debug_notroot.", "lucia.", "nout.0"
+                  , "debug.", "debug.root.", "debug.notroot.", "debug_notroot.", "lucia.", "nout.0", "ucx_debug."
                   # oifs
                   , "meminfo.txt", "NODE."
                   # xios
@@ -27,7 +27,7 @@ if (any(grepl("--help", args))) {
 # run `grep -Ein "warn|err|severe|\!"` on every log
 logs <- commandArgs(trailingOnly=T)
 if (length(logs) == 0) {
-    message("no log files given. use default") 
+    message("no log files given. use default")
     logs <- default_logs
 }
 for (logi in seq_along(logs)) {
@@ -40,9 +40,9 @@ for (logi in seq_along(logs)) {
         for (fi in seq_along(fs)) {
             if (file.info(fs[fi])["size"] > 0) {
                 cmd <- paste0(
-                              #"grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|\\!|No such file or directory\" ", 
-                              #"grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|No such file or directory\" ", 
-                              "grep -Ein \"error|fail|severe|abort|invalid|stop|abor|not found|No such file or directory\" ", 
+                              #"grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|\\!|No such file or directory\" ",
+                              #"grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|No such file or directory\" ",
+                              "grep -Ein \"error|fail|severe|abort|invalid|stop|abor|not found|No such file or directory\" ",
                               fs[fi])
                 message("--> run `", cmd, "` ...")
                 system(cmd)

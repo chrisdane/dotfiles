@@ -7,7 +7,8 @@ if (interactive()) {
     #args <- c("general", "/scratch/de2d/out/awicm3-v3.1/test/run_20000101-20000103/config/test_finished_config.yaml")
     #args <- c("openifs", "/perm/de2d/out/awicm3-v3.1.1/test/run_20000101-20000103/config/test_finished_config.yaml")
     #args <- "output_finished_config.yaml"
-    args <- c("fesom", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/run_44280101-44281231/config/esm-piControl_wout_talk_rest2_finished_config.yaml")
+    #args <- c("fesom", "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/esm-piControl_wout_talk_rest2/run_44280101-44281231/config/esm-piControl_wout_talk_rest2_finished_config.yaml")
+    args <- c("general", "/work/ab1095/a270211/out/awicm-1.0-recom/historical3_1894_tracorr/run_19970101-19971231/config/historical3_1894_tracorr_finished_config.yaml")
 } else {
     args <- commandArgs(trailingOnly=T) # user args only
     if (length(args) == 0) {
@@ -28,7 +29,12 @@ if (length(args) > 1) { # user provided section
 
 library(yaml)
 try(cat("read ", file, "\n", sep=""), silent=T)
-yaml <- yaml::read_yaml(file)
+if (F) { # default
+    yaml <- yaml::read_yaml(file)
+} else if (T) { # return integer as numeric to prevent warning:
+                #   NAs introduced by coercion: 4670438400 is out of integer range
+    yaml <- yaml::read_yaml(file, handlers=list(int=function(x) as.numeric(x)))
+}
 # e.g.
 #List of 10
 # $ computer  :List of 56
@@ -65,14 +71,14 @@ include <- c("original_command",
              "install_esm_tools_branch",
              "couplings",
              "model_dir",
-             "bin_sources", 
+             "bin_sources",
              "branch",
              "setup_name",
-             "version",
+             "version", "major_version",
              "execution_command",
              "comp_command",
-             "include_models", 
-             "pool_dir", 
+             "include_models",
+             "pool_dir",
              "mesh_dir",
              "resolution",
              "res_level",
@@ -94,22 +100,22 @@ include <- c("original_command",
              "time_step",
              "scenario",
              "scenario_type",
-             "config_sources", 
-             "namelist_dir", 
+             "config_sources",
+             "namelist_dir",
              "namelists",
-             "namelist_changes", 
+             "namelist_changes",
              "lresume",
              "restart_in_sources",
              "preprocess",
              "post_processing",
              "postprocess",
-             "dataset", 
-             "forcing_dir", "forcing_sources", 
-             "input_dir", 
-             "input_sources", 
-             "adj_input_dir", 
-             "additional_files", 
-             "greenhouse_dir", 
+             "dataset",
+             "forcing_dir", "forcing_sources",
+             "input_dir",
+             "input_sources",
+             "adj_input_dir",
+             "additional_files",
+             "greenhouse_dir",
              "ifsdata_dir",
              "further_reading"
              #, "runtime_environment_changes"
@@ -121,7 +127,7 @@ for (i in seq_along(yaml)) {
     keys <- keys[match(include, keys)] # continue only with wanted keys
     if (any(is.na(keys))) keys <- keys[-which(is.na(keys))]
     if (length(keys) > 0) {
-        try(cat("\n******************************************* section ", i, "/", length(yaml), 
+        try(cat("\n******************************************* section ", i, "/", length(yaml),
                 " *******************************************\n",
                 names(yaml)[i], "\n", sep=""), silent=T)
         for (j in seq_along(keys)) {
@@ -130,7 +136,7 @@ for (i in seq_along(yaml)) {
             vals <- sapply(yaml[[i]][[keys[j]]], "[")
             #if (keys[j] == "additional_files") stop("asd")
             if (typeof(vals) == "list") {
-                if (length(vals) > 0) { # exclude empty `named list()`s 
+                if (length(vals) > 0) { # exclude empty `named list()`s
                     if (length(vals) == 1) { # special case
                         if (F) {
                             str(sapply(yaml$fesom$namelist_changes, "[")) # list of length > 1: names ok
@@ -145,7 +151,7 @@ for (i in seq_along(yaml)) {
                     #if (i == 8 && keys[j] == "namelist_changes") stop("asd")
                 }
             } else {
-                try(cat(paste(paste0("        ", nams, ": ", vals), collapse="\n"), "\n"), silent=T) 
+                try(cat(paste(paste0("        ", nams, ": ", vals), collapse="\n"), "\n"), silent=T)
             }
         } # for j
     } # if any of wanted keys exist

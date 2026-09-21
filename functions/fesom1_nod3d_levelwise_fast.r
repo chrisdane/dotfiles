@@ -63,7 +63,7 @@ usage <- paste0("\n",
                 "from https://github.com/FESOM/spheRlab.git but faster.",
                 "\n",
                 "\nUsage:\n",
-                "[sbatch -p shared -A <account> -t 08:00:00 -o lvl.log -e lvl.log --wrap=\"]",
+                "[sbatch -p shared -A <account> -t 08:00:00 --mem=4G -o lvl.log -e lvl.log --wrap=\"]",
                 me,
                 " meshdir=/path/to/mesh outdir=/path/to/save/result [griddes=/path/to/griddes.nc] [sellevel=100 or sellevel=100,1337.8,1338 or sellevel=1000/1338] [timstat=monmean] [settbounds=day] [shifttime=-1s] [reduce_dim=false] file1 [file2 fileN; e.g.: {thetao,so}_fesom_{1970..1972}*.nc] [\" or > lvl.log 2>&1 &]\n",
                 "\n",
@@ -263,7 +263,7 @@ for (fi in seq_along(files)) {
                     # eval "find $path -type f \( $expr \)"
                     # ```
     } else if (F) { # use list.files
-                    # todo: brace expansion "so_fesom_{1970..2014}*.nc" cannot be translated to r in a non-painful way? 
+                    # todo: brace expansion "so_fesom_{1970..2014}*.nc" cannot be translated to r in a non-painful way?
         pattern <- glob2rx(basename(files[fi]))
         message("run `list.files(\"", dirname(files[fi]), "\", pattern=\"", pattern, "\", full.names=T)` ...")
         fnames <- list.files(dirname(files[fi]), pattern=pattern, full.names=T) # pattern is regular expression

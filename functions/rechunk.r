@@ -13,10 +13,12 @@ if (interactive()) {
     #./rechunk.r "time/ntime,nodes_2d/126859" /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom/rechunk_ntime_126859 /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom/shifttime/tos_fesom_* > rechunk.log 2>&1 &
 }
 
-usage <- paste0("\nUsage:\n", 
+usage <- paste0("\nUsage:\n",
                 " $ ", me, " time/ntime,nodes_2d/126859 <outpath> <files>\n",
                 " $ ", me, " time/ntime,ncells/126859 <outpath> <files>\n",
                 " $ ", me, " time/ntime,depth/1,ncells/126859 <outpath> <files>\n",
+                " $ ", me, " time/1,depth/nlevel,ncells/126859 <outpath> <files>\n",
+                " $ ", me, " time/ntime,depth/nlevel,ncells/126859 <outpath> <files>\n",
                 " $ ", me, " time/ntime,lat/1,lon/1440 <outpath> <files>\n",
                 " $ ", me, " TIME/1,LATITUDE/180,LONGITUDE/360 <outpath> <files>\n",
                 "\n",
@@ -58,6 +60,14 @@ for (fi in seq_along(files)) {
             if (is.na(ntime)) stop("no success")
             message(ntime)
             tmp <- sub("ntime", ntime, tmp)
+        }
+        if (grepl("/nlevel", tmp)) { # replace "nlevel" with actual nlevel
+            cmd <- paste0("cdo -s nlevel ", files[fi])
+            message("file ", fi, "/", length(files), ": run `", cmd, "` ... ", appendLF=F)
+            nlevel <- as.integer(system(cmd, intern=T))
+            if (is.na(nlevel)) stop("no success")
+            message(nlevel)
+            tmp <- sub("nlevel", nlevel, tmp)
         }
         #fout <- paste0(pathout, "/", basename(files[fi]), "_", gsub("[[:punct:]]", "_", tmp))
         fout <- paste0(pathout, "/", basename(files[fi]))

@@ -147,7 +147,7 @@ if (!is.null(fnode)) {
 } # if fnode
 
 # check input
-inds <- which(is.na(match(stat$CDCONF, c("000000000", "0AAA00AAA", "AAAA00AAA", "FULLPOS-B", "FULLPOS-S"))))
+inds <- which(is.na(match(stat$CDCONF, c("000000000", "0AAA00AAA", "AAAA00AAA", "FAAA00000", "FULLPOS-B", "FULLPOS-S"))))
 if (length(inds) > 0) stop("unknown CDCONF: ", paste(unique(stat$CDCONF[inds]), collapse="\n"))
 inds <- which(is.na(match(stat$CDCALLER, c("CNT3", "CNT0", "DYNFPOS", "STEPO"))))
 if (length(inds) > 0) stop("unknown CDCALLER: ", paste(unique(stat$CDCALLER[inds]), collapse="\n"))

@@ -172,15 +172,20 @@ else
             return 1
         fi
     }
-    tl(){
+    tl(){ # tail latest log
         file=$(\ls -t *.log | grep -v _observe_ | head -n1)
         echo `\ls --color=auto -lFh $(pwd)/$file`
         tail -f $file
     }
-    ml(){
+    ml(){ # more/less latest log
         file=$(\ls -t *.log | grep -v _observe_ | head -n1)
         echo `\ls --color=auto -lFh $(pwd)/$file`
         less -i $file
+    }
+    ml0(){ # more/less latest log "^   0:" lines
+        file=$(\ls -t *.log | grep -v _observe_ | head -n1)
+        echo `\ls --color=auto -lFh $(pwd)/$file`
+        grep -E "^   0|^3584|^3968|^3969|^4033" $file | less -i # core3 tco95 tp2: fesom oifs rnfmap lpj xios
     }
     pwd2(){
         #printf "\$(readlink -f .) = "
@@ -350,6 +355,7 @@ else
         echo "find /usr/local/bin -lname '/usr/local/texlive/*'" -delete # delete links
         echo "find / -iname openssl.pc 2>/dev/null \# locate alternative"
         echo "for f in *1954*; do echo \$f; ln -s \$(pwd)/\$f /aim/\$f; done"
+        echo "for y in {2015..2100}; do echo $y; cdo -expr,'chl=bgc06+bgc15' -merge bgc06_fesom_${y}0101_levelwise_0m.nc bgc15_fesom_${y}0101_levelwise_0m.nc chl_fesom_${y}0101_levelwise_0m.nc; done"
         echo "rename 's/\.DAT/\.dat/' * \# -n for dry"
         echo "while read -r f; do mv '\$f' '\${f//:/_}'; done <files.txt"
         echo "arr=(\$(ls -F historical2_185012* | grep -v codes))"
@@ -513,8 +519,11 @@ else
         echo "git diff --color-words=."
         echo "# merge"
         echo "git merge -s ours # --strategy"
+        echo "git merge -X theirs main"
         echo "# stash"
         echo "git stash list; stash show -p stash@{1}; stash apply stash@{n}; stash drop stash@{2}"
+        echo "git diff stash@{0}^ stash@{0} -- src/io_restart.F90 # show specific stash file"
+        echo "git checkout stash@{0} -- src/io_restart.F90 # apply specific stash file"
         echo "# cherry-pick"
         echo "git checkout commitx"
         echo "git cherry-pick commity [commitz1 commitz2]"
@@ -690,6 +699,7 @@ else
         echo "ncpdq -a time,depth in out # switch dims"
         echo "ncwa -a lev in.nc out.nc # remove dim"
         echo "ncap2 -s 'defdim(\"lon_bnds\",2); lon_bnds=make_bounds(lon,\$lon_bnds,\"lon_bnds\"); defdim(\"lat_bnds\",2); lat_bnds=make_bounds(lat,\$lat_bnds,\"lat_bnds\")' remap bnds"
+        echo "ncap2 -s 'defdim(\"bnds\",2); lon_bnds=make_bounds(lon,\$bnds,\"lon_bnds\"); lat_bnds=make_bounds(lat,\$bnds,\"lat_bnds\")' remap bnds"
     }
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
@@ -875,7 +885,7 @@ else
         echo "if /login does not work --> logout and login in browser session --> try again /login"
     }
     mypath(){
-        Rscript -e "sort(strsplit(system('echo $PATH', intern=T), ':')[[1]])"
+        Rscript -e "strsplit(system('echo $PATH', intern=T), ':')[[1]]"
     }
 
     # aliase (check with 'type alias')
@@ -1231,10 +1241,11 @@ else
         rnohup mnohup nclnohup 
         checkall check_nc_integrity.r 
         myquota.r 
-        myfinger myfinger.r finduser.r 
+        myfinger myfinger.r finduser.r myw.sh
         get_timestep.r get_dz.r get_dir_sizes.sh 
         ping_wait
         slurm_wait slurm_check.r slurm_stats.r slurm_get_npes.r
+        atlas_check.r
         esm_check_yaml.r esm_check_err.r esm_check_paths.r esm_get_output.r
         esm_get_esm_version_exp esm_get_esm_version_home
         esm_tools_helpers.sh
@@ -1258,11 +1269,12 @@ else
         mycat_moc.r
         ncap2_make_lonlat_bnds.sh
         my_gsw_O2sol_SP_pt.r calc_DIC_remin.r
+        hysteresis_koehn26.r
         rechunk.r remap_quasi_conservative.r
         nominal_resolution.r convert_lon_360_to_180.r 
         takahashi_etal_2002.r
         precip_mm_day2month.r precip_mm_month2day.r
-        when.r kelvin.sh fahrenheit.sh feet.sh dom beaufort.r inertial.r
+        when.r kelvin.sh fahrenheit.sh feet.sh doy beaufort.r inertial.r
         )
     mkdir -p ~/bin
     for f in "${fs[@]}"; do
@@ -1382,65 +1394,60 @@ else
     if ! check_existance nc-config; then
         echo 'nc-config' is missing!
     fi
+    
+    if check_existance atlas; then
+        alias atlasll='atlas ls -l'
+        ame() {
+            echo "atlas jobs"
+            atlas jobs
+        }
+    fi
 
-    # change default pip/conda paths
-    # xarray:   2.7G
-    # pyfesom2: 1.9G 4.6G
-    # pyint:    1.8G 6.4G
+    # add envs bin paths
     if [ ! -z ${mywork+x} ]; then # not empty
         echo "mywork = ${mywork} is set"
-        # todo: how to do that correctly?
-        #export PYTHONUSERBASE="${mywork}/sw/pip" # = pythons site.USER_SITE
-        #echo "--> change default pip path from ~/.local to PYTHONUSERBASE=${PYTHONUSERBASE} ..."
-        #export PATH="${PYTHONUSERBASE}/bin:$PATH"
-        # without tilde expansion (hide name of home to be machine-agnostic):
-        if false; then
-            conda_prefix="${mywork}/sw/conda/envs"
-            conda_envs_dirs="${conda_prefix}"
-            conda_pkgs_dirs="${mywork}/sw/conda/pkgs"
-            echo "--> change default conda path from ~/.conda:"
-            echo "       CONDA_PREFIX=${conda_prefix}"
-            echo "       CONDA_ENVS_DIRS=${conda_envs_dirs}"
-            echo "       CONDA_PKGS_DIRS=${conda_pkgs_dirs}"
-            # with tilde expansion: necessary for conda and mkdir:
-            export CONDA_PREFIX="${conda_prefix/#\~/$HOME}"
-            export CONDA_ENVS_DIRS="${conda_envs_dirs/#\~/$HOME}"
-            export CONDA_PKGS_DIRS="${conda_pkgs_dirs/#\~/$HOME}"
-            # todo: conda activate --stack
-            # todo: when both CONDA_PREFIX and PIP_TARGET are set: ERROR: Can not combine '--user' and '--target'
-            #mkdir -p ${CONDA_PREFIX} ${CONDA_ENVS_DIRS} ${CONDA_PKGS_DIRS} ${PIP_PREFIX}
-            #export PYTHONPATH=${conda_envs_dirs/#\~/$HOME}:${conda_pkgs_dirs/#\~/$HOME}:${pip_prefix/#\~/$HOME}:$PYTHONPATH
-        fi # true/false
-        if false; then # pip_prefix cannot be used on system where home, work, tmp, ... are mounted on different file systems
-                       # --> at the end of the build the linking between /tmp and local fails: OSError: [Errno 18] Invalid cross-device link
-            pip_prefix="${mywork}/sw"
-            echo "--> set PIP_PREFIX = ${pip_prefix}"
-            export PIP_PREFIX="${pip_prefix/#\~/$HOME}"
-        fi # true/false
-        if true; then
+
+        # add py envs bins to path
         #if false; then
-            pythonuserbase="${mywork}/sw/py/pkgs"
-            mkdir -p ${pythonuserbase/#\~/$HOME} # mkdir does not understand ~
-            echo "--> run 'export PYTHONUSERBASE=$pythonuserbase' # using absolute path"
-            echo "--> run 'PATH=$pythonuserbase/bin:\$PATH' # using absolute path"
-            export PYTHONUSERBASE="${pythonuserbase/#\~/$HOME}" # pythonuserbase does not understand ~
-            export PATH="${pythonuserbase/#\~/$HOME}/bin:$PATH" # does path understand ~?
-            # pythonpath not needed?:
-            #pyversion=$(python -V 2>&1 | \grep -Po '(?<=Python )(.+)') # e.g. 3.10.10
-            #pyversion=${pyversion%.*} # e.g. 3.10
-            #pythonpath="${pythonuserbase}/lib/python${pyversion}/site-packages"
-            #echo "--> run 'export PYTHONPATH=$pythonupath' # using absolute path"
-            #export PYTHONPATH="${pythonpath/#\~/$HOME}"
-            echo "--> install package with 'pip install [-v] --user [-e .]'"
+        if true; then
+            py_envs_dir="${mywork}/sw/py/envs"
+            py_envs_dir="${py_envs_dir/#\~/$HOME}"
+            if [ -d "${py_envs_dir}" ]; then
+                echo "add all ${py_envs_dir}/*/bin dirs to PATH:"
+                for path in "${py_envs_dir}"/*; do
+                    if [ -d "${path}/bin" ]; then
+                        echo "${path}/bin"
+                        export PATH="${path}/bin:$PATH"
+                    fi
+                done
+            fi
         fi
+        
+        # add conda envs bins to path
+        #if false; then
+        if true; then
+            conda_envs_dir="${mywork}/sw/conda/envs"
+            conda_envs_dir="${conda_envs_dir/#\~/$HOME}"
+            if [ -d "${conda_envs_dir}" ]; then
+                echo "add all ${conda_envs_dir}/*/bin dirs to PATH:"
+                for path in "${conda_envs_dir}"/*; do
+                    if [ -d "${path}/bin" ]; then
+                        echo "${path}/bin"
+                        export PATH="${path}/bin:$PATH"
+                    fi
+                done
+            fi
+        fi
+        
         conda_deactivate(){
             echo "---------------- conda_deactivate() ----------------"
             echo "run 'conda deactivate' ..."
             conda deactivate
-            echo "run 'export CONDA_PREFIX=${conda_prefix}' ..."
-            export CONDA_PREFIX="${conda_prefix/#\~/$HOME}" # re-set CONDA_PREFIX since this is unset on default `conda deactivate`
+            # CONDA_ENVS_DIRS/CONDA_PKGS_DIRS are plain exported env vars, not touched
+            # by `conda activate`/`deactivate`, so nothing needs to be re-set here.
             echo "---------------- conda_deactivate() ----------------"
         } # conda_deactivate
+        
     else
         echo "'mywork' is not set --> do not change default pip/conda paths"
     fi # if mywork is set

@@ -2,14 +2,12 @@
 
 esm_tools_info() {
     if command -v esm_tools > /dev/null 2>&1; then
-        #echo "run 'esm_tools --version' ..."
+        echo "run 'esm_tools --version' ..."
         esm_tools_version=$(esm_tools --version) # e.g. "esm_tools, 6.1.3"
         esm_master_bin=$(which esm_master) # e.g. ~/.local/bin/esm_master
         esm_master_py_bin=$(head -1 $esm_master_bin) # "#!/path"
         esm_master_py_bin=${esm_master_py_bin:2} # "/path"
-        esm_tools_src_path=$($esm_master_py_bin -c "import site; print(site.getusersitepackages())") # e.g. ~/.local/lib/python3.8/site-packages
-        esm_tools_src_path=$(head -1 $esm_tools_src_path/esm-tools.egg-link) # /path/to/esm_tools/src/
-        esm_tools_src_path=$(dirname $esm_tools_src_path) # without /src
+        esm_tools_src_path=$($esm_master_py_bin -c "import esm_tools, os; print(os.path.dirname(os.path.dirname(os.path.dirname(esm_tools.__file__))))") # repo root, without /src/esm_tools
         owd=$(pwd); cd $esm_tools_src_path
         esm_tools_src_path=$(pwd) # normalize path; better than readlink -f
         esm_tools_branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
@@ -27,13 +25,7 @@ esm_tools_info() {
     fi
 } # esm_tools_info
 
-esm_tools_help() {
-
-    echo "scripts/disturb_years.dat"
-
-} # esm_tools_help
-
-recomp_fesom() {
+recomp_fesom() { # deprecated
     if command -v esm_tools > /dev/null 2>&1; then
         if [[ ! -z "$@" && -d $"$@" ]]; then # provided dir is not empty and found
             setup_path=$(cd "$@"; pwd) # better than readlink -f
@@ -91,7 +83,7 @@ recomp_fesom() {
     fi # esm_tools exist
 } # recomp_fesom
 
-recomp_recom() {
+recomp_recom() { # deprecated
     if command -v esm_tools > /dev/null 2>&1; then
         if [[ ! -z "$@" && -d $"$@" ]]; then # provided dir is not empty and found
             setup_path=$(cd "$@"; pwd) # better than readlink -f

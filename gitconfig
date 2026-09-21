@@ -3,6 +3,17 @@
     email = cdanek@awi.de
 [alias]
     gethash = rev-parse --short HEAD
+    list = "!f() { \
+        hash=$(git rev-parse --short ${1:-HEAD}); \
+        before=$(git describe --tags --abbrev=0 $hash 2>/dev/null); \
+        after=$(git tag --contains $hash --sort=v:refname | head -1); \
+        beforedate=\"\"; [ -n \"$before\" ] && beforedate=\" ($(git log -1 --format='%ar%  %an: %ad' --date=format:'%Y-%m-%d %H:%M:%S' $before))\"; \
+        afterdate=\"\"; [ -n \"$after\" ] && afterdate=\" ($(git log -1 --format='%ar%  %an: %ad' --date=format:'%Y-%m-%d %H:%M:%S' $after))\"; \
+        hashdate=\" ($(git log -1 --format='%ar%  %an: %ad' --date=format:'%Y-%m-%d %H:%M:%S' $hash))\"; \
+        echo \"tag after: $after$afterdate\"; \
+        echo \"this one: $hash$hashdate\"; \
+        echo \"tag before: $before$beforedate\"; \
+    }; f"
 
     # log branch:
     #lol = log --decorate --oneline --graph --abbrev-commit

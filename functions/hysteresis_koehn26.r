@@ -25,11 +25,14 @@
 
 if (interactive()) {
     me <- "hysteresis_koehn26.r"
-    if (T) {
+    if (F) {
         args <- c("--fin_co2=/home/a/a270073/work/ab1095/a270073/bc/echam/input/r0008/greenhouse_ssp126.nc",
                   "--fin_y=/home/a/a270073/work/ab1095/a270073/post/AWI-ESM-1-REcoM/spco2/yearmean/spco2_mon_yearmean_AWI-ESM-1-REcoM_ssp126_r1i1p1f1_gr1_2015-2100.nc",
                   "--from_co2=2015",
                   "--to_co2=2100")
+    } else if (T) {
+        args <- c("--fin_co2=/work/ab1095/a270073/post/recom/select/aCO2/aCO2_year_select_recom_esm-ssp126_r1i1p1f1_gn_2015-2100.nc",
+                  "--fin_y=/work/ab1095/a270073/post/recom/select/pCO2s/pCO2s_year_select_recom_esm-ssp126_r1i1p1f1_gn_2015-2100.nc")
     }
 } else { # if not interactive
     args <- commandArgs(trailingOnly=F)
@@ -45,6 +48,7 @@ usage <- paste0("\nUsage:\n ", me, " ",
                 "--fin_co2=<provide CO2 time series filename> ",
                 "--fin_y=<provide spatial y filename> ",
                 "--dry=F ",
+                "--verbose=F ",
                 "--outdir=`dirname fin_y` ",
                 "--varname_co2=`cdo showname fin_co2` ",
                 "--varname_y=`cdo showname fin_y` ",
@@ -55,7 +59,9 @@ usage <- paste0("\nUsage:\n ", me, " ",
                 "\n",
                 "with e.g.\n",
                 "(levante)  --fin_co2=/pool/data/ECHAM6/input/r0008/greenhouse_ssp126.nc\n",
-                "           --fin_co2=/work/bb0519/foci_input2/ECHAM6_GENERAL/ECHAM6/input/r0008/greenhouse_ssp534os.nc\n")
+                "           --fin_co2=/work/bb0519/foci_input2/ECHAM6_GENERAL/ECHAM6/input/r0008/greenhouse_ssp534os.nc\n",
+                "           --fin_co2=/work/ab1095/a270073/post/recom/select/aCO2/aCO2_year_select_recom_esm-ssp126_r1i1p1f1_gn_2015-2100.nc\n",
+                "           --fin_co2=/work/ab1095/a270073/post/recom/select/aCO2/aCO2_year_select_recom_esm-ssp585_and_esm-ssp534-over2_r1i1p1f1_gn_2015-2100.nc\n")
 if (length(args) == 0) {
     message(usage)
     quit()
@@ -167,6 +173,13 @@ if (any(args == "--dry")) {
     dry <- T
 }
 
+# check verbose
+verbose <- F
+if (any(args %in% c("--verbose", "--verbose=T", "--verbose=TRUE"))) {
+    message("argument `--verbose` provided --> verbose")
+    verbose <- T
+}
+
 # check ncdf4
 message("\nload ncdf4 ...")
 library(ncdf4)
@@ -198,8 +211,9 @@ trimws <- function (x, which = c("both", "left", "right"), whitespace = "[ \t\r\
 # at that position (column 1) next to the date `order(co2_leg)` moved
 # there instead (column 2, `dates[ord]`). `co2_leg`/`dates` are the leg's
 # own (already `ok`-filtered) vectors in chronological order; a leg with
-# no violation, or a missing `dates`, prints nothing.
+# no violation, a missing `dates`, or no `--verbose` prints nothing.
 report_ord_mismatch <- function(co2_leg, dates, ord, label) {
+    if (!verbose) return(invisible())
     if (is.null(dates)) return(invisible())
     n <- length(co2_leg)
     if (n < 2) return(invisible())
@@ -208,9 +222,6 @@ report_ord_mismatch <- function(co2_leg, dates, ord, label) {
     if (length(viol) == 0) return(invisible())
     diffidx <- sort(unique(c(viol, viol + 1L))) # both endpoints of each violating step
     idx <- sort(unique(unlist(lapply(diffidx, function(i) max(1, i-3):min(n, i+3)))))
-    warning("--> warning: co2 is not monotonic within the ", label, " leg (", length(diffidx), "/", n,
-            " point(s) out of chronological order) -- order() had to resort. Rows within +/-3 time points ",
-            "of every mismatch (input date vs. the date order() put there instead):")
     print(data.frame(date_input=dates[idx], date_ord=dates[ord][idx]))
 } # report_ord_mismatch
 
@@ -685,25 +696,34 @@ if (!dry) {
 
     # H: same units as y. `ncvar_rename()` only updates the *returned*
     # `nc_out` object's $var list (used by ncvar_put/ncatt_put) -- must reassign
-    nc_out <- ncdf4::ncvar_rename(nc_out, varname_y, paste0("H_", varname_y))
-    ncdf4::ncvar_put(nc_out, paste0("H_", varname_y), H)
-    ncdf4::ncatt_put(nc_out, paste0("H_", varname_y), "long_name",
-                      paste0("Koehn et al. 2026 eq. (1) hysteresis area of ", varname_y))
-    ncdf4::ncatt_put(nc_out, paste0("H_", varname_y), "units", template_var$units)
+    nc_out <- ncdf4::ncvar_rename(nc_out, varname_y, "H")
+    ncdf4::ncvar_put(nc_out, "H", H)
+    ncdf4::ncatt_put(nc_out, "H", "long_name", paste0("Koehn et al. 2026 eq. (1) hysteresis area of ", varname_y))
+    ncdf4::ncatt_put(nc_out, "H", "units", template_var$units)
+    ncdf4::ncatt_put(nc_out, "H", "description",
+                     paste0("Mean absolute difference between the ramp-down and ramp-up values of ", varname_y,
+                            " at the same atmospheric CO2, i.e. the area between both branches divided by the CO2 range. ",
+                            "Same unit as ", varname_y, "; >= 0, 0 = no hysteresis."))
 
     # Hn: unitless
-    var_hn <- ncdf4::ncvar_def(paste0("Hn_", varname_y), units="1", dim=template_var$dim,
-                                missval=template_var$missval,
+    var_hn <- ncdf4::ncvar_def("Hn", units="1", dim=template_var$dim, missval=template_var$missval,
                                 longname=paste0("Koehn et al. 2026 eq. (2) min-max normalized hysteresis area of ", varname_y))
     nc_out <- suppressWarnings(ncdf4::ncvar_add(nc_out, var_hn))
-    ncdf4::ncvar_put(nc_out, paste0("Hn_", varname_y), Hn)
+    ncdf4::ncvar_put(nc_out, "Hn", Hn)
+    ncdf4::ncatt_put(nc_out, "Hn", "description",
+                     paste0("H divided by the max-min range of ", varname_y, " over ramp-up and ramp-down: ",
+                            "fraction of that range enclosed by the hysteresis loop, comparable across regions and variables. ",
+                            "Unitless; >= 0, 0 = no hysteresis."))
 
     # Hs: same units as y
-    var_hs <- ncdf4::ncvar_def(paste0("Hs_", varname_y), units=template_var$units, dim=template_var$dim,
-                                missval=template_var$missval,
+    var_hs <- ncdf4::ncvar_def("Hs", units=template_var$units, dim=template_var$dim, missval=template_var$missval,
                                 longname=paste0("Koehn et al. 2026 eqs. (3)/(4) sign-aware hysteresis area of ", varname_y))
     nc_out <- suppressWarnings(ncdf4::ncvar_add(nc_out, var_hs))
-    ncdf4::ncvar_put(nc_out, paste0("Hs_", varname_y), Hs)
+    ncdf4::ncvar_put(nc_out, "Hs", Hs)
+    ncdf4::ncatt_put(nc_out, "Hs", "description",
+                     paste0("Mean of ", varname_y, " on the ramp-down minus its mean on the ramp-up, at matched ",
+                            "atmospheric CO2 (like H without the absolute value). Same unit as ", varname_y, "; > 0: ",
+                            varname_y, " higher under falling than under rising CO2 (e.g. delayed recovery); < 0: lower."))
 
     ncdf4::ncatt_put(nc_out, 0, "hysteresis_koehn26_fin_co2", fin_co2)
     ncdf4::ncatt_put(nc_out, 0, "hysteresis_koehn26_varname_co2", varname_co2)

@@ -182,7 +182,7 @@ else
         echo `\ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
-    ml0(){ # more/less latest log "^   0:" lines
+    ml0(){ # more/less latest log "^   0" lines
         file=$(\ls -t *.log | grep -v _observe_ | head -n1)
         echo `\ls --color=auto -lFh $(pwd)/$file`
         grep -E "^   0|^3584|^3968|^3969|^4033" $file | less -i # core3 tco95 tp2: fesom oifs rnfmap lpj xios
@@ -1287,6 +1287,7 @@ else
     done
    
     # slurm stuff
+    # add autocomplete for scontrol, scancel, etc.
     if [ -f ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
         source ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh
         if check_existance scontrol; then
@@ -1344,6 +1345,11 @@ else
                 scontrol show jobid -dd $1
             fi
         }
+    fi
+    if [ -d ~/sw/slurm/check_slurm_priority ]; then
+        alias sqcl="~/sw/slurm/check_slurm_priority/check_queue_load.sh"
+        alias sqcp="~/sw/slurm/check_slurm_priority/check_project_priority.sh"
+        alias sqcw="~/sw/slurm/check_slurm_priority/check_queue_by_account.sh"
     fi
 
     # recom stuff
@@ -1413,10 +1419,10 @@ else
             py_envs_dir="${mywork}/sw/py/envs"
             py_envs_dir="${py_envs_dir/#\~/$HOME}"
             if [ -d "${py_envs_dir}" ]; then
-                echo "add all ${py_envs_dir}/*/bin dirs to PATH:"
+                echo "add all ${py_envs_dir}/*/bin dirs to PATH ..."
                 for path in "${py_envs_dir}"/*; do
                     if [ -d "${path}/bin" ]; then
-                        echo "${path}/bin"
+                        #echo "${path}/bin"
                         export PATH="${path}/bin:$PATH"
                     fi
                 done
@@ -1429,10 +1435,10 @@ else
             conda_envs_dir="${mywork}/sw/conda/envs"
             conda_envs_dir="${conda_envs_dir/#\~/$HOME}"
             if [ -d "${conda_envs_dir}" ]; then
-                echo "add all ${conda_envs_dir}/*/bin dirs to PATH:"
+                echo "add all ${conda_envs_dir}/*/bin dirs to PATH ..."
                 for path in "${conda_envs_dir}"/*; do
                     if [ -d "${path}/bin" ]; then
-                        echo "${path}/bin"
+                        #echo "${path}/bin"
                         export PATH="${path}/bin:$PATH"
                     fi
                 done

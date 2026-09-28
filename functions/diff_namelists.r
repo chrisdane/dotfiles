@@ -58,31 +58,42 @@ if (!interactive()) {
     }
 } # interactive
 
-# check
-if (!file.exists(args[1])) stop("file ", args[1], " does not exist")
-if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
-args <- normalizePath(args)
-
+options(warn=2)
 options(width=300) # increase length per print line from default 80
 
-if (F) {
+# check
+if (!file.exists(args[1])) stop("nml1 ", args[1], " does not exist")
+if (!file.exists(args[2])) stop("nml2 ", args[2], " does not exist")
+args <- normalizePath(args)
+
+if (F) { # use their repo
     #install.packages("devtools")
     #devtools::install_github("jsta/nml")
     library(nml) # https://github.com/jsta/nml
-} else {
-    source("~/scripts/r/packages/src/nml/R/utils.R")
-    source("~/scripts/r/packages/src/nml/R/read.R")
+} else { # use my files
+    if (grepl("albedo", Sys.info()["nodename"], ignore.case=T)) {
+        message("source(\"~/../cdanek/scripts/r/packages/src/nml/R/utils.R\")")
+        source("~/../cdanek/scripts/r/packages/src/nml/R/utils.R")
+        message("source(\"~/../cdanek/scripts/r/packages/src/nml/R/read.R\")")
+        source("~/../cdanek/scripts/r/packages/src/nml/R/read.R")
+    } else {
+        stop("implement machine ", Sys.info()["nodename"])
+    }
 }
 
 for (i in seq_along(args)) {
-    cat("\nrun `nml::read_nml(\"", args[i], "\")` ...\n",
-        "(possible printed lines contain non-ASCII characers from `nml:::ascii_only --> nml:::what_ascii --> tools::showNonASCIIfile --> tools:::showNonASCII --> base::iconv`)\n", sep="")
+    # run nml::read_nml
     # - nml::read_nml takes care of multi-line entries and white spaces etc.
     # - nml::read_nml --> nml:::nml_path_norm --> nml:::is_nml_file --> tools::file_ext(x) == "nml" --> raises warning if file ext is not ".nml"
-    # - printed lines contain non-ASCII characers from `tools::showNonASCIIfile`
-    # - do not use `nml::` in actual call to use own files if needed (T/F-case above)
-    options(warn=2)
-    nml <- suppressWarnings(read_nml(args[i]))
+    # - do not use `nml::` in actual call to use own nml repo (T/F-case above)
+    cat("\nrun `nml::read_nml(\"", args[i], "\")` ...\n")
+    if (F) { # let nml::read_nml print non-ascii characters
+        cat("possible printed lines contain non-ASCII characers from `nml:::ascii_only --> nml:::what_ascii --> tools::showNonASCIIfile --> tools:::showNonASCII --> base::iconv`\n", sep="")
+        # - printed lines contain non-ASCII characers from `tools::showNonASCIIfile`
+        nml <- suppressWarnings(read_nml(args[i]))
+    } else if (T) { # do not nml::read_nml print non-ascii characters
+        nml <- suppressMessages(suppressWarnings(read_nml(args[i])))
+    }
     if (i == 1) nml1 <- nml
     if (i == 2) nml2 <- nml
 } # for i
@@ -104,37 +115,37 @@ chapters_unique <- unique(c(chapters1, chapters2))
 
 # check all nml1 variables if they also occur in nml2 (case 1/3) or if they are unique to nml1 (case 2/3)
 nml1_and_nml2 <- nml1_but_not_nml2 <- nml2_but_not_nml1 <- list()
-cat("\ncheck ", length(chapters_unique), " unique nml chapters ...\n", sep="") 
+cat("\ncheck ", length(chapters_unique), " unique nml chapters ...\n", sep="")
 for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
-#for (i in 5) { 
+#for (i in 5) {
 
     chapter <- chapters_unique[i] # name of current chapter
     inds1 <- which(chapters1 == chapter)
     inds2 <- which(chapters2 == chapter)
-    
+
     # nml1 doesnt have current chapter; must come from nml2
-    if (length(inds1) == 0) { 
+    if (length(inds1) == 0) {
         for (ch2i in seq_along(inds2)) {
-            cat("************************** detected unique chapter **************************\n",
+            cat("**************************detected unique chapter **************************\n",
                 "nml2 chapter \"", chapters2[inds2[ch2i]], "\" not in nml1:\n", sep="")
             cat(capture.output(str(nml2[inds2[ch2i]])), sep="\n")
             nml2_but_not_nml1[length(nml2_but_not_nml1)+1] <- nml2[inds2[ch2i]]
             names(nml2_but_not_nml1)[length(nml2_but_not_nml1)] <- chapter
         }
-    
+
     # nml2 doesnt have current chapter; must come from nml1
-    } else if (length(inds2) == 0) { 
+    } else if (length(inds2) == 0) {
         for (ch1i in seq_along(inds1)) {
-            cat("************************** detected unique chapter **************************\n",
-                "nml1 chapter \"", chapters1[inds1[ch1i]], "\" not in nml2:\n", sep="") 
+            cat("**************************detected unique chapter **************************\n",
+                "nml1 chapter \"", chapters1[inds1[ch1i]], "\" not in nml2:\n", sep="")
             cat(capture.output(str(nml1[inds1[ch1i]])), sep="\n")
             nml1_but_not_nml2[length(nml1_but_not_nml2)+1] <- nml1[inds1[ch1i]]
             names(nml1_but_not_nml2)[length(nml1_but_not_nml2)] <- chapter
         }
-    
+
     # both nml have current chapter
     } else if (length(inds1) > 0 && length(inds2) > 0) {
-        
+
         if (length(inds1) != length(inds2)) {
             cat("chapter \"", chapter, "\" occurs ", length(inds1), " times in nml1 and ",
                 length(inds2), " times in nml2\n", sep="")
@@ -151,8 +162,8 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
 
                 # special case
                 if (chapter == "mvstreamctl") {
-                    
-                    # check for unknown keys 
+
+                    # check for unknown keys
                     if (all(is.na(match(c("source", "interval", "target", "filetag",
                                           "variables", "meannam", "sqrmeannam"),
                                         keys1)))) {
@@ -163,7 +174,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                                         keys2)))) {
                         stop("unknown \"", chapter, "\" keys: ", paste(keys2, collapse=", "))
                     }
-                    
+
                     # source
                     if (!any(keys1 == "source") || !any(keys2 == "source")) {
                         stop("this never happened")
@@ -171,7 +182,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                         source1 <- cha1$source
                         source2 <- cha2$source
                     }
-                    
+
                     # interval
                     # echam docu p 201: interval:
                     # "time averaging interval"
@@ -181,7 +192,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     # echam docu p 37: putdata:
                     # "time interval at which output data are written to output files
                     # default: 12,’hours’,’first’,0
-                    if (any(keys1 == "interval")) { 
+                    if (any(keys1 == "interval")) {
                         interval1 <- cha1$interval # e.g. "1,months,first,0"
                     } else {
                         stop("never happened")
@@ -191,7 +202,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     } else {
                         stop("never happened")
                     }
-                    
+
                     # target
                     target1 <- target2 <- NA # default: not given
                     if (any(keys1 == "target")) target1 <- cha1$target
@@ -201,46 +212,46 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     filetag1 <- filetag2 <- NA # default: not given
                     if (any(keys1 == "filetag")) filetag1 <- cha1$filetag
                     if (any(keys2 == "filetag")) filetag2 <- cha2$filetag
-                    
+
                     # variables
-                    if (any(keys1 == "variables")) { 
+                    if (any(keys1 == "variables")) {
                         variables1 <- strsplit(cha1$variables, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
                     } else {
                         variables1 <- NA
                     }
-                    if (any(keys2 == "variables")) { 
+                    if (any(keys2 == "variables")) {
                         variables2 <- strsplit(cha2$variables, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
                     } else {
                         variables2 <- NA
                     }
-                    
+
                     # meannam
-                    if (any(keys1 == "meannam")) { 
+                    if (any(keys1 == "meannam")) {
                         meannam1 <- strsplit(cha1$meannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
                     } else {
                         meannam1 <- NA
                     }
-                    if (any(keys2 == "meannam")) { 
+                    if (any(keys2 == "meannam")) {
                         meannam2 <- strsplit(cha2$meannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
                     } else {
                         meannam2 <- NA
                     }
-                    
+
                     # sqrmeannam
-                    if (any(keys1 == "sqrmeannam")) { 
+                    if (any(keys1 == "sqrmeannam")) {
                         sqrmeannam1 <- strsplit(cha1$sqrmeannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
                     } else {
                         sqrmeannam1 <- NA
                     }
-                    if (any(keys2 == "sqrmeannam")) { 
+                    if (any(keys2 == "sqrmeannam")) {
                         sqrmeannam2 <- strsplit(cha2$sqrmeannam, ",")[[1]] # e.g. "st:mean" or "tslm1" or "irsucs:inst>irsucs_pt=6"
                     } else {
                         sqrmeannam2 <- NA
                     }
-                    
+
                     # get well structured data frames from input chapter
                     mvstream1_df <- mvstream2_df <- data.frame()
-                    
+
                     # add cha1 "variables"
                     for (vi in seq_along(variables1)) {
                         if (all(is.na(variables1))) {
@@ -255,10 +266,10 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                                 name_type <- c(name_type, "mean") # case 3/3 "tslm1" --> mean
                             }
                         }
-                        row <- data.frame(variables=name_type[1], type=name_type[2], 
-                                          meannam=NA, sqrmeannam=NA, 
-                                          source=source1, target=target1, filetag=filetag1, 
-                                          interval=interval1, orig=variables1[vi], 
+                        row <- data.frame(variables=name_type[1], type=name_type[2],
+                                          meannam=NA, sqrmeannam=NA,
+                                          source=source1, target=target1, filetag=filetag1,
+                                          interval=interval1, orig=variables1[vi],
                                           stringsAsFactors=F)
                         mvstream1_df <- rbind(mvstream1_df, row)
                     } # for vi in variables1
@@ -274,14 +285,14 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                             }
                         }
                         row <- data.frame(variables=NA, type=NA,
-                                          meannam=meannam, 
-                                          sqrmeannam=NA, 
-                                          source=source1, target=target1, filetag=filetag1, 
-                                          interval=interval1, orig=meannam1[vi], 
+                                          meannam=meannam,
+                                          sqrmeannam=NA,
+                                          source=source1, target=target1, filetag=filetag1,
+                                          interval=interval1, orig=meannam1[vi],
                                           stringsAsFactors=F)
                         mvstream1_df <- rbind(mvstream1_df, row)
                     } # for vi in meannam1
-                        
+
                     # add cha1 "sqrmeannam"
                     for (vi in seq_along(sqrmeannam1)) {
                         if (all(is.na(sqrmeannam1))) {
@@ -293,14 +304,14 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                             }
                         }
                         row <- data.frame(variables=NA, type=NA,
-                                          meannam=NA, 
-                                          sqrmeannam=sqrmeannam, 
-                                          source=source1, target=target1, filetag=filetag1, 
-                                          interval=interval1, orig=sqrmeannam1[vi], 
+                                          meannam=NA,
+                                          sqrmeannam=sqrmeannam,
+                                          source=source1, target=target1, filetag=filetag1,
+                                          interval=interval1, orig=sqrmeannam1[vi],
                                           stringsAsFactors=F)
                         mvstream1_df <- rbind(mvstream1_df, row)
-                    } # for vi in sqrmeannam1                     
-                  
+                    } # for vi in sqrmeannam1
+
                     # add cha2 "variables"
                     for (vi in seq_along(variables2)) {
                         if (all(is.na(variables2))) {
@@ -315,10 +326,10 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                                 name_type <- c(name_type, "mean") # case 3/3 "tslm1" --> mean
                             }
                         }
-                        row <- data.frame(variables=name_type[1], type=name_type[2], 
-                                          meannam=NA, sqrmeannam=NA, 
-                                          source=source2, target=target2, filetag=filetag2, 
-                                          interval=interval2, orig=variables2[vi], 
+                        row <- data.frame(variables=name_type[1], type=name_type[2],
+                                          meannam=NA, sqrmeannam=NA,
+                                          source=source2, target=target2, filetag=filetag2,
+                                          interval=interval2, orig=variables2[vi],
                                           stringsAsFactors=F)
                         mvstream2_df <- rbind(mvstream2_df, row)
                     } # for vi in variables2
@@ -334,14 +345,14 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                             }
                         }
                         row <- data.frame(variables=NA, type=NA,
-                                          meannam=meannam, 
-                                          sqrmeannam=NA, 
-                                          source=source2, target=target2, filetag=filetag2, 
-                                          interval=interval2, orig=meannam2[vi], 
+                                          meannam=meannam,
+                                          sqrmeannam=NA,
+                                          source=source2, target=target2, filetag=filetag2,
+                                          interval=interval2, orig=meannam2[vi],
                                           stringsAsFactors=F)
                         mvstream2_df <- rbind(mvstream2_df, row)
                     } # for vi in meannam2
-                        
+
                     # add cha2 "sqrmeannam"
                     for (vi in seq_along(sqrmeannam2)) {
                         if (all(is.na(sqrmeannam2))) {
@@ -353,14 +364,14 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                             }
                         }
                         row <- data.frame(variables=NA, type=NA,
-                                          meannam=NA, 
-                                          sqrmeannam=sqrmeannam, 
-                                          source=source2, target=target2, filetag=filetag2, 
-                                          interval=interval2, orig=sqrmeannam2[vi], 
+                                          meannam=NA,
+                                          sqrmeannam=sqrmeannam,
+                                          source=source2, target=target2, filetag=filetag2,
+                                          interval=interval2, orig=sqrmeannam2[vi],
                                           stringsAsFactors=F)
                         mvstream2_df <- rbind(mvstream2_df, row)
-                    } # for vi in sqrmeannam2         
-                   
+                    } # for vi in sqrmeannam2
+
                     # sort alphabetically
                     if (!all(is.na(mvstream1_df$variables))) {
                         mvstream1_df <- mvstream1_df[sort(mvstream1_df$variables, index.return=T)$ix,]
@@ -380,26 +391,26 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     } else {
                         # none of "variables", "meannam", "sqrmeannam" given in current mvstreamctl chapter
                     }
-                    
-                    # add number column 
+
+                    # add number column
                     mvstream1_df <- cbind(no=seq_len(dim(mvstream1_df)[1]), mvstream1_df)
                     mvstream2_df <- cbind(no=seq_len(dim(mvstream2_df)[1]), mvstream2_df)
-                    
-                    # compare mvstreamctl blocks 
+
+                    # compare mvstreamctl blocks
                     if (identical(mvstream1_df, mvstream2_df)) { # mvstreamctl blocks are identical
                         nml1_and_nml2[length(nml1_and_nml2)+1] <- list(list(nml1=cha1, nml2=cha2,
-                                                                            nml1_df=mvstream1_df, 
+                                                                            nml1_df=mvstream1_df,
                                                                             nml2_df=mvstream2_df))
                         names(nml1_and_nml2)[length(nml1_and_nml2)] <- chapter
-                        
+
                     } else { # mvstreamctl blocks differ
                         # check different levels of similarity of mvstreamctl blocks
                         # approach here: do they have the same source or variables? if yes, print them
                         if (identical(mvstream1_df$source, mvstream2_df$source)) { # same source
                             if (identical(mvstream1_df$variables, mvstream2_df$variables)) { # same vars
-                                cat("************************** detected diffs in similar mvstreamctl chapters **************************\n",
-                                    "nml1 \"", chapter, "\" chapter ", ch1i, "/", 
-                                    length(inds1), " and nml2 \"", chapter, "\" chapter ", 
+                                cat("**************************detected diffs in similar mvstreamctl chapters **************************\n",
+                                    "nml1 \"", chapter, "\" chapter ", ch1i, "/",
+                                    length(inds1), " and nml2 \"", chapter, "\" chapter ",
                                     ch2i, "/", length(inds2), " share the same \"source\" and variables but differ:\n", sep="")
                                 print(mvstream1_df, row.names=F)
                                 print(mvstream2_df, row.names=F)
@@ -409,20 +420,20 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                         names(nml1_but_not_nml2)[length(nml1_but_not_nml2)] <- chapter
                         nml2_but_not_nml1[length(nml2_but_not_nml1)+1] <- list(list(nml2=cha2, nml2_df=mvstream2_df))
                         names(nml2_but_not_nml1)[length(nml2_but_not_nml1)] <- chapter
-                    
+
                     } # are mvstreamctl blocks are identical or not
 
                 # special case
                 } else if (chapter == "set_stream") {
-                    
-                    # check for unknown keys 
+
+                    # check for unknown keys
                     if (all(is.na(match(c("stream", "lpost", "lrerun"), keys1)))) {
                         stop("unknown \"", chapter, "\" keys: ", paste(keys1, collapse=", "))
                     }
                     if (all(is.na(match(c("stream", "lpost", "lrerun"), keys2)))) {
                         stop("unknown \"", chapter, "\" keys: ", paste(keys2, collapse=", "))
                     }
-                    
+
                     # stream
                     if (!any(keys1 == "stream") || !any(keys2 == "stream")) {
                         stop("this never happened")
@@ -435,7 +446,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     lpost1 <- lpost2 <- NA # default: not given
                     if (any(keys1 == "lpost")) lpost1 <- cha1$lpost
                     if (any(keys1 == "lpost")) lpost2 <- cha2$lpost
-                    
+
                     # lrerun
                     lrerun1 <- lrerun2 <- NA # default: not given
                     if (any(keys1 == "lrerun")) lrerun1 <- cha1$lrerun
@@ -443,27 +454,27 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
 
                     stream1_df <- data.frame(stream=stream1, lpost=lpost1, lrerun=lrerun1, stringsAsFactors=F)
                     stream2_df <- data.frame(stream=stream2, lpost=lpost2, lrerun=lrerun2, stringsAsFactors=F)
-                        
+
                     # sort alphabetically
                     stream1_df <- stream1_df[sort(stream1_df$stream, index.return=T)$ix,]
                     stream2_df <- stream2_df[sort(stream2_df$stream, index.return=T)$ix,]
                     stream1_df <- cbind(no=seq_len(dim(stream1_df)[1]), stream1_df)
                     stream2_df <- cbind(no=seq_len(dim(stream2_df)[1]), stream2_df)
-                    
-                    # compare set_stream blocks 
+
+                    # compare set_stream blocks
                     if (identical(stream1_df, stream2_df)) { #  blocks are identical
                         nml1_and_nml2[length(nml1_and_nml2)+1] <- list(list(nml1=cha1, nml2=cha2,
-                                                                            nml1_df=stream1_df, 
+                                                                            nml1_df=stream1_df,
                                                                             nml2_df=stream2_df))
                         names(nml1_and_nml2)[length(nml1_and_nml2)] <- chapter
-                        
+
                     } else { # set_stream blocks differ
                         # check different levels of similarity of set_stream blocks
                         # approach here: do they have the same stream? if yes, print them
                         if (identical(stream1_df$stream, stream2_df$stream)) { # same stream
-                            cat("************************** detected diffs in similar set_stream chapters **************************\n",
-                                "nml1 \"", chapter, "\" chapter ", ch1i, "/", 
-                                length(inds1), " and nml2 \"", chapter, "\" chapter ", 
+                            cat("**************************detected diffs in similar set_stream chapters **************************\n",
+                                "nml1 \"", chapter, "\" chapter ", ch1i, "/",
+                                length(inds1), " and nml2 \"", chapter, "\" chapter ",
                                 ch2i, "/", length(inds2), " share the same \"stream\" but differ:\n", sep="")
                             print(stream1_df, row.names=F)
                             print(stream2_df, row.names=F)
@@ -472,20 +483,20 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                         names(nml1_but_not_nml2)[length(nml1_but_not_nml2)] <- chapter
                         nml2_but_not_nml1[length(nml2_but_not_nml1)+1] <- list(list(nml2=cha2, nml2_df=stream2_df))
                         names(nml2_but_not_nml1)[length(nml2_but_not_nml1)] <- chapter
-                    
+
                     } # are set_stream blocks are identical or not
 
                 # special case
                 } else if (chapter == "set_stream_element") {
-                    
-                    # check for unknown keys 
+
+                    # check for unknown keys
                     if (all(is.na(match(c("stream", "name", "code", "lpost"), keys1)))) {
                         stop("unknown \"", chapter, "\" keys: ", paste(keys1, collapse=", "))
                     }
                     if (all(is.na(match(c("stream", "name", "code", "lpost"), keys2)))) {
                         stop("unknown \"", chapter, "\" keys: ", paste(keys2, collapse=", "))
                     }
-                    
+
                     # stream
                     if (!any(keys1 == "stream") || !any(keys2 == "stream")) {
                         stop("this never happened")
@@ -498,12 +509,12 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     name1 <- name2 <- NA # default: not given
                     if (any(keys1 == "name")) name1 <- cha1$name
                     if (any(keys1 == "name")) name2 <- cha2$name
-                    
+
                     # code
                     code1 <- code2 <- NA # default: not given
                     if (any(keys1 == "code")) code1 <- cha1$code
                     if (any(keys1 == "code")) code2 <- cha2$code
-                    
+
                     # lpost
                     lpost1 <- lpost2 <- NA # default: not given
                     if (any(keys1 == "lpost")) lpost1 <- cha1$lpost
@@ -511,27 +522,27 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
 
                     stream_elem1_df <- data.frame(stream=stream1, name=name1, code=code1, lpost=lpost1, stringsAsFactors=F)
                     stream_elem2_df <- data.frame(stream=stream2, name=name2, code=code2, lpost=lpost2, stringsAsFactors=F)
-                        
+
                     # sort alphabetically
                     stream_elem1_df <- stream_elem1_df[sort(stream_elem1_df$stream, index.return=T)$ix,]
                     stream_elem2_df <- stream_elem2_df[sort(stream_elem2_df$stream, index.return=T)$ix,]
                     stream_elem1_df <- cbind(no=seq_len(dim(stream_elem1_df)[1]), stream_elem1_df)
                     stream_elem2_df <- cbind(no=seq_len(dim(stream_elem2_df)[1]), stream_elem2_df)
-                    
-                    # compare set_stream_element blocks 
+
+                    # compare set_stream_element blocks
                     if (identical(stream_elem1_df, stream_elem2_df)) { #  blocks are identical
                         nml1_and_nml2[length(nml1_and_nml2)+1] <- list(list(nml1=cha1, nml2=cha2,
-                                                                            nml1_df=stream_elem1_df, 
+                                                                            nml1_df=stream_elem1_df,
                                                                             nml2_df=stream_elem2_df))
                         names(nml1_and_nml2)[length(nml1_and_nml2)] <- chapter
-                        
+
                     } else { # set_stream_element blocks differ
                         # check different levels of similarity of set_stream_element blocks
                         # approach here: do they have the same stream? if yes, print them
                         if (identical(stream_elem1_df$stream, stream_elem2_df$stream)) { # same stream
-                            cat("************************** detected diffs in similar similar set_stream_element chapters **************************\n",
-                                "nml1 \"", chapter, "\" chapter ", ch1i, "/", 
-                                length(inds1), " and nml2 \"", chapter, "\" chapter ", 
+                            cat("**************************detected diffs in similar set_stream_element chapters **************************\n",
+                                "nml1 \"", chapter, "\" chapter ", ch1i, "/",
+                                length(inds1), " and nml2 \"", chapter, "\" chapter ",
                                 ch2i, "/", length(inds2), " share the same \"stream\" but differ:\n", sep="")
                             print(stream_elem1_df, row.names=F)
                             print(stream_elem2_df, row.names=F)
@@ -540,14 +551,14 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                         names(nml1_but_not_nml2)[length(nml1_but_not_nml2)] <- chapter
                         nml2_but_not_nml1[length(nml2_but_not_nml1)+1] <- list(list(nml2=cha2, nml2_df=stream_elem2_df))
                         names(nml2_but_not_nml1)[length(nml2_but_not_nml1)] <- chapter
-                    
+
                     } # are set_stream_element blocks are identical or not
 
                 # default case
-                } else { 
-                    
+                } else {
+
                     # for better comparison, make df out of list
-                    # --> NA becomes "NA" 
+                    # --> NA becomes "NA"
                     cha1_df <- cha2_df <- data.frame()
                     for (j in seq_along(cha1)) { # for every entry in current chapter1
                         name <- names(cha1)[j]
@@ -576,11 +587,11 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                         nml1_and_nml2[length(nml1_and_nml2)+1] <- list(list(nml1=cha1, nml2=cha2,
                                                                             nml1_df=cha1_df, nml2_df=cha2_df))
                         names(nml1_and_nml2)[length(nml1_and_nml2)] <- chapter
-                    
+
                     } else {
-                        cat("************************** detected diffs default chapter **************************\n",
-                            "nml1 \"", chapter, "\" chapter ", ch1i, "/", 
-                            length(inds1), " and nml2 \"", chapter, "\" chapter ", 
+                        cat("**************************detected diffs in default chapter **************************\n",
+                            "nml1 \"", chapter, "\" chapter ", ch1i, "/",
+                            length(inds1), " and nml2 \"", chapter, "\" chapter ",
                             ch2i, "/", length(inds2), " differ:\n", sep="")
                         keys_unique <- unique(c(cha1_df$name, cha2_df$name))
                         for (keyi in seq_along(keys_unique)) {
@@ -588,12 +599,12 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                             keyinds1 <- which(cha1_df$name == key)
                             keyinds2 <- which(cha2_df$name == key)
                             if (length(keyinds1) > 1) {
-                                stop("key \"", key, "\" occurs ", length(keyinds1), " times in chapter \"", 
+                                stop("key \"", key, "\" occurs ", length(keyinds1), " times in chapter \"",
                                      chapter, "\" of nml1. this chapter is not defined as special case ",
                                      "and so every key must occur not or once only.")
                             }
                             if (length(keyinds2) > 1) {
-                                stop("key \"", key, "\" occurs ", length(keyinds2), " times in chapter \"", 
+                                stop("key \"", key, "\" occurs ", length(keyinds2), " times in chapter \"",
                                      chapter, "\" of nml2. this chapter is not defined as special case ",
                                      "and so every key must occur not or once only.")
                             }
@@ -609,9 +620,9 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                                         "   nml2 key \"", key, "\" = \"", cha2_df$val[keyinds2], "\"\n", sep="")
                                 }
                             }
-                        
+
                         } # for keyi in keys
-                        
+
                         nml1_but_not_nml2[length(nml1_but_not_nml2)+1] <- list(list(nml1=cha1, nml1_df=cha1_df))
                         names(nml1_but_not_nml2)[length(nml1_but_not_nml2)] <- chapter
                         nml2_but_not_nml1[length(nml2_but_not_nml1)+1] <- list(list(nml2=cha2, nml2_df=cha2_df))
@@ -620,10 +631,10 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
                     } # are current nml1 and nml2 chapters are identical or not
 
                 } # default nml block or one of specail cases (mvstreamctl, set_stream, set_stream_element)
-            
+
             } # for ch2i
         } # for ch1i
-    
+
     } # how often current chapter occurs in nml1 and nml2
 
 } # for i in chapters_unique

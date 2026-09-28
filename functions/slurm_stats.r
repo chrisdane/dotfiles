@@ -71,7 +71,8 @@ if (interactive()) {
 help <- paste0("\nUsage:\n $ ", me, " [--exclude=1,2,3-5] logfile1 [logfile2 ... logileN>]\n",
                "   e.g. ", me, " # shows this help\n",
                "        ", me, " *_awicm_compute_*\n",
-               "        ", me, " *_compute_*-*_*.log\n")
+               "        ", me, " *_compute_*-*_*.log\n",
+               "        ", me, " $(\\grep -l \"time step size is set to    1200\" fesom.out.done.*)\n")
 oo <- options() # save old/default options
 
 # stop if help

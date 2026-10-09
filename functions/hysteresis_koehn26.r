@@ -15,7 +15,7 @@
 #   - Hs < 0: y is lower on the way down than on the way up — an overshoot, or the loop traversed in the opposite sense.
 
 # `fin_co2`: a global/single-point atmospheric CO2 time series, e.g. files
-#   in /work/ab1095/a270073/post/echam6/fldint/co2_burden (kg m-2) or
+#   in /work/ab1095/a270073/post/echam/fldint/co2_burden (kg m-2) or
 #   /work/ab1095/a270073/post/recom/select/aCO2 (uatm/ppm-like); its "units"
 #   attribute is carried through as-is to the output, not converted.
 # `fin_y`: the spatial variable to evaluate hysteresis for, e.g. files in
@@ -31,7 +31,7 @@ if (interactive()) {
                   "--from_co2=2015",
                   "--to_co2=2100")
     } else if (T) {
-        args <- c("--fin_co2=/work/ab1095/a270073/post/recom/select/aCO2/aCO2_year_select_recom_esm-ssp126_r1i1p1f1_gn_2015-2100.nc",
+        args <- c("--fin_co2=/work/ab1095/a270073/post/echam/fldmean/co2_burden/co2_burden_year_fldmean_echam_esm-ssp126_r1i1p1f1_gn_2015-2100.nc",
                   "--fin_y=/work/ab1095/a270073/post/recom/select/pCO2s/pCO2s_year_select_recom_esm-ssp126_r1i1p1f1_gn_2015-2100.nc")
     }
 } else { # if not interactive
@@ -60,8 +60,8 @@ usage <- paste0("\nUsage:\n ", me, " ",
                 "with e.g.\n",
                 "(levante)  --fin_co2=/pool/data/ECHAM6/input/r0008/greenhouse_ssp126.nc\n",
                 "           --fin_co2=/work/bb0519/foci_input2/ECHAM6_GENERAL/ECHAM6/input/r0008/greenhouse_ssp534os.nc\n",
-                "           --fin_co2=/work/ab1095/a270073/post/recom/select/aCO2/aCO2_year_select_recom_esm-ssp126_r1i1p1f1_gn_2015-2100.nc\n",
-                "           --fin_co2=/work/ab1095/a270073/post/recom/select/aCO2/aCO2_year_select_recom_esm-ssp585_and_esm-ssp534-over2_r1i1p1f1_gn_2015-2100.nc\n")
+                "           --fin_co2=/work/ab1095/a270073/post/echam/fldmean/co2_burden/co2_burden_year_fldmean_echam_esm-ssp126_r1i1p1f1_gn_2015-2100.nc\n",
+                "           --fin_co2=/work/ab1095/a270073/post/echam/fldmean/co2_burden/co2_burden_year_fldmean_echam_esm-ssp585_and_esm-ssp534-over2_r1i1p1f1_gn_2015-2100.nc\n")
 if (length(args) == 0) {
     message(usage)
     quit()

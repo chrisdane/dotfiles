@@ -71,14 +71,15 @@ if (F) { # use their repo
     #devtools::install_github("jsta/nml")
     library(nml) # https://github.com/jsta/nml
 } else { # use my files
-    if (grepl("albedo", Sys.info()["nodename"], ignore.case=T)) {
-        message("source(\"~/../cdanek/scripts/r/packages/src/nml/R/utils.R\")")
-        source("~/../cdanek/scripts/r/packages/src/nml/R/utils.R")
-        message("source(\"~/../cdanek/scripts/r/packages/src/nml/R/read.R\")")
-        source("~/../cdanek/scripts/r/packages/src/nml/R/read.R")
-    } else {
-        stop("implement machine ", Sys.info()["nodename"])
-    }
+    fs <- paste0("~/scripts/r/packages/src/nml/R/", c("utils.R", "read.R"))
+    for (f in fs) {
+        if (file.exists(f)) {
+            message("source(\"", f, "\")")
+            source(f)
+        } else {
+            stop("could not find ", f)
+        }
+    } # for f
 }
 
 for (i in seq_along(args)) {

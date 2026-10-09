@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# run `cdo [remapycon,global_1] -setgrid,<fesom_griddesh.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`
+# run `cdo [remapycon,r360x180] -setgrid,<fesom_griddesh.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`
 # input must either be 2D or, if 3D, levelwise
 
 rm(list=ls()); graphics.off()
@@ -8,7 +8,7 @@ rm(list=ls()); graphics.off()
 if (interactive()) {
     me <- "fesom_setgrid_regrid.r"
     args <- c("griddes"="/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc",
-              #"regrid"="-remapycon,global_1",
+              #"regrid"="-remapycon,r360x180",
               #"cmd_before_regrid="-shifttime,-1day",
               "outdir=/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/outdata",
               "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/historical2/levelwise/thetao_fesom_29360101.nc")
@@ -21,26 +21,37 @@ if (interactive()) {
 }
 
 usage <- paste0("\nUsage:\n $ ", me,
-                " griddes=/path/to/griddes.nc [regrid=-remapycon,global_1] [cmd_before_regrid=-shifttime,-1day] outdir=/path/to/save/result file1 [file2 filen]\n",
+                " griddes=/path/to/griddes.nc [regrid=-remapycon,r360x180] [cmd_before_regrid=-shifttime,-1day] outdir=/path/to/save/result file1 [file2 filen]\n",
                 "\n",
-                " with e.g. (albedo) griddes=/albedo/pool/FESOM/meshes_default/core/griddes.nc\n",
+                " with e.g. (albedo) core\n",
+                "                    griddes=/albedo/pool/FESOM/meshes_default/core/griddes.nc\n",
+                "                    core2\n",
                 "                    griddes=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2/core2_griddes_nodes.nc\n",
                 "                    griddes=/albedo/work/projects/p_pool_recom/meshes/fesom2/core2/core2_griddes_elements.nc\n",
                 "           (ecmwf) griddes=/scratch/deu5912/pool/FESOM2/awicm3/core2/core2_griddes_nodes.nc\n",
-                "           (levante) griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc\n",
+                "           (levante) core\n",
+                "                     griddes=/pool/data/AWICM/FESOM1/MESHES/core/griddes.nc\n",
+                "                     core2\n",
                 "                     griddes=/pool/data/AWICM/FESOM2/MESHES_FESOM2.1/core2/core2_griddes_nodes.nc\n",
                 "                     griddes=/pool/data/AWICM/FESOM2/MESHES_FESOM2.1/core2/core2_griddes_elements.nc\n",
+                "                     core3\n",
                 "                     griddes=/work/ab0246/a270092/input//fesom2//core3/mesh.nc # nodes\n",
                 "                     griddes=/work/ab0246/a270092/input//fesom2//core3/mesh_cavity.nc # nodes\n",
                 "                     griddes=/work/ab0246/a270092/input/fesom2/dars2/mesh.nc # nodes\n",
+                "                     griddes=/work/ab1095/a270073/mesh/fesom2/core3/griddes_core3_node.nc\n",
+                "                     griddes=/work/ab1095/a270073/mesh/fesom2/core3/griddes_core3_elem.nc\n",
+                "                     dars\n",
                 "                     griddes=/work/ab1095/a270073/mesh/fesom2/dars2/griddes_dars2_node.nc # nodes\n",
                 "                     griddes=/work/ab1095/a270073/mesh/fesom2/dars2/griddes_dars2_elem.nc # elem\n",
+                "                     LSea2\n",
                 "                     griddes=/work/ab0246/a270073/mesh/fesom/LSea2/griddes_LSea2.nc\n",
-                "           (ollie) griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n",
+                "           (ollie) core\n",
+                "                   griddes=/work/ollie/pool/FESOM/meshes_default/core/griddes.nc\n",
+                "                   core2\n",
                 "                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_nodes.nc\n",
                 "                   griddes=/work/ollie/projects/clidyn/FESOM2/meshes/core2/core2_griddes_elements.nc\n",
                 "\n",
-                " runs `cdo [remapycon,global_1] -setgrid,<fesom_griddes.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`\n",
+                " runs `cdo [remapycon,r360x180] -setgrid,<fesom_griddes.nc> <cmd_before_regrid> <in_irreg_2D_or_levelwise> <out>`\n",
                 " input must either be 2D or, if 3D, levelwise\n\n",
                 " if <in_irreg_2D_or_levelwise> already has a proper griddes, e.g. cmorized data, `setgrid` is not necessary\n")
 

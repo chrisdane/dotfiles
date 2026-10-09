@@ -704,6 +704,7 @@ else
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
     }
+    export HDF5_USE_FILE_LOCKING=FALSE # that cdo and nc* work on open files
     isnc() { # use as e.g. `isnc <file> && echo yes`
         if ncdump -k "$1" >/dev/null 2>&1; then
             return 0 # file is nc
@@ -1267,6 +1268,7 @@ else
         myeof.r plotmyeof.r
         myncrcat.r
         mycat_moc.r
+        nc_check_zero.sh
         ncap2_make_lonlat_bnds.sh
         my_gsw_O2sol_SP_pt.r calc_DIC_remin.r
         hysteresis_koehn26.r
@@ -1314,6 +1316,9 @@ else
         } 
     fi
     if check_existance sshare; then
+        sshareme_best() {
+            sshare -U -n -P -u $USER -o FairShare,Account | grep -v -e '|noaccount$' -e '_gpu' | sort -t'|' -k1,1nr | head -1 | cut -d'|' -f2
+        }
         sshareme() {
             echo "sshare -U -u \$(whoami) --format=\"Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare\""
             sshare -U -u $(whoami) --format="Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare"
@@ -1413,14 +1418,14 @@ else
     if [ ! -z ${mywork+x} ]; then # not empty
         echo "mywork = ${mywork} is set"
 
-        # add py envs bins to path
+        # add python envs bins to path
         #if false; then
         if true; then
-            py_envs_dir="${mywork}/sw/py/envs"
-            py_envs_dir="${py_envs_dir/#\~/$HOME}"
-            if [ -d "${py_envs_dir}" ]; then
-                echo "add all ${py_envs_dir}/*/bin dirs to PATH ..."
-                for path in "${py_envs_dir}"/*; do
+            python_envs_dir="${mywork}/sw/python/envs"
+            python_envs_dir="${python_envs_dir/#\~/$HOME}"
+            if [ -d "${python_envs_dir}" ]; then
+                echo "add all ${python_envs_dir}/*/bin dirs to PATH ..."
+                for path in "${python_envs_dir}"/*; do
                     if [ -d "${path}/bin" ]; then
                         #echo "${path}/bin"
                         export PATH="${path}/bin:$PATH"

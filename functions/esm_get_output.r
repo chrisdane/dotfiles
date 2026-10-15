@@ -89,7 +89,7 @@ if (interactive()) {
                     "   unnamed arg1: /path/that/contains/outdata/dir\n",
                     "   unnames arg2: year\n",
                     "   unnamed arg3: filename/of/output_table.ods (must have ending \".ods\", \".xlsx\" or \".txt\")\n",
-                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam6,jsbach3,fesom1,fesom2,oifs,recom2,recom3)\n",
+                    "   optional named arg --models=models,to,include,string,seperated,by,comma (e.g. echam6,jsbach3,fesom1,fesom2,oifs,recom2,recom3,lpj)\n",
                     "   optional named arg --libpaths=/add/path/where/R/packages/are/installed,/separated/by/comma/if/more/than/one\n",
                     "\n",
                     "Dependencies:\n",
@@ -143,7 +143,10 @@ known_models <- list("echam6"=list(dirname="echam",
                      "oifs"=list(dirname="oifs",
                                  interval_files="monthly",
                                  #pattern="_<year>-<year+1>.nc_<year>0131-<year+1>0131"
-                                 pattern="atm_remapped_.*_<year>-<year>.nc")
+                                 pattern="atm_remapped_.*_<year>-<year>.nc"),
+                     "lpj"=list(dirname="lpj_guess",
+                                interval_files="annual",
+                                pattern="\\.nc$") # cmass_remapcon_r360x180.nc; no year in filename
                      ) # known models so far
 
 if (F) { # adjust manually depending on output
@@ -187,6 +190,7 @@ known_dims[["fesom2"]] <- c("time"="time",
 known_dims[["oifs"]] <- c("time"="time_counter", "lon", "lat", "axis_nbounds", "pressure_levels")
 known_dims[["recom2"]] <- known_dims[["fesom1"]]
 known_dims[["recom3"]] <- known_dims[["fesom2"]]
+known_dims[["lpj"]] <- c("time"="time", "lon", "lat", "depth")
 for (mi in seq_along(known_dims)) {
     if (is.null(names(known_dims[[mi]])) ||
         !any(names(known_dims[[mi]]) == "time")) {

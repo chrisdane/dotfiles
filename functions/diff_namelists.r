@@ -61,31 +61,43 @@ if (!interactive()) {
     }
 } # interactive
 
-# check
-if (!file.exists(args[1])) stop("file ", args[1], " does not exist")
-if (!file.exists(args[2])) stop("file ", args[2], " does not exist")
-args <- normalizePath(args)
-
+options(warn=2)
 options(width=300) # increase length per print line from default 80
 
-if (F) {
+# check
+if (!file.exists(args[1])) stop("nml1 ", args[1], " does not exist")
+if (!file.exists(args[2])) stop("nml2 ", args[2], " does not exist")
+args <- normalizePath(args)
+
+if (F) { # use their repo
     #install.packages("devtools")
     #devtools::install_github("jsta/nml")
     library(nml) # https://github.com/jsta/nml
-} else {
-    source("~/scripts/r/packages/src/nml/R/utils.R")
-    source("~/scripts/r/packages/src/nml/R/read.R")
+} else { # use my files
+    fs <- paste0("~/scripts/r/packages/src/nml/R/", c("utils.R", "read.R"))
+    for (f in fs) {
+        if (file.exists(f)) {
+            message("source(\"", f, "\")")
+            source(f)
+        } else {
+            stop("could not find ", f)
+        }
+    } # for f
 }
 
 for (i in seq_along(args)) {
-    cat("\nrun `nml::read_nml(\"", args[i], "\")` ...\n",
-        "(possible printed lines contain non-ASCII characers from `nml:::ascii_only --> nml:::what_ascii --> tools::showNonASCIIfile --> tools:::showNonASCII --> base::iconv`)\n", sep="")
+    # run nml::read_nml
     # - nml::read_nml takes care of multi-line entries and white spaces etc.
     # - nml::read_nml --> nml:::nml_path_norm --> nml:::is_nml_file --> tools::file_ext(x) == "nml" --> raises warning if file ext is not ".nml"
-    # - printed lines contain non-ASCII characers from `tools::showNonASCIIfile`
-    # - do not use `nml::` in actual call to use own files if needed (T/F-case above)
-    options(warn=2)
-    nml <- suppressWarnings(read_nml(args[i]))
+    # - do not use `nml::` in actual call to use own nml repo (T/F-case above)
+    cat("\nrun `nml::read_nml(\"", args[i], "\")` ...\n")
+    if (F) { # let nml::read_nml print non-ascii characters
+        cat("possible printed lines contain non-ASCII characers from `nml:::ascii_only --> nml:::what_ascii --> tools::showNonASCIIfile --> tools:::showNonASCII --> base::iconv`\n", sep="")
+        # - printed lines contain non-ASCII characers from `tools::showNonASCIIfile`
+        nml <- suppressWarnings(read_nml(args[i]))
+    } else if (T) { # do not nml::read_nml print non-ascii characters
+        nml <- suppressMessages(suppressWarnings(read_nml(args[i])))
+    }
     if (i == 1) nml1 <- nml
     if (i == 2) nml2 <- nml
 } # for i
@@ -118,7 +130,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
     # nml1 doesnt have current chapter; must come from nml2
     if (length(inds1) == 0) {
         for (ch2i in seq_along(inds2)) {
-            cat("************************** detected unique chapter **************************\n",
+            cat("**************************detected unique chapter **************************\n",
                 "nml2 chapter \"", chapters2[inds2[ch2i]], "\" not in nml1:\n", sep="")
             cat(capture.output(str(nml2[inds2[ch2i]])), sep="\n")
             nml2_but_not_nml1[length(nml2_but_not_nml1)+1] <- nml2[inds2[ch2i]]
@@ -128,7 +140,7 @@ for (i in seq_along(chapters_unique)) { # loop through all unique chapter names
     # nml2 doesnt have current chapter; must come from nml1
     } else if (length(inds2) == 0) {
         for (ch1i in seq_along(inds1)) {
-            cat("************************** detected unique chapter **************************\n",
+            cat("**************************detected unique chapter **************************\n",
                 "nml1 chapter \"", chapters1[inds1[ch1i]], "\" not in nml2:\n", sep="")
             cat(capture.output(str(nml1[inds1[ch1i]])), sep="\n")
             nml1_but_not_nml2[length(nml1_but_not_nml2)+1] <- nml1[inds1[ch1i]]

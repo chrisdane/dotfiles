@@ -73,15 +73,23 @@ else
     # enable git colors
     #git config --global color.ui auto
     
+    # prepend dir to PATH only if not already in PATH (e.g. sourcing ~/.bashrc again, nested shells)
+    path_prepend(){
+        case ":$PATH:" in
+            *":$1:"*) ;;
+            *) export PATH="$1:$PATH" ;;
+        esac
+    } # path_prepend
+
     # my bins (doing this recursively is not recommended; security)
-    #if [ -d ~/bin ]; then
-        export PATH=~/bin:$PATH
-    #fi
-    #if [ -d ~/.local/bin ]; then
-        export PATH=~/.local/bin:$PATH
-    #fi
+    if [ -d ~/bin ]; then
+        path_prepend ~/bin
+    fi
+    if [ -d ~/.local/bin ]; then
+        path_prepend ~/.local/bin
+    fi
     if [ -d ~/.opencode/bin ]; then # opencode
-        export PATH=~/.opencode/bin:$PATH 
+        path_prepend ~/.opencode/bin
     fi
 
     # get battery capacity percentage if available
@@ -182,7 +190,7 @@ else
         echo `\ls --color=auto -lFh $(pwd)/$file`
         less -i $file
     }
-    ml0(){ # more/less latest log "^   0:" lines
+    ml0(){ # more/less latest log "^   0" lines
         file=$(\ls -t *.log | grep -v _observe_ | head -n1)
         echo `\ls --color=auto -lFh $(pwd)/$file`
         grep -E "^   0|^3584|^3968|^3969|^4033" $file | less -i # core3 tco95 tp2: fesom oifs rnfmap lpj xios
@@ -526,6 +534,7 @@ else
         echo "git merge -X theirs <branch>"
         echo "# stash"
         echo "git stash list; stash show -p stash@{1}; stash apply stash@{n}; stash drop stash@{2}"
+        echo "git stash -m \"myname\""
         echo "git diff stash@{0}^ stash@{0} -- src/io_restart.F90 # show specific stash file"
         echo "git checkout stash@{0} -- src/io_restart.F90 # apply specific stash file"
         echo "# cherry-pick"
@@ -539,13 +548,15 @@ else
         echo "@editor: first line let \"pick\"; all other lines from \"pick\" --> \"squash\""
         echo "git push -u origin +branchname # \"+\" similar as --force but different"
         echo "@other pc: git reset --hard origin/branchname # caution: overwrites potential local changes irreversible"
-        echo "rebase branch"
+        echo "# rebase branch"
         echo "git checkout commit_from_where_my_branch_should_start"
         echo "git checkout -b new_branch # create and checkout new branch"
         echo "git cherry-pick commit_i_want_to_include"
         echo "git branch -d old_branch # delete old branch locally"
         echo "git push origin --delete old_branch # delete old branch remote"
         echo "@other pc: git remote prune origin # to delete the old branch in the 'git branch -av' list"
+        echo "# subrepo"
+        echo "bring subrepo back to pointer: git submodule update src/recom"
     } # githelp
     llg(){
         repofiles="$(git ls-tree --full-tree --name-only -r HEAD)" # omits untracked, ignored, deleted files., e.g. potentially large dir ./git
@@ -677,6 +688,8 @@ else
         echo "Interpolate remaplaf        Largest area fraction remapping"
         echo "Remap       remap           SCRIP grid remapping"
         echo "-setattribute,precip@long_name='Precipitation' in out"
+        echo "cdo -setunit,ppm -mulc,28.9652 -divc,44.0095 -mulc,1e6 -fldmean -vertmean -genlevelbounds -yearmonmean -select,name=co2 *_co2_* ~/co2_fldmean_vertmean_ppm.nc"
+        echo "cdo -setunit,PgC -mulc,2.72916e-13 -divc,9.80665 -fldint -vertint -genlevelbounds -yearmonmean -select,name=co2 *_co2_* ~/co2_fldmean_vertmean_PgC.nc"
     } # cdohelp
     # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
@@ -708,6 +721,7 @@ else
     ncdumphelp() {
         echo "ncdump -hs fin # show chunks"
     }
+    export HDF5_USE_FILE_LOCKING=FALSE # that cdo and nc* work on open files
     isnc() { # use as e.g. `isnc <file> && echo yes`
         if ncdump -k "$1" >/dev/null 2>&1; then
             return 0 # file is nc
@@ -887,9 +901,6 @@ else
     }
     claudehelp(){
         echo "if /login does not work --> logout and login in browser session --> try again /login"
-    }
-    mypath(){
-        Rscript -e "strsplit(system('echo $PATH', intern=T), ':')[[1]]"
     }
 
     # aliase (check with 'type alias')
@@ -1157,12 +1168,8 @@ else
     # check if there are systemctl timers running
     if check_existance systemctl; then
         printf "systemctl list-timers ... "
-        timers=$(systemctl list-timers) #; echo "$timers"
-        readarray -t arr <<<$timers # split vector by \n to array #; echo "$arr"
-        from=1
-        to=${#arr[@]} #; echo "$to lines"
-        to=$((to-4)) #; echo "select lines $((from+1)) to $((to+1)) ..."
-        arr2=("${arr[@]:$from:$to}") #; echo "--> ${#arr2[@]} lines"
+        timers=$(systemctl list-timers 2>/dev/null) #; echo "$timers"
+        readarray -t arr <<<"$timers" # split vector by \n to array #; echo "$arr"
         system_services=(systemd-tmpfiles-clean.service 
                          logrotate.service
                          man-db.service
@@ -1174,9 +1181,9 @@ else
                          fstrim.service
                          snapd.snap-repair.service
                          ureadahead-stop.service)
-        for line in "${arr2[@]}"; do
+        for line in "${arr[@]}"; do
             #echo $line
-            if [[ "$line" = *" ago "* ]]; then # check if valid line
+            if [[ "$line" = *" ago "* ]]; then # check if valid line (skips header, footer and error lines)
                 service=${line##* } # get active service --> last component of line
                 # exclude default system services
                 #if [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # =~: regex; if included
@@ -1271,6 +1278,7 @@ else
         myeof.r plotmyeof.r
         myncrcat.r
         mycat_moc.r
+        nc_check_zero.sh
         ncap2_make_lonlat_bnds.sh
         my_gsw_O2sol_SP_pt.r calc_DIC_remin.r
         hysteresis_koehn26.r
@@ -1291,6 +1299,7 @@ else
     done
    
     # slurm stuff
+    # add autocomplete for scontrol, scancel, etc.
     if [ -f ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh ]; then
         source ~/sw/dotfiles/functions/slurm_jobid_autocomplete.sh
         if check_existance scontrol; then
@@ -1317,6 +1326,9 @@ else
         } 
     fi
     if check_existance sshare; then
+        sshareme_best() {
+            sshare -U -n -P -u $USER -o FairShare,Account | grep -v -e '|noaccount$' -e '_gpu' | sort -t'|' -k1,1nr | head -1 | cut -d'|' -f2
+        }
         sshareme() {
             echo "sshare -U -u \$(whoami) --format=\"Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare\""
             sshare -U -u $(whoami) --format="Account%-30,User%15,NormShares,RawUsage,EffectvUsage,FairShare"
@@ -1348,6 +1360,11 @@ else
                 scontrol show jobid -dd $1
             fi
         }
+    fi
+    if [ -d ~/sw/slurm/check_slurm_priority ]; then
+        alias sqcl="~/sw/slurm/check_slurm_priority/check_queue_load.sh"
+        alias sqcp="~/sw/slurm/check_slurm_priority/check_project_priority.sh"
+        alias sqcw="~/sw/slurm/check_slurm_priority/check_queue_by_account.sh"
     fi
 
     # recom stuff
@@ -1411,17 +1428,17 @@ else
     if [ ! -z ${mywork+x} ]; then # not empty
         echo "mywork = ${mywork} is set"
 
-        # add py envs bins to path
+        # add python envs bins to path
         #if false; then
         if true; then
-            py_envs_dir="${mywork}/sw/py/envs"
-            py_envs_dir="${py_envs_dir/#\~/$HOME}"
-            if [ -d "${py_envs_dir}" ]; then
-                echo "add all ${py_envs_dir}/*/bin dirs to PATH:"
-                for path in "${py_envs_dir}"/*; do
-                    if [ -d "${path}/bin" ]; then
-                        echo "${path}/bin"
-                        export PATH="${path}/bin:$PATH"
+            python_envs_dir="${mywork}/sw/python/envs"
+            python_envs_dir="${python_envs_dir/#\~/$HOME}"
+            if [ -d "${python_envs_dir}" ]; then
+                echo "add all ${python_envs_dir}/*/bin dirs to PATH ..."
+                for path in "${python_envs_dir}"/*; do
+                    if [[ "${path##*/}" != \#* && -d "${path}/bin" ]]; then # skip envs starting with #
+                        #echo "${path}/bin"
+                        path_prepend "${path}/bin"
                     fi
                 done
             fi
@@ -1433,11 +1450,11 @@ else
             conda_envs_dir="${mywork}/sw/conda/envs"
             conda_envs_dir="${conda_envs_dir/#\~/$HOME}"
             if [ -d "${conda_envs_dir}" ]; then
-                echo "add all ${conda_envs_dir}/*/bin dirs to PATH:"
+                echo "add all ${conda_envs_dir}/*/bin dirs to PATH ..."
                 for path in "${conda_envs_dir}"/*; do
-                    if [ -d "${path}/bin" ]; then
-                        echo "${path}/bin"
-                        export PATH="${path}/bin:$PATH"
+                    if [[ "${path##*/}" != \#* && -d "${path}/bin" ]]; then # skip envs starting with #
+                        #echo "${path}/bin"
+                        path_prepend "${path}/bin"
                     fi
                 done
             fi
@@ -1455,6 +1472,30 @@ else
     else
         echo "'mywork' is not set --> do not change default pip/conda paths"
     fi # if mywork is set
+
+    # print $PATH numbered; `mypath i [j ...]`: move the ith [jth ...] entry to the top (first given first)
+    mypath(){
+        local IFS=: i; local -a p=($PATH) top=() rest=(); local -A seen=()
+        if [ $# -eq 0 ]; then
+            for i in "${!p[@]}"; do echo "$((i+1)): ${p[i]}"; done
+            return
+        fi
+        for i in "$@"; do
+            if ! [[ $i =~ ^[0-9]+$ ]] || (( i < 1 || i > ${#p[@]} )); then
+                echo "invalid index: $i (must be within 1 and ${#p[@]})" >&2
+                return 1
+            fi
+            i=$((10#$i)) # e.g. 08 -> 8
+            [[ ${seen[$i]} ]] && continue # given twice
+            seen[$i]=1
+            top+=("${p[i-1]}")
+        done
+        for i in "${!p[@]}"; do
+            [[ ${seen[$((i+1))]} ]] || rest+=("${p[i]}")
+        done
+        export PATH="${top[*]}${rest:+:${rest[*]}}"
+        mypath
+    } # mypath
 
     # finish
     printf '%*s' "$ncol" | tr ' ' "*"

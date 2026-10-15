@@ -40,9 +40,9 @@ for (logi in seq_along(logs)) {
         for (fi in seq_along(fs)) {
             if (file.info(fs[fi])["size"] > 0) {
                 cmd <- paste0(
-                              #"grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|\\!|No such file or directory\" ",
-                              #"grep -Ein \"warn|error|fail|severe|abort|invalid|stop|abor|No such file or directory\" ",
-                              "grep -Ein \"error|fail|severe|abort|invalid|stop|abor|not found|No such file or directory\" ",
+                              #"grep -ianE \"warn|error|fail|severe|abort|invalid|stop|abor|\\!|No such file or directory\" ",
+                              #"grep -ianE \"warn|error|fail|severe|abort|invalid|stop|abor|No such file or directory\" ",
+                              "grep -ianE \"error|fail|severe|abort|invalid|stop|abor|not found|No such file or directory\" ",
                               fs[fi])
                 message("--> run `", cmd, "` ...")
                 system(cmd)

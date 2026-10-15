@@ -16,13 +16,13 @@ if (F) { # load package
     message("\nloaded spheRlab version ", packageVersion("spheRlab"),
             " from path ", attr(packageDescription("spheRlab"), "file"))
 } else if (T) { # use functions directly
-    if (T) { # levante
-        for (f in list.files("~/models/fesom/spheRlab/R", pattern=".*.r",full.names=T, ignore.case=T)) source(f)
+    if (T) {
+        for (f in list.files("~/models/fesom/scripts/spheRlab/R", pattern=".*.r",full.names=T, ignore.case=T)) source(f)
     }
 }
 
-fesom2velocities <- T # elem-space
-#fesom2velocities <- F # node-space
+#fesom2velocities <- T # elem-space
+fesom2velocities <- F # node-space
 remove.emptylev <- T
 verbose <- T
 
@@ -63,16 +63,18 @@ if (F) { # fesom1 core
     outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_coast_500km_200m_10km"
     rot <- F
     rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
-} else if (F) { # core3 cav
+} else if (T) { # core3 cav
     fesom2 <- T
-    gridname <- "core3_cav"
+    gridname <- "core3"
     #griddir <- "/albedo/work/user/sharig/mg/MT_v0.1/mesh_CORE3_cav"
     #outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_core3_cav"
-    griddir <- "/albedo/work/user/sharig/mg/MT_v0.1/mesh_CORE3_cav/mesh_20251110"
-    outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_core3_cav/mesh_20251110"
+    #griddir <- "/albedo/work/user/sharig/mg/MT_v0.1/mesh_CORE3_cav/mesh_20251110"
+    #outdir <- "/albedo/work/user/cdanek/mesh/fesom2/mesh_core3_cav/mesh_20251110"
+    griddir <- "/work/ab0246/a270092/input/fesom2/core3"
+    outdir <- "/work/ab1095/a270073/mesh/fesom2/core3"
     rot <- F
     rot.invert <- T; rot.abg <- c(50, 15, -90) # will be ignored if rot=F
-} else if (T) { # dars2 cav
+} else if (F) { # dars2 cav
     fesom2 <- T
     gridname <- "dars2"
     griddir <- "/work/ab0246/a270092/input/fesom2/dars2"

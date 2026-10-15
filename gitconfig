@@ -60,8 +60,6 @@
     diff = auto
     interactive = auto
     status = auto
-[credential]
-    helper = cache --timeout=10
 [safe]
     directory = *
 [core]

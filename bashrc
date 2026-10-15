@@ -220,6 +220,7 @@ else
     myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
     myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
     myfindh() { find -name "*$1*" 2>/dev/null ; } # hidden files
+    myfindemptydir() { find -mindepth 1 -type d -empty ; }
     alias grepa="grep -a" # to grep in binary files as if were text files
     greplib(){ # todo: grep args
         /usr/bin/strings "$2" | /usr/bin/grep --color=always "$1"
@@ -511,6 +512,9 @@ else
         echo "# clone"
         echo "git clone --branch=test url"
         echo "# diff"
+        echo "-w, --ignore-all-space — ignore whitespace entirely when comparing lines"
+        echo "-b, --ignore-space-change — ignore changes in amount of whitespace, but not whitespace-only additions/removals"
+        echo "--ignore-blank-lines — ignore changes where lines are only blank"
         echo "git diff [from] to # = all commits reachable from [to] that are not reachable from [from]"
         echo "git diff --name-only"
         echo "git diff 6843db8 -- '*.functions'"
@@ -518,8 +522,8 @@ else
         echo "git diff --word-diff-regex=."
         echo "git diff --color-words=."
         echo "# merge"
-        echo "git merge -s ours # --strategy"
-        echo "git merge -X theirs main"
+        echo "git merge -s ours <branch> # --strategy"
+        echo "git merge -X theirs <branch>"
         echo "# stash"
         echo "git stash list; stash show -p stash@{1}; stash apply stash@{n}; stash drop stash@{2}"
         echo "git diff stash@{0}^ stash@{0} -- src/io_restart.F90 # show specific stash file"
@@ -562,7 +566,7 @@ else
         done # todo: without loop
         #printf ' %s' "${vec[@]}"
         #printf -v repofiles ' %s' "${vec[@]}" # convert array back to string
-        dus=$(du -hc "${vec[@]}" | sort -h)
+        dus=$(printf '%s\0' "${vec[@]}" | du -hc --files0-from=- | sort -h) # via stdin: avoids "Argument list too long" in repos with many files
         homeprefix=$(readlink -f ~/)
         # replace home in du result
         repl_pat_home='~' # need this extra variable for line below

@@ -73,15 +73,23 @@ else
     # enable git colors
     #git config --global color.ui auto
     
+    # prepend dir to PATH only if not already in PATH (e.g. sourcing ~/.bashrc again, nested shells)
+    path_prepend(){
+        case ":$PATH:" in
+            *":$1:"*) ;;
+            *) export PATH="$1:$PATH" ;;
+        esac
+    } # path_prepend
+
     # my bins (doing this recursively is not recommended; security)
-    #if [ -d ~/bin ]; then
-        export PATH=~/bin:$PATH
-    #fi
-    #if [ -d ~/.local/bin ]; then
-        export PATH=~/.local/bin:$PATH
-    #fi
+    if [ -d ~/bin ]; then
+        path_prepend ~/bin
+    fi
+    if [ -d ~/.local/bin ]; then
+        path_prepend ~/.local/bin
+    fi
     if [ -d ~/.opencode/bin ]; then # opencode
-        export PATH=~/.opencode/bin:$PATH 
+        path_prepend ~/.opencode/bin
     fi
 
     # get battery capacity percentage if available
@@ -522,6 +530,7 @@ else
         echo "git merge -X theirs main"
         echo "# stash"
         echo "git stash list; stash show -p stash@{1}; stash apply stash@{n}; stash drop stash@{2}"
+        echo "git stash -m \"myname\""
         echo "git diff stash@{0}^ stash@{0} -- src/io_restart.F90 # show specific stash file"
         echo "git checkout stash@{0} -- src/io_restart.F90 # apply specific stash file"
         echo "# cherry-pick"
@@ -535,13 +544,15 @@ else
         echo "@editor: first line let \"pick\"; all other lines from \"pick\" --> \"squash\""
         echo "git push -u origin +branchname # \"+\" similar as --force but different"
         echo "@other pc: git reset --hard origin/branchname # caution: overwrites potential local changes irreversible"
-        echo "rebase branch"
+        echo "# rebase branch"
         echo "git checkout commit_from_where_my_branch_should_start"
         echo "git checkout -b new_branch # create and checkout new branch"
         echo "git cherry-pick commit_i_want_to_include"
         echo "git branch -d old_branch # delete old branch locally"
         echo "git push origin --delete old_branch # delete old branch remote"
         echo "@other pc: git remote prune origin # to delete the old branch in the 'git branch -av' list"
+        echo "# subrepo"
+        echo "bring subrepo back to pointer: git submodule update src/recom"
     } # githelp
     llg(){
         repofiles="$(git ls-tree --full-tree --name-only -r HEAD)" # omits untracked, ignored, deleted files., e.g. potentially large dir ./git
@@ -673,6 +684,8 @@ else
         echo "Interpolate remaplaf        Largest area fraction remapping"
         echo "Remap       remap           SCRIP grid remapping"
         echo "-setattribute,precip@long_name='Precipitation' in out"
+        echo "cdo -setunit,ppm -mulc,28.9652 -divc,44.0095 -mulc,1e6 -fldmean -vertmean -genlevelbounds -yearmonmean -select,name=co2 *_co2_* ~/co2_fldmean_vertmean_ppm.nc"
+        echo "cdo -setunit,PgC -mulc,2.72916e-13 -divc,9.80665 -fldint -vertint -genlevelbounds -yearmonmean -select,name=co2 *_co2_* ~/co2_fldmean_vertmean_PgC.nc"
     } # cdohelp
     # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
@@ -884,9 +897,6 @@ else
     }
     claudehelp(){
         echo "if /login does not work --> logout and login in browser session --> try again /login"
-    }
-    mypath(){
-        Rscript -e "strsplit(system('echo $PATH', intern=T), ':')[[1]]"
     }
 
     # aliase (check with 'type alias')
@@ -1154,12 +1164,8 @@ else
     # check if there are systemctl timers running
     if check_existance systemctl; then
         printf "systemctl list-timers ... "
-        timers=$(systemctl list-timers) #; echo "$timers"
-        readarray -t arr <<<$timers # split vector by \n to array #; echo "$arr"
-        from=1
-        to=${#arr[@]} #; echo "$to lines"
-        to=$((to-4)) #; echo "select lines $((from+1)) to $((to+1)) ..."
-        arr2=("${arr[@]:$from:$to}") #; echo "--> ${#arr2[@]} lines"
+        timers=$(systemctl list-timers 2>/dev/null) #; echo "$timers"
+        readarray -t arr <<<"$timers" # split vector by \n to array #; echo "$arr"
         system_services=(systemd-tmpfiles-clean.service 
                          logrotate.service
                          man-db.service
@@ -1171,9 +1177,9 @@ else
                          fstrim.service
                          snapd.snap-repair.service
                          ureadahead-stop.service)
-        for line in "${arr2[@]}"; do
+        for line in "${arr[@]}"; do
             #echo $line
-            if [[ "$line" = *" ago "* ]]; then # check if valid line
+            if [[ "$line" = *" ago "* ]]; then # check if valid line (skips header, footer and error lines)
                 service=${line##* } # get active service --> last component of line
                 # exclude default system services
                 #if [[ ${system_services[*]} =~ (^|[[:space:]])"$service"($|[[:space:]]) ]]; then # =~: regex; if included
@@ -1426,9 +1432,9 @@ else
             if [ -d "${python_envs_dir}" ]; then
                 echo "add all ${python_envs_dir}/*/bin dirs to PATH ..."
                 for path in "${python_envs_dir}"/*; do
-                    if [ -d "${path}/bin" ]; then
+                    if [[ "${path##*/}" != \#* && -d "${path}/bin" ]]; then # skip envs starting with #
                         #echo "${path}/bin"
-                        export PATH="${path}/bin:$PATH"
+                        path_prepend "${path}/bin"
                     fi
                 done
             fi
@@ -1442,9 +1448,9 @@ else
             if [ -d "${conda_envs_dir}" ]; then
                 echo "add all ${conda_envs_dir}/*/bin dirs to PATH ..."
                 for path in "${conda_envs_dir}"/*; do
-                    if [ -d "${path}/bin" ]; then
+                    if [[ "${path##*/}" != \#* && -d "${path}/bin" ]]; then # skip envs starting with #
                         #echo "${path}/bin"
-                        export PATH="${path}/bin:$PATH"
+                        path_prepend "${path}/bin"
                     fi
                 done
             fi
@@ -1462,6 +1468,30 @@ else
     else
         echo "'mywork' is not set --> do not change default pip/conda paths"
     fi # if mywork is set
+
+    # print $PATH numbered; `mypath i [j ...]`: move the ith [jth ...] entry to the top (first given first)
+    mypath(){
+        local IFS=: i; local -a p=($PATH) top=() rest=(); local -A seen=()
+        if [ $# -eq 0 ]; then
+            for i in "${!p[@]}"; do echo "$((i+1)): ${p[i]}"; done
+            return
+        fi
+        for i in "$@"; do
+            if ! [[ $i =~ ^[0-9]+$ ]] || (( i < 1 || i > ${#p[@]} )); then
+                echo "invalid index: $i (must be within 1 and ${#p[@]})" >&2
+                return 1
+            fi
+            i=$((10#$i)) # e.g. 08 -> 8
+            [[ ${seen[$i]} ]] && continue # given twice
+            seen[$i]=1
+            top+=("${p[i-1]}")
+        done
+        for i in "${!p[@]}"; do
+            [[ ${seen[$((i+1))]} ]] || rest+=("${p[i]}")
+        done
+        export PATH="${top[*]}${rest:+:${rest[*]}}"
+        mypath
+    } # mypath
 
     # finish
     printf '%*s' "$ncol" | tr ' ' "*"

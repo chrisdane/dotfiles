@@ -3,30 +3,90 @@
 # get args
 args <- commandArgs(trailingOnly=F)
 me <- basename(sub("--file=", "", args[grep("--file=", args)]))
-help <- paste0("\nUsage:\n $ ", me, " [user=`whoami`]\n")
+help <- paste0("\nUsage:\n $ ", me, " [user=`whoami`|jobid]\n",
+               "   if a jobid (only digits, optionally `_` for array jobs, e.g. 12345 or 12345_6)\n",
+               "   is provided, only this specific job is checked\n",
+               "   and no non-running or running jobs of any user are checked\n")
 
 if (any(grepl("--help", args))) {
     message(help)
     quit()
 }
 
-# get user
+# get args: either nothing, a user, or a jobid (digits only, optionally "_" for array jobs)
 args <- commandArgs(trailingOnly=T)
+jobid <- NULL
 if (length(args) == 0) { # default: own user
     user <- Sys.info()["user"]
-} else if (length(args) == 1) { # user was provided
-    # check if provided user exists
-    user <- args[1]
-    cmd <- paste0("id -u ", user)
-    message("run `", cmd, "` ...")
-    check <- system(cmd)  # script stops here if provided user is invalid
-    if (check == 1) quit()
+} else if (length(args) == 1) { # user or jobid was provided
+    if (grepl("^[0-9]+(_[0-9]+)?$", args[1])) { # looks like a jobid
+        jobid <- args[1]
+        user <- Sys.info()["user"] # not used for the jobid check below but kept for consistency
+    } else { # user was provided
+        # check if provided user exists
+        user <- args[1]
+        cmd <- paste0("id -u ", user)
+        message("run `", cmd, "` ...")
+        check <- system(cmd)  # script stops here if provided user is invalid
+        if (check == 1) quit()
+    }
 } else {
     message(help)
     quit()
 }
 
 options(width=3000) # increase length per print line from default 80
+
+# if a specific jobid was provided, check only this job and skip checking for
+# any non-running or running jobs of `user`
+if (!is.null(jobid)) {
+
+    cmd <- paste0("scontrol show jobid -dd ", jobid)
+    message("\njobid ", jobid, " was provided --> check only this job and skip checking for any non-running or running jobs\n")
+    message("run `", cmd, "` ...")
+    scontrol <- system(cmd, intern=T)
+    if (length(scontrol) == 0) {
+        message("--> `", cmd, "` returned nothing. does jobid ", jobid, " exist?\n",
+                "    (already completed/old jobs may have dropped out of `scontrol`; try `sacct -j ", jobid, "` instead)")
+        quit()
+    }
+
+    jobstate <- NA
+    if (any(grepl("JobState=", scontrol))) {
+        state_line <- scontrol[which(grepl("JobState=", scontrol))[1]]
+        jobstate <- regmatches(state_line, regexpr("JobState=[^ ]*", state_line))
+        jobstate <- sub("JobState=", "", jobstate)
+    }
+    message("--> JobState = ", jobstate)
+
+    if (any(grepl("WorkDir=", scontrol))) {
+        workdir <- scontrol[which(grepl("WorkDir=", scontrol))[1]]
+        workdir <- substr(workdir,
+                          start=regexpr("WorkDir=", workdir) + 8,
+                          stop=nchar(workdir))
+        message("workdir = ", workdir)
+    }
+
+    if (!is.na(jobstate) && jobstate == "RUNNING") {
+        if (!any(grepl("StdOut=", scontrol))) {
+            message("--> did not find a \"StdOut=\" line. skip")
+        } else {
+            logfile <- scontrol[which(grepl("StdOut=", scontrol))[1]]
+            logfile <- substr(logfile,
+                              start=regexpr("StdOut=", logfile) + 7,
+                              stop=nchar(logfile))
+            if (!file.exists(logfile)) {
+                message("logfile \"", logfile, "\" does not exist. skip")
+            } else {
+                cmd <- paste0("tail -20 ", logfile)
+                message("run `", cmd, "` ...")
+                system(cmd)
+            }
+        }
+    }
+
+    quit()
+} # if !is.null(jobid)
 
 # step 1/2: check if there are jobs in the queue
 cmd <- paste0("squeue -u ", user, " --start") # --start to return estimated start_time

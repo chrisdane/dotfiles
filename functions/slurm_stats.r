@@ -72,6 +72,7 @@ help <- paste0("\nUsage:\n $ ", me, " [--exclude=1,2,3-5] logfile1 [logfile2 ...
                "   e.g. ", me, " # shows this help\n",
                "        ", me, " *_awicm_compute_*\n",
                "        ", me, " *_compute_*-*_*.log\n",
+               "        ", me, " $(ls *_compute_*-*_*.log | grep -v '_observe_compute_')\n",
                "        ", me, " $(\\grep -l \"time step size is set to    1200\" fesom.out.done.*)\n")
 oo <- options() # save old/default options
 
@@ -368,6 +369,17 @@ if (length(inds) > 0) {
     elapsed_day[inds] <- as.integer(substr(elapsed[inds], 1, regexpr("-", elapsed[inds])-1))
 }
 elapsed_hour <- elapsed_day*24 + elapsed_hour + elapsed_min/60 + elapsed_sec/(60*60)
+elapsed_min <- elapsed_hour*60 # total elapsed in minutes (was: just the "MM" substring, i.e. minutes-within-the-hour, 0-59)
+elapsed_hmin <- { # total elapsed as "H:MM" string, e.g. "26:19" for 1 day 2:19:42
+    hh <- floor(elapsed_hour)
+    mm <- round((elapsed_hour - hh)*60)
+    carry <- which(mm == 60) # rounding edge case, e.g. 2.9999 hours -> hh=2, mm=60
+    if (length(carry) > 0) {
+        hh[carry] <- hh[carry] + 1
+        mm[carry] <- 0
+    }
+    paste0(hh, ":", sprintf("%02d", mm))
+}
 node_hours <- nnodes * elapsed_hour
 
 # calc queue time = start - submit
@@ -435,7 +447,7 @@ message("\n****************************************************************\n",
         "results of ", length(jobids), " successfull / ", length(jobids) + length(missing_jobid_inds),
         " provided jobids (rerun with `--exclude=1,2,3-5` if needed):\n")
 options(width=1000)
-df <- data.frame(log=logs, jobid=jobids, elapsed_min=elapsed_min, elapsed_h=elapsed_hour, node_hours=node_hours, nnodes=nnodes, queue=queue, energy_kWh=energy_kWh)
+df <- data.frame(log=logs, jobid=jobids, elapsed_min=elapsed_min, elapsed_h=elapsed_hour, elapsed_hmin=elapsed_hmin, node_hours=node_hours, nnodes=nnodes, queue=queue, energy_kWh=energy_kWh)
 print(df, row.names=rownames, digits=3)
 options(width=oo$width)
 message("(", length(jobids), " successfull / ", length(jobids) + length(missing_jobid_inds), " provided)")

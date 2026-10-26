@@ -1318,6 +1318,10 @@ else
             squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R"
         } 
         smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R" ; }
+        sla() {
+            echo "squeue -u lahajd001 --sort=-i -o \"%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
+            squeue -u lahajd001 --sort=-i -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R"
+        }
     fi
     if check_existance sacctmgr; then
         smy() {
@@ -1455,7 +1459,18 @@ else
                 done
             fi
         fi
-        
+
+        # add hdf5plugin's bundled HDF5 filter plugins (blosc, lz4, zstd, ...)
+        # so cdo/nco/ncdump/etc. can read HDF5-filtered netCDF written with them
+        if true; then
+            for path in "${python_envs_dir}"/hdf5plugin/lib/python3.*/site-packages/hdf5plugin/plugins; do
+                if [ -d "${path}" ]; then
+                    echo "export HDF5_PLUGIN_PATH=${path}"
+                    export HDF5_PLUGIN_PATH="${path}"
+                fi
+            done
+        fi
+
         # add conda envs bins to path
         #if false; then
         if true; then

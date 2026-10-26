@@ -1397,7 +1397,6 @@ else
     # replace prompt with liquidprompt if git is available (thats why do it after .myprofile)
     if true; then # use liquidprompt prompt
         if [ -x "$(command -v liquidprompt)" ]; then 
-            LP_PS1_PREFIX="\$(get_battery_capacity)\$(get_battery_status)\$(get_current_temp)"
             # gitstatus daemon for fast git info in liquidprompt (LP_ENABLE_GITSTATUSD); must run before liquidprompt
             if [ -f ~/sw/gitstatus/gitstatus.plugin.sh ]; then
                 source ~/sw/gitstatus/gitstatus.plugin.sh
@@ -1406,6 +1405,12 @@ else
                 echo "could not load gitstatus --> run 'git clone --depth=1 https://github.com/romkatv/gitstatus.git ~/sw/gitstatus'"
             fi
             source liquidprompt # check ~/.liquidpromptrc
+            # prepend battery/temp prefix ourselves: liquidprompt adds a space after a non-empty LP_PS1_PREFIX (since 45abd52)
+            eval "_lp_orig_theme_prompt_template()$(declare -f _lp_default_theme_prompt_template | tail -n +2)"
+            _lp_default_theme_prompt_template() {
+                _lp_orig_theme_prompt_template
+                PS1="\$(get_battery_capacity)\$(get_battery_status)\$(get_current_temp)${PS1}"
+            }
         else 
             echo "could not load liquidprompt --> run 'git clone https://github.com/nojhan/liquidprompt.git' and ln -s ~/sw/liquidprompt/liquidprompt ~/bin/liquidprompt"
         fi

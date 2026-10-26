@@ -537,7 +537,7 @@ for (vari in seq_len(nit)) {
                 }
             }
             
-            ntime_all <- slope_all <- slope_err_all <- t_val_all <- p_val_all <- rep(NA, t=nloc) # allocate
+            ntime_all <- slope_all <- slope_err_all <- t_val_all <- p_val_all <- n_eff_ar1_all <- p_val_ar1_all <- rep(NA, t=nloc) # allocate
             if (mode == "var_vs_time") dt_day_all <- slope_day_all <- slope_day_err_all <- ntime_all
             for (loci in seq_len(nloc)) { # loop through all locations
                 locinds <- unlist(mapping_df[loci,])
@@ -616,6 +616,26 @@ for (vari in seq_len(nit)) {
                                 slope_err <- lms$coefficients[2,"Std. Error"]
                                 t_val <- lms$coefficients[2,"t value"]
                                 p_val <- lms$coefficients[2,"Pr(>|t|)"]
+                                # p value adjusted for lag-1 autocorrelation of the residuals via the
+                                # effective sample size n_eff = n*(1-rho1)/(1+rho1) (santer et al. 2000; same as
+                                # n_eff(..., method="ar1") of myfunctions.r); rho1 < 0 is set to 0;
+                                # missing values stay in place so that only consecutive pairs enter rho1;
+                                # rho1 is the correlation of these pairs since stats::acf with na.pass is
+                                # unstable for gappy series (can yield rho1 = 1)
+                                res <- rep(NA, t=length(ts[[1]]))
+                                res[inds] <- lm$residuals
+                                pairs_ok <- which(!is.na(res[-1]) & !is.na(res[-length(res)]))
+                                rho1 <- NA
+                                if (length(pairs_ok) > 2) {
+                                    rho1 <- stats::cor(res[-length(res)][pairs_ok], res[-1][pairs_ok])
+                                }
+                                rho1 <- max(rho1, 0, na.rm=T)
+                                n_eff_ar1 <- ninds*(1 - rho1)/(1 + rho1)
+                                p_val_ar1 <- NA
+                                if (n_eff_ar1 > 2) {
+                                    t_val_ar1 <- slope/(slope_err*sqrt((ninds - 2)/(n_eff_ar1 - 2)))
+                                    p_val_ar1 <- 2*stats::pt(-abs(t_val_ar1), df=n_eff_ar1 - 2)
+                                }
                                 if (mode == "var_vs_time") {
                                     dt_day <- as.numeric(difftime(posixct_vari[inds[ninds]], posixct_vari[inds[1]], units="days"))
                                     # total trend or drift:
@@ -636,6 +656,8 @@ for (vari in seq_len(nit)) {
                         slope_err_all[loci] <- slope_err
                         t_val_all[loci] <- t_val
                         p_val_all[loci] <- p_val
+                        n_eff_ar1_all[loci] <- n_eff_ar1
+                        p_val_ar1_all[loci] <- p_val_ar1
                         if (mode == "var_vs_time") {
                             dt_day_all[loci] <- dt_day
                             slope_day_all[loci] <- slope_day
@@ -648,12 +670,20 @@ for (vari in seq_len(nit)) {
             # close progress bar
             if (T) base::close(pb)
 
+            # control false discovery rate of p_val_ar1 over all locations (benjamini and hochberg 1995);
+            # compare with alpha_fdr = 2*alpha_global for spatially correlated fields (wilks 2016)
+            p_val_ar1_fdr_all <- p_val_ar1_all
+            inds_ok <- which(!is.na(p_val_ar1_all))
+            p_val_ar1_fdr_all[inds_ok] <- stats::p.adjust(p_val_ar1_all[inds_ok], method="BH")
+            message("FDR (BH) adjusted p_val_ar1 over ", length(inds_ok), " locations",
+                    ifelse(length(location_inds) < ntot, paste0(" (only a subset of all ", ntot, " locations!)"), ""))
+
             if (all(is.na(slope_all))) {
                 message("all regression slopes are NA. do not save any output. skip")
             } else { # save output
                 
                 message("save ", fouti, " ...")
-                names <- c("ntime", "slope", "slope_err", "t_val", "p_val")
+                names <- c("ntime", "slope", "slope_err", "t_val", "p_val", "n_eff_ar1", "p_val_ar1", "p_val_ar1_fdr")
                 if (mode == "var_vs_time") {
                     varunits <- nc[[1]]$var[[varname]]$units
                     if (varunits == "days") { # special: see https://code.mpimet.mpg.de/issues/12004
@@ -672,7 +702,13 @@ for (vari in seq_len(nit)) {
                 slope_err_var <- ncdf4::ncvar_def(name=names[3], units=slope_unit, dim=spatial_dims_nc, missval=NA)
                 t_val_var <- ncdf4::ncvar_def(name=names[4], units="", dim=spatial_dims_nc, missval=NA)
                 p_val_var <- ncdf4::ncvar_def(name=names[5], units="", dim=spatial_dims_nc, missval=NA)
-                ncvars <- list(ntime_var, slope_var, slope_err_var, t_val_var, p_val_var)
+                n_eff_ar1_var <- ncdf4::ncvar_def(name=names[6], units="", dim=spatial_dims_nc, missval=NA,
+                                                  longname="effective sample size n*(1-rho1)/(1+rho1) from lag-1 autocorrelation of residuals")
+                p_val_ar1_var <- ncdf4::ncvar_def(name=names[7], units="", dim=spatial_dims_nc, missval=NA,
+                                                  longname="p value of slope adjusted for lag-1 autocorrelation of residuals (t test with n_eff_ar1-2 dof)")
+                p_val_ar1_fdr_var <- ncdf4::ncvar_def(name=names[8], units="", dim=spatial_dims_nc, missval=NA,
+                                                      longname="p_val_ar1 adjusted for false discovery rate over all locations (benjamini-hochberg)")
+                ncvars <- list(ntime_var, slope_var, slope_err_var, t_val_var, p_val_var, n_eff_ar1_var, p_val_ar1_var, p_val_ar1_fdr_var)
                 if (mode == "var_vs_time") {
                     save_trend_per_month <- save_trend_per_year <- save_trend_per_decade <- save_trend_per_century <- save_trend_per_millenium <- F # default
                     slope_all_per_day <- slope_day_all/dt_day_all
@@ -752,6 +788,9 @@ for (vari in seq_len(nit)) {
                 ncdf4::ncvar_put(nc=outnc, varid=slope_err_var, vals=slope_err_all)
                 ncdf4::ncvar_put(nc=outnc, varid=t_val_var, vals=t_val_all)
                 ncdf4::ncvar_put(nc=outnc, varid=p_val_var, vals=p_val_all)
+                ncdf4::ncvar_put(nc=outnc, varid=n_eff_ar1_var, vals=n_eff_ar1_all)
+                ncdf4::ncvar_put(nc=outnc, varid=p_val_ar1_var, vals=p_val_ar1_all)
+                ncdf4::ncvar_put(nc=outnc, varid=p_val_ar1_fdr_var, vals=p_val_ar1_fdr_all)
                 if (mode == "var_vs_time") {
                     if (save_trend_per_day) {
                         message("save trends per day (min/max ", min(slope_all_per_day, na.rm=T), "/", max(slope_all_per_day, na.rm=T), ") ...")

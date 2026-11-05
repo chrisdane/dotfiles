@@ -107,6 +107,7 @@ if (any(squeue$ST != "R")) { # not running
     message("--> there are ", length(inds), " non-running jobs (in alphabetical order of workdirs via `scontrol show jobid -dd <jobid>`):\n")
     #print(squeue)
     jobids <- squeue$JOBID
+    jobids <- sub("_\\[([0-9]+).*\\]$", "_\\1", jobids) # pending job array "123_[4-16%4]" --> its 1st task "123_4"; scontrol cannot show the former
     workdirs <- rep(NA, t=length(jobids))
     for (jobi in seq_along(jobids)) { # get workpath of job
         cmd <- paste0("scontrol show jobid -dd ", jobids[jobi])
@@ -130,7 +131,7 @@ if (any(squeue$ST != "R")) { # not running
 
 # step 2/2: check if user has running jobs
 #cmd <- paste0("squeue -u ", user)
-cmd <- paste0("squeue -u ", user, " -o \"%.8i %.12P %.20j %.15a %.10u %.2t %.20V %.20S %.10M %.6D %R\"") # jobid partition jobname account user status submit_time start_time time nodes nodelist
+cmd <- paste0("squeue -u ", user, " -o \"%.20i %.12P %.20j %.15a %.10u %.2t %.20V %.20S %.10M %.6D %R\"") # jobid partition jobname account user status submit_time start_time time nodes nodelist
 message("\nrun `", cmd, "` ...")
 squeue <- base::pipe(cmd)
 squeue <- read.table(squeue, header=T, stringsAsFactors=F)

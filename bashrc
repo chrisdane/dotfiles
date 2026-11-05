@@ -156,7 +156,7 @@ else
     PS1='[\u@\h \W]\$ ' # default
     if true; then # my prompt; use `\$` to evaulate on every new line (i.e. when pressing enter)
         #PS1='\[\033[0;34m\]\u@\h:$(pwd)/>\[\033[0m\] '
-        PS1='\[\033[0;34m\]\u@\h:$(get_battery_capacity)$(get_battery_status)$(get_current_temp):$(pwd)/>\[\033[0m\] '
+        PS1='\[\033[0;34m\]\u@\h:$(get_battery_capacity)$(get_battery_status)$(get_current_temp):$(pwd -P)/>\[\033[0m\] '
     fi
 
     # enable make autocomplete:
@@ -1314,13 +1314,13 @@ else
     fi
     if check_existance squeue; then
         sme() {
-            echo "squeue -u $(whoami) --sort=-i -o \"%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
-            squeue -u $(whoami) --sort=-i -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R"
+            echo "squeue -u $(whoami) --sort=-i -o \"%.20i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.10l %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
+            squeue -u $(whoami) --sort=-i -o "%.20i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.10l %.6D %R"
         } 
-        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R" ; }
+        smi() { squeue -u $(whoami) --sort=-i -i 1 -o "%.20i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.10l %.6D %R" ; }
         sla() {
-            echo "squeue -u lahajd001 --sort=-i -o \"%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
-            squeue -u lahajd001 --sort=-i -o "%.8i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.6D %R"
+            echo "squeue -u lahajd001 --sort=-i -o \"%.20i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.10l %.6D %R\" # jobid partition jobname account user status submit_time start_time time maxtime nodes nodelist"
+            squeue -u lahajd001 --sort=-i -o "%.20i %.12P %.35j %.25a %.15u %.2t %.20V %.20S %.10M %.10l %.6D %R"
         }
     fi
     if check_existance sacctmgr; then
@@ -1409,6 +1409,14 @@ else
                 echo "could not load gitstatus --> run 'git clone --depth=1 https://github.com/romkatv/gitstatus.git ~/sw/gitstatus'"
             fi
             source liquidprompt # check ~/.liquidpromptrc
+            # show the actual path, not the link path
+            eval "_lp_orig_path_format()$(declare -f _lp_path_format | tail -n +2)"
+            _lp_path_format() {
+                local phys
+                phys=$(pwd -P)
+                local PWD=$phys
+                _lp_orig_path_format "$@"
+            }
             # prepend battery/temp prefix ourselves: liquidprompt adds a space after a non-empty LP_PS1_PREFIX (since 45abd52)
             eval "_lp_orig_theme_prompt_template()$(declare -f _lp_default_theme_prompt_template | tail -n +2)"
             _lp_default_theme_prompt_template() {

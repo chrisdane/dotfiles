@@ -218,13 +218,16 @@ else
         git diff --no-index --color=always --word-diff-regex='[[:alnum:]_]+|[^[:space:]]' $1 $2 # works better
     }
     myfind() { find -name "*$1*" -not -path '*/.*' 2>/dev/null ; } # `-not -path '*/.*'`to ignore hidden dirs/files
-    myfindp() { find -path "*$1*" -not -path '*/.*' 2>/dev/null ; } # -path and not -name to support '/'
-    myfinds(){ find -name "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
-    myfindps(){ find -path "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
     myfindi(){ find -iname "*$1*" -not -path '*/.*' 2>/dev/null ; }
-    myfindpi(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null ; }
     myfindis(){ find -iname "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
+    myfindip(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null ; }
+    myfindil() { find -L -name "*$1*" -not -path '*/.*' 2>/dev/null ; } # `-L`: follow symlinks
+    myfinds(){ find -name "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
+    myfindp() { find -path "*$1*" -not -path '*/.*' 2>/dev/null ; } # -path and not -name to support '/'
+    myfindps(){ find -path "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
     myfindpis(){ find -ipath "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
+    myfindl() { find -L -name "*$1*" -not -path '*/.*' 2>/dev/null ; } # `-L`: follow symlinks
+    myfindls(){ find -L -name "*$1*" -not -path '*/.*' 2>/dev/null | sort ; }
     myfindb(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null ; } # broken links
     myfindbs(){ find -ipath "*$1*" -not -path '*/.*' -xtype l 2>/dev/null | sort ; }
     myfindh() { find -name "*$1*" 2>/dev/null ; } # hidden files
@@ -688,8 +691,8 @@ else
         echo "Interpolate remaplaf        Largest area fraction remapping"
         echo "Remap       remap           SCRIP grid remapping"
         echo "-setattribute,precip@long_name='Precipitation' in out"
-        echo "cdo -setunit,ppm -mulc,28.9652 -divc,44.0095 -mulc,1e6 -fldmean -vertmean -genlevelbounds -yearmonmean -select,name=co2 *_co2_* ~/co2_fldmean_vertmean_ppm.nc"
-        echo "cdo -setunit,PgC -mulc,2.72916e-13 -divc,9.80665 -fldint -vertint -genlevelbounds -yearmonmean -select,name=co2 *_co2_* ~/co2_fldmean_vertmean_PgC.nc"
+        echo "cdo -w -output -setunit,ppm -mulc,28.9652 -divc,44.0095 -mulc,1e6 -fldmean -vertmean -genlevelbounds -yearmonmean [ -select,name=co2 *_co2_* ] # ~/co2_fldmean_vertmean_ppm.nc"
+        echo "cdo -w -output -setunit,PgC -mulc,2.72916e-13 -divc,9.80665 -fldint -vertint -genlevelbounds -yearmonmean [ -select,name=co2 *_co2_* ] # ~/co2_fldmean_vertmean_PgC.nc"
     } # cdohelp
     # argument list too long
     #/bin/echo "$(printf "%*s" 131071 ".")" > /dev/null
@@ -1494,7 +1497,23 @@ else
                 done
             fi
         fi
-        
+
+        # point reval.py (release_evaluation_tool2) at this own env instead of
+        # its shared default -- on albedo it activates a conda env by *path*,
+        # not by name, so a plain `conda activate reval` isn't enough
+        if true; then
+            path="${conda_envs_dir}/reval"
+            if [ -d "${path}" ]; then
+                echo "export REVAL_ENV=${path}"
+                export REVAL_ENV="${path}"
+                # reval.py's default SLURM account (clidyn.clidyn) is Jan
+                # Streffing's own project, not valid here -- sbatch rejects it
+                # outright ("Invalid account or account/partition combination")
+                echo "export REVAL_ACCOUNT=biogeo_model.biogeo_model"
+                export REVAL_ACCOUNT="biogeo_model.biogeo_model"
+            fi
+        fi
+
         conda_deactivate(){
             echo "---------------- conda_deactivate() ----------------"
             echo "run 'conda deactivate' ..."
